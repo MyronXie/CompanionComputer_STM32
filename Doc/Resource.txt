@@ -1,0 +1,19 @@
+USART1: F3<->Pixhawk for communication
+PB6(Tx)-P2.3(USART1-Tx)
+PB7(Rx)-P2.4(USART1-Rx)
+
+USART3:F3<->PC for debug
+PB10(Tx)-P2.5(USART3-Tx)
+PB11(Rx)-P2.6(USART3-Tx)
+
+I2C1: battery communication
+PB8(SCL)-P6.3/P7.3
+PB9(SDA)-P6.4/P7.4
+
+TIM2: Landing gear PWM control (100Hz)
+Left:PA9(TIM2-CH3)-P3.3(PWM2)
+Right:PA10(TIM2-CH4)-P3.4(PWM3)
+Relay:PA11(STEER_PWR)
+
+TIM6: PWM adjustment (100Hz)
+TIM7: Read & Send Battery message (0.5Hz)
