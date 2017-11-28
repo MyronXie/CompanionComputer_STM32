@@ -5,7 +5,7 @@
   *
   * Version			: v0.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.11.27
+  * Revised	Date	: 2017.11.28
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -22,8 +22,8 @@
 #define PUL_LEFT_DOWN	25
 #define PUL_LEFT_Range	(PUL_LEFT_UP-PUL_LEFT_DOWN)
 
-#define PUL_RIGHT_UP	1966
-#define PUL_RIGHT_DOWN	1125
+#define PUL_RIGHT_UP	1100
+#define PUL_RIGHT_DOWN	250
 #define PUL_RIGHT_Range	(PUL_RIGHT_UP-PUL_RIGHT_DOWN)
 
 #define PUL_SCALE		0.01

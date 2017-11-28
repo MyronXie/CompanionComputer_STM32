@@ -21,7 +21,7 @@ uint8_t UART_Rx_Buff[256];
 
 void USART_Init(void)
 {
-	//USART1 for PX4
+	//USART1 for Pixhawk
 	huart1.Instance			=	USART1;
 	huart1.Init.BaudRate	=	57600;
 	huart1.Init.WordLength	=	UART_WORDLENGTH_8B;

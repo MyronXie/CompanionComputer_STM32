@@ -3,9 +3,9 @@
   * File Name		: main.c
   * Description		: CompanionComputer_STM32 main program
   *
-  * Version			: v0.1
+  * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2017.11.27
+  * Revised	Date	: 2017.11.28
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -40,7 +40,6 @@ uint8_t lgChangedPrev=0;			//Changed: 1
   */
 int main(void)
 {
-	
 	HAL_Init();
 	SystemClock_Config();
 	
@@ -49,21 +48,21 @@ int main(void)
 	
 	LG_Init();
 	Batt_Init();
-	
+
 	HAL_UART_Receive_IT(&huart1,&aRxBuffer,1);
 	HAL_UART_Receive_IT(&huart3,&aRxBuffer,1);	
 
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim7);
 	
-	batt1.current_consumed=100;
-	batt1.temperature=2760;
-	batt1.voltages[0]=24360;
-	batt1.current_battery=-1602;
-	batt1.id=0x16;
-	batt1.battery_function=MAV_BATTERY_FUNCTION_ALL;
-	batt1.type=MAV_BATTERY_TYPE_LIPO;
-	batt1.battery_remaining=99;
+	batt1.current_consumed	= 100;
+	batt1.temperature		= 2760;
+	batt1.voltages[0]		= 24360;
+	batt1.current_battery	= -1602;
+	batt1.id				= 0x16;
+	batt1.battery_function	= MAV_BATTERY_FUNCTION_ALL;
+	batt1.type				= MAV_BATTERY_TYPE_LIPO;
+	batt1.battery_remaining	= 99;
 
 	
 	while(1)
@@ -98,21 +97,11 @@ int main(void)
 				default:
 					printf(" (ERROR) Can't decode message.");
 					break;
-			}
-					
+			}		
 		}
-	
 	}
-
 }  
   
-//	cmdTx.param1=0;
-//	cmdTx.param2=1;
-//	cmdTx.command=2520;
-//			mavlink_msg_command_long_encode(1, 1, &msgTx, &cmdTx);
-//			mavlink_msg_to_send_buffer(bufferTx, &msgTx);
-//			HAL_UART_Transmit(&huart1,bufferTx,41,1000);
-
 /**
   * @brief  System Clock Configuration
   *            System Clock source            = PLL (HSI)
@@ -124,8 +113,6 @@ int main(void)
   *            PLLMUL                         = RCC_PLL_MUL16 (16)
   *            Flash Latency(WS)              = 2
   */
-
-
 static void SystemClock_Config(void)
 {
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
@@ -156,54 +143,51 @@ static void SystemClock_Config(void)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	
 	if(huart->Instance==USART1)
 	{
 		if(mavlink_frame_char(chan, aRxBuffer, &msgRx, &sta) != MAVLINK_FRAMING_INCOMPLETE)
 		{
-			msgOK =1;	//mavlink receive success
+			msgOK =1;		//MavLink receive success
 		}	
-		HAL_UART_Receive_IT(&huart1,&aRxBuffer,1); //restart usart1 IT for next receive process
+		HAL_UART_Receive_IT(&huart1,&aRxBuffer,1); //restart usart1's IT for next receive process
 	}
-
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	//100Hz, Landing Gear PWM Adjustment
+	//TIM6:Landing Gear PWM Adjustment (100Hz)
 	if(htim->Instance==TIM6)
 	{
 		if(lgChangedPrev!=lgChanged)
 		{
 			lgChangedPrev=lgChanged;
-			if(lgChanged) printf("\r\n[TIM6]Start PWM adjustment (%d)",lgPosition);
-			else printf("\r\n[TIM6]Stop PWM adjustment (%d)",lgPosition);
+			if(lgChanged) printf("\r\n[TIM6]Start PWM adjustment(%d)",lgPosition);
+			else printf("\r\n[TIM6]Stop PWM adjustment(%d)",lgPosition);
 		}
 		
 		if(lgChanged)
 		{
-			Relay_ON();
+			//Relay_ON();		//[debug] Need to adjust relay enable time
+			printf(".");
 			lgChanged=LG_Control(lgPosition);
 		}
-		else Relay_OFF();
+		//else Relay_OFF();		//[debug] Need to adjust relay enable time
 	}
 	
-	//1Hz, Send Battery data to Pixhawk
+	//TIM7:Send Battery data to Pixhawk (1Hz) 
 	if(htim->Instance==TIM7)
 	{
-		mavlink_msg_battery_status_encode(1, 1, &msgTx, &batt1);
-		mavlink_msg_to_send_buffer(bufferTx, &msgTx);
-		HAL_UART_Transmit(&huart1,bufferTx,44,1000);
-		printf("\r\n[TIM7]Send battery Message.");
+		//[Debug]Disable because of massive massage output
+//		mavlink_msg_battery_status_encode(1, 1, &msgTx, &batt1);
+//		mavlink_msg_to_send_buffer(bufferTx, &msgTx);
+//		HAL_UART_Transmit(&huart1,bufferTx,44,1000);
+//		printf("\r\n[TIM7]Send battery Message.");
 	}
 }
 
 static void Error_Handler(void)
 {
-  /* User may add here some code to deal with this error */
-  while(1)
-  {
-  }
+  while(1)  {  }
 }
 
 /*****END OF FILE****/
