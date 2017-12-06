@@ -18,15 +18,16 @@
 #include "stm32f3xx_hal.h"
 #include "math.h"
 
-#define PUL_LEFT_UP		1075
-#define PUL_LEFT_DOWN	25
+#define PUL_LEFT_UP		1100
+#define PUL_LEFT_DOWN	200
 #define PUL_LEFT_Range	(PUL_LEFT_UP-PUL_LEFT_DOWN)
 
 #define PUL_RIGHT_UP	1100
-#define PUL_RIGHT_DOWN	250
+#define PUL_RIGHT_DOWN	210
 #define PUL_RIGHT_Range	(PUL_RIGHT_UP-PUL_RIGHT_DOWN)
 
-#define PUL_SCALE		0.01
+#define PUL_SCALE_UP	0.01
+#define PUL_SCALE_DOWN	0.01
 
 #define Relay_ON() 		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
 #define Relay_OFF()		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)

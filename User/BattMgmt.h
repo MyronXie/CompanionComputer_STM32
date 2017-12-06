@@ -20,8 +20,8 @@
 
 
 //============I2C Address============
-#define BATT_0x16 		0x16
-#define BATT_0x26	 	0x26
+#define BATT_A 		0x16
+#define BATT_B	 	0x26
 
 
 #define BATT_POWERON			0x55AA

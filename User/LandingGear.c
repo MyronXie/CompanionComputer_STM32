@@ -3,9 +3,9 @@
   * File Name		: LandingGear.c
   * Description		: Landing Gear Drivers
   *
-  * Version			: v0.2
+  * Version			: v0.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.11.28
+  * Revised	Date	: 2017.12.06
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -14,8 +14,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "LandingGear.h"
 
-uint8_t lgPosition=0;			//Down: 0, Up: 1
-uint8_t lgChanged=0;			//Changed: 1
 uint16_t lgPulseL=PUL_LEFT_DOWN;
 uint16_t lgPulseR=PUL_RIGHT_DOWN;
 
@@ -26,14 +24,14 @@ void LG_Init()
 {
 	LG_TIM_Init();
 	LG_Relay_Init();
-	Relay_ON();		//[debug] Need to adjust relay enable time
+	Relay_OFF();
 }
 
 void LG_TIM_Init(void)
 {
-	//TIM3 for PWM control (100Hz)
+	//TIM3 for PWM control (50Hz)
 	htim3.Instance			= TIM3;
-	htim3.Init.Prescaler	= 64;
+	htim3.Init.Prescaler	= 128;
 	htim3.Init.CounterMode	= TIM_COUNTERMODE_UP;
 	htim3.Init.Period		= 10000-1;
 	htim3.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;
@@ -71,10 +69,10 @@ uint8_t LG_Control(uint8_t status)
 {
 	uint8_t changed=1;
 	
-	if(status)	//Landing Gear Up(1)
+	if(status==1)	//Landing Gear Up(1)
 	{
-		lgPulseL+=PUL_LEFT_Range*PUL_SCALE;
-		lgPulseR+=PUL_RIGHT_Range*PUL_SCALE;
+		lgPulseL+=PUL_LEFT_Range*PUL_SCALE_UP;
+		lgPulseR+=PUL_RIGHT_Range*PUL_SCALE_UP;
 		if(lgPulseL>PUL_LEFT_UP||lgPulseR>PUL_RIGHT_UP)
 		{
 			lgPulseL=PUL_LEFT_UP;
@@ -82,10 +80,10 @@ uint8_t LG_Control(uint8_t status)
 			changed=0; 				//Finish process
 		}
 	}
-	else		//Landing gear Down(0)
+	else if(status==0)		//Landing Gear Down(0)
 	{
-		lgPulseL-=PUL_LEFT_Range*PUL_SCALE;
-		lgPulseR-=PUL_RIGHT_Range*PUL_SCALE;
+		lgPulseL-=PUL_LEFT_Range*PUL_SCALE_DOWN;
+		lgPulseR-=PUL_RIGHT_Range*PUL_SCALE_DOWN;
 		if(lgPulseL<PUL_LEFT_DOWN||lgPulseR<PUL_RIGHT_DOWN)
 		{
 			lgPulseL=PUL_LEFT_DOWN;

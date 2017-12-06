@@ -1417,6 +1417,11 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
+              <FileName>LandingGear.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\LandingGear.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\main.c</FilePath>
@@ -1435,11 +1440,6 @@
               <FileName>bsp_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\bsp_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>LandingGear.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\LandingGear.c</FilePath>
             </File>
             <File>
               <FileName>BattMgmt.c</FileName>
