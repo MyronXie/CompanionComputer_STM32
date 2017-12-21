@@ -3,37 +3,43 @@
   * File Name		: main.c
   * Description		: CompanionComputer_STM32 main program
   *
-  * Version			: v0.1
+  * Version			: v0.1.1
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2017.12.06
+  * Revised	Date	: 2017.12.21
   *
   * Author			: Mingye Xie
   ******************************************************************************
   */
 
 #include "main.h"
-  
+
+/* System Function */
+static void SystemClock_Config(void);
+static void Error_Handler(void);
+
+/* Extern parameter*/
 extern UART_HandleTypeDef huart1,huart3;
 extern uint8_t aRxBuffer;
 extern TIM_HandleTypeDef htim6,htim7;
 
+/* Parameter for Mavlink */
 mavlink_message_t msgRx,msgTx;
 mavlink_heartbeat_t hrtRx;
 mavlink_status_t sta;
 mavlink_command_long_t cmdRx,cmdTx;
-mavlink_channel_t chan = MAVLINK_COMM_0;
 mavlink_battery_status_t batt1,batt2;
-int msgOK = 0;
+int msgOK = 0;			//Mavlink Receive flag
 uint8_t bufferTx[263];	//Mavlink max length is 263.
 
-static void SystemClock_Config(void);
-static void Error_Handler(void);
+/* Parameter for Landing Gear */
+uint8_t lgPositionRecv=0;
+uint8_t lgPositionCurr=0;			//Position of Landing gear [Down: 0, Up: 1]
+uint8_t lgPositionPrev=0;
+uint8_t lgChangeStatus=0;			//Change Status of landing gear
+uint8_t lgChangeStatusPrev=0;
+uint8_t lgChangeProgress=50;		//Change Progress of landing gear
 
-uint8_t lgPos=0;			//Down: 0, Up: 1
-uint8_t lgPosPrev=0;
-uint8_t lgChanged=0;		//Changed: 1
-uint8_t lgChangedPrev=0;
-
+/* Parameter for Battery Control */
 uint16_t regData;
 
 /**
@@ -67,12 +73,13 @@ int main(void)
 	batt1.type				= MAV_BATTERY_TYPE_LIPO;
 	batt1.battery_remaining	= 99;
 	
+	printf("\r\n*****CompanionComputer_STM32 is running now.*****\r\n");
 	while(1)
 	{	
-		/* Mavlink Decode Process */
+		/************************* Mavlink Decode Process *************************/
 		if(msgOK)
 		{
-			msgOK=0;		//Clear flag
+			msgOK=0;		//Clear Mavlink Receive flag
 			printf("\r\n[MSG]%3d,%3d,%d,%d,%3d;", msgRx.len, msgRx.seq, msgRx.sysid, msgRx.compid, msgRx.msgid);
 			switch(msgRx.msgid)
 			{
@@ -85,21 +92,51 @@ int main(void)
 				/* #76:Command_Long */
 				case MAVLINK_MSG_ID_COMMAND_LONG: 
 					mavlink_msg_command_long_decode(&msgRx, &cmdRx);
-					printf(" {CMDLONG} Cmd:%d,P1:%d,P2:%d",cmdRx.command,(int)cmdRx.param1,(int)cmdRx.param2);
+					printf(" {CMDLONG} %4d,%d,%d",cmdRx.command,(int)cmdRx.param1,(int)cmdRx.param2);
 					
 					switch(cmdRx.command)
 					{
-						/* Landing Gear Control */
+						/********** Landing Gear Control **********/
 						case MAV_CMD_AIRFRAME_CONFIGURATION:
-							printf("\r\n[CMD]Landing Gear ");	
-							lgPos=(int)cmdRx.param2;
-							printf("%s",lgPos?"UP":"DOWN");
-							if(lgPosPrev!=lgPos)					//Ignore same direction command
+							printf("\r\n[CMD]LandingGear");
+							lgPositionRecv=(int)cmdRx.param2;
+							if(lgPositionRecv!=0&&lgPositionRecv!=1)	//Parameter Check
 							{
-								lgChanged=1;
-								lgPosPrev=lgPos;
+								printf("%s",":Wrong Parameter!");
+								break;
 							}
-							break;
+							else	printf("(%s):",lgPositionRecv?"UP":"DOWN");
+
+							/* Landing Gear is changing */
+							if(lgChangeStatus)
+							{
+								if(lgPositionRecv!=lgPositionCurr)
+								{
+									printf("%s","Command too fast!");					//Ignore too fast command
+								}
+								else
+								{
+									printf("%s","Same Direction command");
+								}
+
+							}
+							/* Landing Gear isn't changing */
+							else
+							{
+								lgPositionCurr=lgPositionRecv;
+								/* Adjust Position of Landing Gear*/
+								if(lgPositionPrev!=lgPositionCurr)
+								{
+									lgChangeStatus=1;
+									lgPositionPrev=lgPositionCurr;
+								}
+								else
+								{
+									printf("%s","Have already changed");
+								}
+							}
+
+							break;//MAV_CMD_AIRFRAME_CONFIGURATION
 						
 						default:break;
 					}
@@ -159,7 +196,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance==USART1)
 	{
-		if(mavlink_frame_char(chan, aRxBuffer, &msgRx, &sta) != MAVLINK_FRAMING_INCOMPLETE)
+		if(mavlink_frame_char(MAVLINK_COMM_0, aRxBuffer, &msgRx, &sta) != MAVLINK_FRAMING_INCOMPLETE)
 		{
 			msgOK =1;	//Receive MavLink massage
 		}	
@@ -172,17 +209,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM6:Landing Gear PWM Adjustment (100Hz) */
 	if(htim->Instance==TIM6)
 	{
-		if(lgChangedPrev!=lgChanged)	//Status changed msg
+		if(lgChangeStatusPrev!=lgChangeStatus)	//Status changed msg
 		{
-			lgChangedPrev=lgChanged;
-			if(lgChanged) 	printf("\r\n[CMD]TIM6:Start(%s)",lgPos?"UP":"DOWN");
-			else 			printf("\r\n[CMD]TIM6:Stop(%s)",lgPos?"UP":"DOWN");
+			lgChangeStatusPrev=lgChangeStatus;
+			if(lgChangeStatus)
+			{
+				printf("\r\n[CMD]TIM6:Start(%s)",lgPositionCurr?"UP":"DOWN");
+			}
+			else
+			{
+				printf("\r\n[CMD]TIM6:Stop(%s)",lgPositionCurr?"UP":"DOWN");
+			}
 		}
-		
-		if(lgChanged)						//Changing process
+		/* Landing Gear changing process */
+		if(lgChangeStatus)
 		{
 			Relay_ON();						//Turn on relay to power on steers
-			lgChanged=LG_Control(lgPos);	//If changing process finished, lgChanged turns 0
+			lgChangeStatus=LG_Control(lgPositionCurr,&lgChangeProgress);	//If changing process finished, lgChangeStatus turns 0
 		}
 		else Relay_OFF();					//Turn off relay to power off steers
 	}
@@ -190,7 +233,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7:Send Battery data to Pixhawk (1Hz) */
 	if(htim->Instance==TIM7)
 	{
-
 //		Batt_ReadWord(BATT_A, BATT_Voltage, &regData);			batt1.voltages[0]		= regData;
 //		Batt_ReadWord(BATT_A, BATT_Current, &regData);  		batt1.current_battery	= regData;
 //		Batt_ReadWord(BATT_A, BATT_Temperature, &regData);		batt1.temperature		= regData;
@@ -198,7 +240,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 //		mavlink_msg_battery_status_encode(1, 1, &msgTx, &batt1);
 //		mavlink_msg_to_send_buffer(bufferTx, &msgTx);
-//		HAL_UART_Transmit(&huart1,bufferTx,44,1000);
+//		HAL_UART_Transmit(&huart1,bufferTx,MAVLINK_MSG_ID_BATTERY_STATUS_LEN+MAVLINK_NUM_NON_PAYLOAD_BYTES,1000);
 //		printf("\r\n[TIM7]Send battery Message.");
 	}
 }

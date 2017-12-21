@@ -3,9 +3,9 @@
   * File Name		: LandingGear.c
   * Description		: Landing Gear Drivers
   *
-  * Version			: v0.1
+  * Version			: v0.1.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.06
+  * Revised	Date	: 2017.12.21
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -24,6 +24,8 @@ void LG_Init()
 {
 	LG_TIM_Init();
 	LG_Relay_Init();
+	Relay_ON();
+	HAL_Delay(1500);	//Make sure landing gear is down when power up (need test)
 	Relay_OFF();
 }
 
@@ -65,22 +67,29 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
-uint8_t LG_Control(uint8_t status)
+/**
+  * @brief  Landing Gear Control function.
+  * @param  pos current position of landing gear
+  * @param  prog precentage of changing progress
+  * @retval new langding gear changing status
+  */
+uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 {
-	uint8_t changed=1;
+	uint8_t changeStatus=1;
 	
-	if(status==1)	//Landing Gear Up(1)
+	if(pos==1)	//Landing Gear Up(1)
 	{
 		lgPulseL+=PUL_LEFT_Range*PUL_SCALE_UP;
 		lgPulseR+=PUL_RIGHT_Range*PUL_SCALE_UP;
 		if(lgPulseL>PUL_LEFT_UP||lgPulseR>PUL_RIGHT_UP)
 		{
 			lgPulseL=PUL_LEFT_UP;
-			lgPulseR=PUL_RIGHT_UP;	//Ensure safe 
-			changed=0; 				//Finish process
+			lgPulseR=PUL_RIGHT_UP;			//Ensure safe
+			changeStatus=0; 				//Finish process
 		}
+		*prog=(uint8_t)((lgPulseL-PUL_LEFT_DOWN)*100.0/PUL_LEFT_Range);
 	}
-	else if(status==0)		//Landing Gear Down(0)
+	else if(pos==0)		//Landing Gear Down(0)
 	{
 		lgPulseL-=PUL_LEFT_Range*PUL_SCALE_DOWN;
 		lgPulseR-=PUL_RIGHT_Range*PUL_SCALE_DOWN;
@@ -88,8 +97,9 @@ uint8_t LG_Control(uint8_t status)
 		{
 			lgPulseL=PUL_LEFT_DOWN;
 			lgPulseR=PUL_RIGHT_DOWN;
-			changed=0; 
+			changeStatus=0;
 		}
+		*prog=(uint8_t)((PUL_LEFT_UP-lgPulseL)*100.0/PUL_LEFT_Range);
 	}
 
 	hocl.Pulse=lgPulseL;	
@@ -100,7 +110,7 @@ uint8_t LG_Control(uint8_t status)
 	HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
 	
-	return changed;
+	return changeStatus;
 }
 
 
