@@ -28,8 +28,10 @@ mavlink_heartbeat_t hrtRx;
 mavlink_status_t sta;
 mavlink_command_long_t cmdRx,cmdTx;
 mavlink_battery_status_t batt1,batt2;
+
 int msgOK = 0;			//Mavlink Receive flag
 uint8_t bufferTx[263];	//Mavlink max length is 263.
+uint16_t sendBytes=0; 
 
 /* Parameter for Landing Gear */
 uint8_t lgPositionRecv=0;
@@ -112,11 +114,17 @@ int main(void)
 							{
 								if(lgPositionRecv!=lgPositionCurr)
 								{
-									printf("%s","Command too fast!");					//Ignore too fast command
+									printf("%s","Ingore Command!");					//Ignore too fast command
+									sendBytes=mavlink_msg_command_ack_pack(1, 1, &msgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0);
+									mavlink_msg_to_send_buffer(bufferTx, &msgTx);
+									HAL_UART_Transmit(&huart1,bufferTx,sendBytes,1000);
 								}
 								else
 								{
-									printf("%s","Same Direction command");
+									printf("%s","Changing now");
+									sendBytes=mavlink_msg_command_ack_pack(1, 1, &msgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, lgChangeProgress);
+									mavlink_msg_to_send_buffer(bufferTx, &msgTx);
+									HAL_UART_Transmit(&huart1,bufferTx,sendBytes,1000);
 								}
 
 							}
@@ -215,10 +223,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			if(lgChangeStatus)
 			{
 				printf("\r\n[CMD]TIM6:Start(%s)",lgPositionCurr?"UP":"DOWN");
+				sendBytes=mavlink_msg_command_ack_pack(1, 1, &msgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 1);
+				mavlink_msg_to_send_buffer(bufferTx, &msgTx);
+				HAL_UART_Transmit(&huart1,bufferTx,sendBytes,1000);
 			}
 			else
 			{
 				printf("\r\n[CMD]TIM6:Stop(%s)",lgPositionCurr?"UP":"DOWN");
+				sendBytes=mavlink_msg_command_ack_pack(1, 1, &msgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100);
+				mavlink_msg_to_send_buffer(bufferTx, &msgTx);
+				HAL_UART_Transmit(&huart1,bufferTx,sendBytes,1000);
 			}
 		}
 		/* Landing Gear changing process */
