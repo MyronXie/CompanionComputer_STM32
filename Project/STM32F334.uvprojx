@@ -373,7 +373,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F334x8,USE_HAL_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Drivers\BSP;..\Drivers\CMSIS\Core;..\Drivers\CMSIS\Include;..\Drivers\STM32F3xx_HAL_Driver\Inc;..\Drivers\STM32F3xx_HAL_Driver\Inc\Legacy;..\Drivers\STM32F3xx_HAL_Driver\Src;..\User;..\Drivers\Mavlink;..\Drivers\Mavlink\common</IncludePath>
+              <IncludePath>..\Drivers\BSP;..\Drivers\CMSIS\Core;..\Drivers\CMSIS\Include;..\Drivers\STM32F3xx_HAL_Driver\Inc;..\Drivers\STM32F3xx_HAL_Driver\Inc\Legacy;..\Drivers\STM32F3xx_HAL_Driver\Src;..\User;..\Drivers\mavlink-c_library_v2;..\Drivers\mavlink-c_library_v2\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -684,732 +684,857 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Mavlink</GroupName>
+          <GroupName>mavlink-c_library_v2</GroupName>
           <Files>
-            <File>
-              <FileName>checksum.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\checksum.h</FilePath>
-            </File>
-            <File>
-              <FileName>mavlink_conversions.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\mavlink_conversions.h</FilePath>
-            </File>
-            <File>
-              <FileName>mavlink_helpers.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\mavlink_helpers.h</FilePath>
-            </File>
-            <File>
-              <FileName>mavlink_types.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\mavlink_types.h</FilePath>
-            </File>
-            <File>
-              <FileName>protocol.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\protocol.h</FilePath>
-            </File>
             <File>
               <FileName>common.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\common.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\common.h</FilePath>
             </File>
             <File>
               <FileName>mavlink.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_actuator_control_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_actuator_control_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_actuator_control_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_adsb_vehicle.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_adsb_vehicle.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_adsb_vehicle.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_altitude.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_altitude.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_altitude.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_att_pos_mocap.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_att_pos_mocap.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_att_pos_mocap.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_attitude.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_attitude.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_attitude.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_attitude_quaternion.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_attitude_quaternion.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_attitude_quaternion.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_attitude_quaternion_cov.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_attitude_quaternion_cov.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_attitude_quaternion_cov.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_attitude_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_attitude_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_attitude_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_auth_key.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_auth_key.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_auth_key.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_autopilot_version.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_autopilot_version.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_autopilot_version.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_battery_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_battery_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_battery_status.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_button_change.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_button_change.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_camera_capture_status.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_camera_capture_status.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_camera_image_captured.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_camera_image_captured.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_camera_information.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_camera_information.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_camera_settings.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_camera_settings.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_camera_trigger.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_camera_trigger.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_camera_trigger.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_change_operator_control.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_change_operator_control.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_change_operator_control.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_change_operator_control_ack.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_change_operator_control_ack.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_change_operator_control_ack.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_collision.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_collision.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_collision.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_command_ack.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_command_ack.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_command_ack.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_command_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_command_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_command_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_command_long.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_command_long.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_command_long.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_control_system_state.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_control_system_state.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_control_system_state.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_data_stream.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_data_stream.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_data_stream.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_data_transmission_handshake.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_data_transmission_handshake.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_data_transmission_handshake.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_debug.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_debug.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_debug.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_debug_vect.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_debug_vect.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_debug_vect.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_distance_sensor.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_distance_sensor.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_distance_sensor.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_encapsulated_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_encapsulated_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_encapsulated_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_estimator_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_estimator_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_estimator_status.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_extended_sys_state.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_extended_sys_state.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_extended_sys_state.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_file_transfer_protocol.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_file_transfer_protocol.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_file_transfer_protocol.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_flight_information.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_flight_information.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_follow_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_follow_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_follow_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_global_position_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_global_position_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_global_position_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_global_position_int_cov.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_global_position_int_cov.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_global_position_int_cov.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_global_vision_position_estimate.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_global_vision_position_estimate.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_global_vision_position_estimate.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_global_origin.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_global_origin.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_global_origin.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_inject_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_inject_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_inject_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_input.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_input.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_input.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_raw_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_raw_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_raw_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_rtcm_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_rtcm_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_rtcm_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_rtk.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_rtk.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_rtk.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps_status.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps2_raw.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps2_raw.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps2_raw.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_gps2_rtk.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_gps2_rtk.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_gps2_rtk.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_heartbeat.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_heartbeat.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_heartbeat.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_high_latency.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_high_latency.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_high_latency.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_highres_imu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_highres_imu.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_highres_imu.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_actuator_controls.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_actuator_controls.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_actuator_controls.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_controls.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_controls.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_controls.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_gps.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_gps.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_gps.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_optical_flow.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_optical_flow.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_optical_flow.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_rc_inputs_raw.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_rc_inputs_raw.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_rc_inputs_raw.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_sensor.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_sensor.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_sensor.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_state.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_state.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_state.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_hil_state_quaternion.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_hil_state_quaternion.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_hil_state_quaternion.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_home_position.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_home_position.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_home_position.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_landing_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_landing_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_landing_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_local_position_ned.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_local_position_ned.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_local_position_ned.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_local_position_ned_cov.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_local_position_ned_cov.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_local_position_ned_cov.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_local_position_ned_system_global_offset.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_local_position_ned_system_global_offset.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_local_position_ned_system_global_offset.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_entry.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_entry.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_entry.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_erase.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_erase.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_erase.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_request_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_request_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_request_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_request_end.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_request_end.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_request_end.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_log_request_list.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_log_request_list.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_log_request_list.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_logging_ack.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_logging_ack.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_logging_data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_logging_data.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_logging_data_acked.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_logging_data_acked.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_manual_control.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_manual_control.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_manual_control.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_manual_setpoint.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_manual_setpoint.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_manual_setpoint.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_memory_vect.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_memory_vect.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_memory_vect.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_message_interval.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_message_interval.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_message_interval.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_ack.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_ack.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_ack.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_clear_all.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_clear_all.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_clear_all.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_count.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_count.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_count.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_current.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_current.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_current.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_item.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_item.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_item.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_item_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_item_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_item_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_item_reached.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_item_reached.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_item_reached.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_request.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_request.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_request.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_request_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_request_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_request_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_request_list.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_request_list.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_request_list.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_request_partial_list.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_request_partial_list.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_request_partial_list.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_set_current.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_set_current.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_set_current.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_mission_write_partial_list.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_mission_write_partial_list.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mission_write_partial_list.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_mount_orientation.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_mount_orientation.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_named_value_float.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_named_value_float.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_named_value_float.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_named_value_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_named_value_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_named_value_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_nav_controller_output.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_nav_controller_output.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_nav_controller_output.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_optical_flow.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_optical_flow.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_optical_flow.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_optical_flow_rad.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_optical_flow_rad.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_optical_flow_rad.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_param_ext_ack.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_ext_ack.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_param_ext_request_list.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_ext_request_list.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_param_ext_request_read.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_ext_request_read.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_param_ext_set.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_ext_set.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_param_ext_value.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_ext_value.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_param_map_rc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_param_map_rc.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_map_rc.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_param_request_list.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_param_request_list.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_request_list.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_param_request_read.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_param_request_read.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_request_read.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_param_set.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_param_set.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_set.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_param_value.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_param_value.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_param_value.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_ping.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_ping.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_ping.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_play_tune.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_play_tune.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_position_target_global_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_position_target_global_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_position_target_global_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_position_target_local_ned.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_position_target_local_ned.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_position_target_local_ned.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_power_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_power_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_power_status.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_protocol_version.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_protocol_version.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_radio_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_radio_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_radio_status.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_raw_imu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_raw_imu.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_raw_imu.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_raw_pressure.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_raw_pressure.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_raw_pressure.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_rc_channels.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_rc_channels.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_rc_channels.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_rc_channels_override.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_rc_channels_override.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_rc_channels_override.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_rc_channels_raw.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_rc_channels_raw.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_rc_channels_raw.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_rc_channels_scaled.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_rc_channels_scaled.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_rc_channels_scaled.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_request_data_stream.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_request_data_stream.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_request_data_stream.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_resource_request.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_resource_request.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_resource_request.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_safety_allowed_area.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_safety_allowed_area.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_safety_allowed_area.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_safety_set_allowed_area.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_safety_set_allowed_area.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_safety_set_allowed_area.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_imu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_imu.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_imu.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_imu2.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_imu2.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_imu2.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_imu3.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_imu3.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_imu3.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_pressure.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_pressure.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_pressure.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_pressure2.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_pressure2.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_pressure2.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_scaled_pressure3.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_scaled_pressure3.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_scaled_pressure3.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_serial_control.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_serial_control.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_serial_control.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_servo_output_raw.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_servo_output_raw.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_servo_output_raw.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_actuator_control_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_actuator_control_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_actuator_control_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_attitude_target.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_attitude_target.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_attitude_target.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_gps_global_origin.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_gps_global_origin.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_gps_global_origin.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_home_position.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_home_position.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_home_position.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_mode.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_mode.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_mode.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_position_target_global_int.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_position_target_global_int.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_position_target_global_int.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_set_position_target_local_ned.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_set_position_target_local_ned.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_position_target_local_ned.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_set_video_stream_settings.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_set_video_stream_settings.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_setup_signing.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_setup_signing.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_sim_state.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_sim_state.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_sim_state.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_statustext.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_statustext.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_statustext.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_storage_information.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_storage_information.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_sys_status.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_sys_status.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_sys_status.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_system_time.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_system_time.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_system_time.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_terrain_check.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_terrain_check.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_terrain_check.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_terrain_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_terrain_data.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_terrain_data.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_terrain_report.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_terrain_report.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_terrain_report.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_terrain_request.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_terrain_request.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_terrain_request.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_timesync.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_timesync.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_timesync.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_uavcan_node_info.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_uavcan_node_info.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_uavcan_node_status.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_uavcan_node_status.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_v2_extension.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_v2_extension.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_v2_extension.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_vfr_hud.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_vfr_hud.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_vfr_hud.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_vibration.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_vibration.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_vibration.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_vicon_position_estimate.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_vicon_position_estimate.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_vicon_position_estimate.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_video_stream_information.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_video_stream_information.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_vision_position_estimate.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_vision_position_estimate.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_vision_position_estimate.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_vision_speed_estimate.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_vision_speed_estimate.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_vision_speed_estimate.h</FilePath>
             </File>
             <File>
               <FileName>mavlink_msg_wind_cov.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\mavlink_msg_wind_cov.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_wind_cov.h</FilePath>
             </File>
             <File>
               <FileName>testsuite.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\testsuite.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\testsuite.h</FilePath>
             </File>
             <File>
               <FileName>version.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Drivers\Mavlink\common\version.h</FilePath>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\version.h</FilePath>
+            </File>
+            <File>
+              <FileName>checksum.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\checksum.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_conversions.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\mavlink_conversions.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_get_info.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\mavlink_get_info.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_helpers.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\mavlink_helpers.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_sha256.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\mavlink_sha256.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_types.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\mavlink_types.h</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\protocol.h</FilePath>
             </File>
           </Files>
         </Group>
