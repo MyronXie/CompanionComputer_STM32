@@ -5,7 +5,7 @@
   *
   * Version			: v0.1.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.21
+  * Revised	Date	: 2017.12.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -18,8 +18,9 @@
 #include "stm32f3xx_hal.h"
 #include "math.h"
 
+/* Parameters of Landing Gear Control */
 #define PUL_LEFT_UP		1100
-#define PUL_LEFT_DOWN	200
+#define PUL_LEFT_DOWN	250
 #define PUL_LEFT_Range	(PUL_LEFT_UP-PUL_LEFT_DOWN)
 
 #define PUL_RIGHT_UP	1250
@@ -36,6 +37,7 @@ uint8_t LG_Control(uint8_t pos, uint8_t* prog);
 void LG_Init(void);
 void LG_Relay_Init(void);
 void LG_TIM_Init(void);
+void LG_Reset(void);
 
 #endif /* __LANDING_GEAR_H */
 

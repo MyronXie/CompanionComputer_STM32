@@ -1,12 +1,13 @@
 # CompanionComputer_STM32
 
 ## Function
-- Communicate with Drone Control Board through Mavlink
+- Communicate with FC through Mavlink
 - Landing Gear Control
-- Battery Management (in development)
+- Battery Management (WIP)
 
 ## Resource
-- USART1: F3<->Pixhawk for communication
+Based on Externsion Board Rev1.0
+- USART1: F3<->FC for communication
     - PB6(Tx)-P2.3(USART1-Tx)
     - PB7(Rx)-P2.4(USART1-Rx)
 - USART3: F3<->PC for debug
@@ -20,9 +21,14 @@
     - Right:PB5(TIM3-CH2)-P3.6(PWM5)
     - Relay:PA11(STEER_PWR)
 - TIM6: PWM adjustment (100Hz)
-- TIM7: Read & Send Battery message (0.5Hz)
+- TIM7: Heartbeat (1Hz)
+- Read & Send Battery message (WIP)
 
 ## Milestone
+- v0.1.1 (WIP)
+    - Fix bug of Landing Gear System
+    - Sends massage to FC and report on QGC
+
 - v0.1 (20171206) : Initial Release
-    - Communicate with Drone Control Board through Mavlink
+    - Communicate with FC through Mavlink
     - Landing Gear Control

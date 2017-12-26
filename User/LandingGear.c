@@ -5,7 +5,7 @@
   *
   * Version			: v0.1.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.21
+  * Revised	Date	: 2017.12.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -22,11 +22,10 @@ TIM_OC_InitTypeDef hocl,hocr;
 
 void LG_Init()
 {
-	LG_TIM_Init();
 	LG_Relay_Init();
-	Relay_ON();
-	HAL_Delay(1500);	//Make sure landing gear is down when power up (need test)
+	LG_TIM_Init();
 	Relay_OFF();
+	LG_Reset();
 }
 
 void LG_TIM_Init(void)
@@ -113,6 +112,18 @@ uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 	return changeStatus;
 }
 
+void LG_Reset(void)
+{
+	Relay_ON();
+	hocl.Pulse=PUL_LEFT_DOWN;
+	HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+	hocr.Pulse=PUL_RIGHT_DOWN;
+	HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
+	HAL_Delay(1500);
+	Relay_OFF();
+}
 
 void LG_Relay_Init(void)
 {
