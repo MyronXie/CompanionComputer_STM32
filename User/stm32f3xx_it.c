@@ -185,6 +185,7 @@ void TIM6_DAC1_IRQHandler(void)
 {
 	HAL_TIM_IRQHandler(&htim6);
 }
+
 void TIM7_DAC2_IRQHandler(void)
 {
 	HAL_TIM_IRQHandler(&htim7);

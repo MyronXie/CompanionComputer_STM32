@@ -5,7 +5,7 @@
   *
   * Version			: v0.1.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.26
+  * Revised	Date	: 2017.12.27
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -20,12 +20,11 @@ uint16_t lgPulseR=PUL_RIGHT_DOWN;
 TIM_HandleTypeDef htim3;
 TIM_OC_InitTypeDef hocl,hocr;
 
-void LG_Init()
+void LandingGear_Init()
 {
 	LG_Relay_Init();
 	LG_TIM_Init();
 	Relay_OFF();
-	LG_Reset();
 }
 
 void LG_TIM_Init(void)
@@ -72,7 +71,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
   * @param  prog precentage of changing progress
   * @retval new langding gear changing status
   */
-uint8_t LG_Control(uint8_t pos, uint8_t* prog)
+uint8_t LandingGear_Control(uint8_t pos, uint8_t* prog)
 {
 	uint8_t changeStatus=1;
 	
@@ -112,16 +111,23 @@ uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 	return changeStatus;
 }
 
-void LG_Reset(void)
+void LandingGear_Reset(void)
 {
 	Relay_ON();
-	hocl.Pulse=PUL_LEFT_DOWN;
+	
+	lgPulseL=PUL_LEFT_DOWN;
+	lgPulseR=PUL_RIGHT_DOWN;
+	
+	hocl.Pulse=lgPulseL;
 	HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-	hocr.Pulse=PUL_RIGHT_DOWN;
+	
+	hocr.Pulse=lgPulseR;
 	HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
-	HAL_Delay(1500);
+	
+	HAL_Delay(1250);
+	
 	Relay_OFF();
 }
 
