@@ -144,14 +144,14 @@ int main(void)
 								if(lgPositionRecv!=lgPositionCurr)	// Opposite direction, send reject message to FC
 								{
 									printf(": %s","Ingore!");
-									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0);
+									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
 									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
 								else								// Same direction, send progress message to FC
 								{
 									printf(": %s","Changing!");
-									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, lgChangeProgress);
+									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, lgChangeProgress, 0, 1, 1);
 									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
@@ -275,7 +275,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			if(lgChangeStatus)						// Changing Process Start
 			{
 				printf("\r\n# TIM6: Start(%s)",lgPositionCurr?"UP":"DOWN");
-				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 1);
+				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 1, 0, 1, 1);
 				mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 				HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 				
@@ -284,7 +284,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			else									// Changing Process Finish
 			{
 				printf("\r\n# TIM6: Stop(%s)",lgPositionCurr?"UP":"DOWN");
-				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100);
+				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
 				mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 				HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 				
