@@ -1,0 +1,4 @@
+[submodule "Drivers/mavlink-c_library_v2"]
+	path = Drivers/mavlink-c_library_v2
+	url = git@gitlab.com:Clobotics/FlightControlPX4/mavlink-c_library_v2.git
+	branch = master-f3

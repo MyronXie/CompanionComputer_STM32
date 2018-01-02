@@ -1,0 +1,5 @@
+/Project/DebugConfig/
+/Project/Listings/
+/Project/Objects/
+/Project/*
+!/Project/STM32F334.uvprojx
