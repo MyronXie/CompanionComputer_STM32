@@ -5,7 +5,7 @@
   *
   * Version			: v0.1.1
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2017.12.28
+  * Revised	Date	: 2018.01.03
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -70,22 +70,22 @@ int main(void)
 	USART_Init();
 	printf("\r\n*****CompanionComputer_STM32*****\r\n");
 	
-	printf("\r\n# Init Landing Gear");
+	printf("\r\n# LandingGear: Init");
 	LandingGear_Init();
+	printf("\r\n# Flash: Load status");
 	FLASH_LoadLGStatus(&lgPositionCurr,&lgChangeStatus);
 	/* Landing Gear not reset in last process, Reset Landing Gear */
 	if(lgPositionCurr!=0 || lgChangeStatus!=0)
 	{
-		printf("\r\n# Reset Landing Gear");
+		printf("\r\n# LandingGear: Reset...");
 		LandingGear_Reset();
 		lgPositionCurr = 0, lgChangeStatus = 0;
-		printf("\r\n# Flash: Save LG Position(%s)",lgPositionCurr?"UP":"DOWN");
 		FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatus);
 	}
 	
 	IWDG_Init();
 	
-	printf("\r\n# Init Timer");
+	printf("\r\n# Timer: Init");
 	TIM_Init();
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim7);
@@ -110,30 +110,31 @@ int main(void)
 		{
 			msgRecvFin = 0;							//Clear Mavlink Receive flag
 			msgLostCnt = 0;							//Clear Communication Lost flag
-			printf("\r\n[MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);
-			//printf("\r\n[MSG]%3d,%3d,%d,%d,%3d;", mavMsgRx.len, mavMsgRx.seq, mavMsgRx.sysid, mavMsgRx.compid, mavMsgRx.msgid);	// for detailed debug
+			//printf("\r\n[MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);
 			switch(mavMsgRx.msgid)
 			{
 				/* #0: Heartbeat */
 				case MAVLINK_MSG_ID_HEARTBEAT:
 					mavlink_msg_heartbeat_decode(&mavMsgRx, &mavHrt);
+					printf("\r\n");
 					printf(" {HRTBEAT} %d,%d,%d,%d,%d,%d", mavHrt.type, mavHrt.autopilot, mavHrt.base_mode, mavHrt.custom_mode, mavHrt.system_status, mavHrt.mavlink_version);
 					break;
 				
 				/* #76: Command_Long */
 				case MAVLINK_MSG_ID_COMMAND_LONG: 
 					mavlink_msg_command_long_decode(&mavMsgRx, &mavCmdRx);
+					printf("\r\n");
 					printf(" {CMDLONG} %4d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);		// Only use 2 params at present
 					
 					switch(mavCmdRx.command)
 					{
 						/********** Landing Gear Control **********/
 						case MAV_CMD_AIRFRAME_CONFIGURATION:			//.command == 2520
-							printf("\r\n> LandingGear");
+							printf("\r\n> [CMD]LandingGear");
 							lgPositionRecv = (int)mavCmdRx.param2;		// param2 for landing gear position
 							if(lgPositionRecv!=0 && lgPositionRecv!=1)	// Param Check
 							{
-								printf("%s",":Wrong Parameter!");
+								printf(": Wrong Parameter!");
 								break;
 							}
 							else	printf("(%s)", lgPositionRecv?"UP":"DOWN");
@@ -143,22 +144,24 @@ int main(void)
 							{
 								if(lgPositionRecv!=lgPositionCurr)	// Opposite direction, send reject message to FC
 								{
-									printf(": %s","Ingore!");
+									printf(": Reject!");
 									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
 									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
-								else								// Same direction, send progress message to FC
+								else								// Same direction, send ignore message to FC
 								{
-									printf(": %s","Changing!");
-									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, lgChangeProgress, 0, 1, 1);
+									printf(": Igrore!");
+									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
 									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
+
 							}
 							/* Landing Gear is standby, respond recv command */
 							else
 							{
+								printf(": Respond!");
 								lgPositionCurr = lgPositionRecv;
 								if(lgPositionPrev != lgPositionCurr)	// Opposite direction, set change status of Landing Gear
 								{
@@ -167,7 +170,7 @@ int main(void)
 								}
 								else									// Same direction, ignore command
 								{
-									printf(": %s","Already changed!");
+									printf(": Already changed!");
 								}
 							}
 
@@ -181,12 +184,14 @@ int main(void)
 				/* #77: Command_Ack */
 				case MAVLINK_MSG_ID_COMMAND_ACK:
 					mavlink_msg_command_ack_decode(&mavMsgRx, &mavCmdAck);
-					printf(" {CMD_ACK} %4d,%d,%d", mavCmdAck.command, mavCmdAck.progress, mavCmdAck.result);
+					printf("\r\n");
+					printf(" {CMD_ACK} %4d,%d", mavCmdAck.command, mavCmdAck.result);	// Param progess is dummy
 					break;
 
 				/* #147: Battery Status */
 				case MAVLINK_MSG_ID_BATTERY_STATUS:
 					mavlink_msg_battery_status_decode(&mavMsgRx, &batt2);
+					printf("\r\n");
 					printf(" {BATTERY} ID:%d,V:%.2f,I:%.2f,T:%.2f,R:%d", batt2.id, batt2.voltages[0]/1000.0, batt2.current_battery/100.0, batt2.temperature/100.0, batt2.battery_remaining);
 					break;
 				
@@ -198,14 +203,13 @@ int main(void)
 		if(msgLostCnt == 3)
 		{
 			msgLostCnt++;							// Prevent step into this process too many times
-			printf("\r\n> Communication Lost");
+			printf("\r\n> Communication Lost!");
 			if(lgPositionCurr == 1)					// Changing Landing Gear cost 1s approx., no need to judge change status
 			{
 				HAL_TIM_Base_Stop_IT(&htim6);		// Stop general changing process temp.
-				printf("\r\n# Reset Landing Gear");
+				printf("\r\n# LandingGear: Reset...");
 				LandingGear_Reset();
 				lgPositionCurr = 0, lgPositionPrev = 0;
-				printf("\r\n# Flash: Save LG Position(%s)",lgPositionCurr?"UP":"DOWN");
 				FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatus);
 				HAL_TIM_Base_Start_IT(&htim6);		// Restart general changing process
 			}
@@ -274,21 +278,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			lgChangeStatusPrev = lgChangeStatus;
 			if(lgChangeStatus)						// Changing Process Start
 			{
-				printf("\r\n# TIM6: Start(%s)",lgPositionCurr?"UP":"DOWN");
-				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 1, 0, 1, 1);
+				printf("\r\n# LandingGear: Start Changing(%s)",lgPositionCurr?"UP":"DOWN");
+				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
 				mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 				HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
-				
+				printf("\r\n# Flash: Save status (%s,%s)",lgPositionCurr?"UP":"DOWN",lgChangeStatus?"Changing":"Standby");
 				FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatus);
 			}
 			else									// Changing Process Finish
 			{
-				printf("\r\n# TIM6: Stop(%s)",lgPositionCurr?"UP":"DOWN");
+				printf("\r\n# LandingGear: Stop Changing(%s)",lgPositionCurr?"UP":"DOWN");
 				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
 				mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 				HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
-				
-				printf("\r\n# Flash: Save LG Position(%s)",lgPositionCurr?"UP":"DOWN");
+				printf("\r\n# Flash: Save status (%s,%s)",lgPositionCurr?"UP":"DOWN",lgChangeStatus?"Changing":"Standby");
 				FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatus);
 			}
 		}

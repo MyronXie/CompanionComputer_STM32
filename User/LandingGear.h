@@ -5,7 +5,7 @@
   *
   * Version			: v0.1.1
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.27
+  * Revised	Date	: 2018.01.03
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -27,8 +27,8 @@
 #define PUL_RIGHT_DOWN	250
 #define PUL_RIGHT_Range	(PUL_RIGHT_UP-PUL_RIGHT_DOWN)
 
-#define PUL_SCALE_UP	0.01
-#define PUL_SCALE_DOWN	0.01
+#define PUL_SCALE_UP	0.008
+#define PUL_SCALE_DOWN	0.008
 
 #define Relay_ON() 		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
 #define Relay_OFF()		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)
