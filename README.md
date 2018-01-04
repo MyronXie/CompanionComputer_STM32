@@ -9,10 +9,11 @@
 See Doc/Resource.md
 
 ## Milestone
-- v0.1.1 (WIP)
+- v0.1.1 (20180104) : Improve stability of Landing Gear System
     - Improve stability of Landing Gear System
-        - Reboot logic
-        - Communication lost logic
+        - Ignore frequent commands
+        - Put down Landing Gear when communication lost or system reboot
+    - Improve stability of USART
     - Sends massage to FC and report on QGC
 
 - v0.1 (20171221) : Initial Release

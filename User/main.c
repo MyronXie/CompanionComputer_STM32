@@ -23,8 +23,8 @@ extern uint8_t aRxBuffer;
 extern TIM_HandleTypeDef htim6,htim7;
 
 /* System */
-uint8_t sysRunning = 0;				// Receive first heartbeat from FC, means system working.
-uint8_t sysError = 0;				// count for fatal error
+uint8_t sysRunning = 0;					// Receive first heartbeat from FC, means system working.
+uint8_t sysError = 0;					// count for fatal error
 
 /* Watchdog */
 IWDG_HandleTypeDef hiwdg;
@@ -114,8 +114,8 @@ int main(void)
 		/************************* Mavlink Decode Process *************************/
 		if(msgRecvFin)
 		{
-			msgRecvFin = 0;							//Clear Mavlink Receive flag
-			msgLostCnt = 0;							//Clear Communication Lost flag
+			msgRecvFin = 0;							// Clear Mavlink Receive flag
+			msgLostCnt = 0;							// Clear Communication Lost flag
 			sysError = 0;
 			//printf("\r\n[MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);
 			switch(mavMsgRx.msgid)
@@ -125,7 +125,7 @@ int main(void)
 					mavlink_msg_heartbeat_decode(&mavMsgRx, &mavHrt);
 					printf("\r\n");
 					printf(" {HRTBEAT} %d,%d,%d,%d,%d,%d", mavHrt.type, mavHrt.autopilot, mavHrt.base_mode, mavHrt.custom_mode, mavHrt.system_status, mavHrt.mavlink_version);
-					if(!sysRunning)
+					if(!sysRunning)					// Receive first mavlink msg, start system
 					{
 						printf("\r\n# System: Running!\r\n");
 						sysRunning = 1;
@@ -158,17 +158,14 @@ int main(void)
 								{
 									printf(": Reject!");
 									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
-									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
 								else								// Same direction, send ignore message to FC
 								{
 									printf(": Igrore!");
 									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
-									mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-									HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 								}
-
+								mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+								HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
 							}
 							/* Landing Gear is standby, respond recv command */
 							else
@@ -216,11 +213,11 @@ int main(void)
 		{
 			printf("\r\n> Communication Lost!");
 			msgLostCnt = 0;							// For next count cycle
-			sysError++;
+			sysError++;								// Add sysError
 			printf("\r\n> SysError: %d",sysError);
 
 			// Reset Landing Gear
-			if(lgPositionCurr == 1)					// Changing Landing Gear cost 1s approx., no need to judge change status
+			if(lgPositionCurr == 1)					// Changing Landing Gear cost 1~2s approx., no need to judge change status
 			{
 				HAL_TIM_Base_Stop_IT(&htim6);		// Stop general changing process temp.
 				printf("\r\n# LandingGear: Reset...");
@@ -233,7 +230,6 @@ int main(void)
 			printf("\r\n# USART: Reset");
 			USART_DeInit();
 			USART_Init();
-			printf("\r\n> USART Reset success!");
 		}
 		
 		/************************* Reset System *************************/
@@ -330,7 +326,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			Relay_ON();								// Turn on relay to power on steers
 			// If changing process finished, lgChangeStatus turns 0
 			lgChangeStatusCurr = LandingGear_Control(lgPositionCurr,&lgChangeProgress);
-			lgChangeDelayCnt = 2;					// Ignore cmd for 3s
+			lgChangeDelayCnt = 2;					// Ignore cmd for 2s (guard time)
 		}
 		else Relay_OFF();							// Turn off relay to power off steers
 	}
@@ -338,7 +334,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7: HeartBeat (1Hz) */
 	if(htim->Instance == TIM7)
 	{
-		if(sysRunning)		msgLostCnt++;
+		if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
 		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
 
 		printf("\r\n> Heartbeat");
@@ -347,7 +343,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
 
 		HAL_IWDG_Refresh(&hiwdg);					// Feed watchdog
-
 	}
 }
 
@@ -368,17 +363,17 @@ void IWDG_Init(void)
   */
 void FLASH_SaveLGStatus(uint8_t pos, uint8_t cng)
 {
-	HAL_FLASH_Unlock();
+	HAL_FLASH_Unlock();								// Unlock Flash
 	
 	flashErase.TypeErase = FLASH_TYPEERASE_PAGES;
 	flashErase.PageAddress = flashAddr;
 	flashErase.NbPages = 1;
-	HAL_FLASHEx_Erase(&flashErase, &PageError);
+	HAL_FLASHEx_Erase(&flashErase, &PageError);		// Erase Flash
 	
 	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddr, (uint32_t)pos);
 	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, flashAddr+4, (uint32_t)cng);
 	
-	HAL_FLASH_Lock();
+	HAL_FLASH_Lock();								// Lock Flash
 }
 
 /**
