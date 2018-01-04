@@ -3,9 +3,9 @@
   * File Name		: bsp_usart.h
   * Description		: Drivers for usart (based on HAL)
   *
-  * Version			: v0.1
+  * Version			: v0.1.1
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2017.11.27
+  * Revised	Date	: 2018.01.04
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -20,6 +20,7 @@
 
 
 void USART_Init(void);
+void USART_DeInit(void);
 
 #endif /* __BSP_USART_H */
 

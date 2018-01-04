@@ -3,9 +3,9 @@
   * File Name		: bsp_usart.c
   * Description		: Drivers for usart (based on HAL)
   *
-  * Version			: v0.1
+  * Version			: v0.1.1
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2017.12.26
+  * Revised	Date	: 2018.01.04
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -50,24 +50,57 @@ void USART_Init(void)
 	HAL_UART_Receive_IT(&huart1,&aRxBuffer,1);
 }
 
+void USART_DeInit(void)
+{
+	HAL_UART_DeInit(&huart1);
+	HAL_UART_DeInit(&huart3);
+
+}
+
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 {
 	GPIO_InitTypeDef GPIO_InitS;
 
-	__HAL_RCC_USART1_CLK_ENABLE();
-	__HAL_RCC_USART3_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
+	if(huart->Instance == USART1)
+	{
+		__HAL_RCC_USART1_CLK_ENABLE();
+		__HAL_RCC_GPIOB_CLK_ENABLE();
+		
+		GPIO_InitS.Pin		=	GPIO_PIN_6|GPIO_PIN_7;
+		GPIO_InitS.Mode		=	GPIO_MODE_AF_PP;
+		GPIO_InitS.Pull		=	GPIO_PULLUP;
+		GPIO_InitS.Speed	=	GPIO_SPEED_FREQ_HIGH;
+		GPIO_InitS.Alternate	=	GPIO_AF7_USART1;
+		HAL_GPIO_Init(GPIOB,&GPIO_InitS);
+	}
+	
+	if(huart->Instance == USART3)
+	{
+		__HAL_RCC_USART3_CLK_ENABLE();
+		__HAL_RCC_GPIOB_CLK_ENABLE();
+		
+		GPIO_InitS.Pin		=	GPIO_PIN_10|GPIO_PIN_11;
+		GPIO_InitS.Mode		=	GPIO_MODE_AF_PP;
+		GPIO_InitS.Pull		=	GPIO_PULLUP;
+		GPIO_InitS.Speed	=	GPIO_SPEED_FREQ_HIGH;
+		GPIO_InitS.Alternate	=	GPIO_AF7_USART3;
+		HAL_GPIO_Init(GPIOB,&GPIO_InitS);
+	}
+}
 
-	GPIO_InitS.Pin		=	GPIO_PIN_6|GPIO_PIN_7;
-	GPIO_InitS.Mode		=	GPIO_MODE_AF_PP;
-	GPIO_InitS.Pull		=	GPIO_PULLUP;
-	GPIO_InitS.Speed	=	GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitS.Alternate	=	GPIO_AF7_USART1;
-	HAL_GPIO_Init(GPIOB,&GPIO_InitS);
-
-	GPIO_InitS.Pin		=	GPIO_PIN_10|GPIO_PIN_11;
-	GPIO_InitS.Alternate	=	GPIO_AF7_USART3;
-	HAL_GPIO_Init(GPIOB,&GPIO_InitS);
+void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART1)
+	{
+		__HAL_RCC_USART1_CLK_DISABLE();
+		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_7);
+	}
+	
+	if(huart->Instance == USART3)
+	{
+		__HAL_RCC_USART3_CLK_DISABLE();
+		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
+	}
 }
 
 int fputc(int ch, FILE *f)			//->printf()
