@@ -3,7 +3,7 @@
 ### Function
 - Communicate with FC through Mavlink (bi-direction)
 - Landing Gear Control System
-- Battery Management (WIP)
+- Battery Management System (WIP)
 
 ### Milestone
 - v0.2 (WIP) : Add Battery Management System
@@ -13,7 +13,7 @@
         - Ignore frequent commands
         - Put down Landing Gear when communication lost or system reboot
     - Improve stability of USART
-    - Sends massage to FC and report on QGC
+    - Sends CMD_ACK msg to FC and report on QGC
 
 - v0.1 (20171221) : Initial Release
     - Add Communication from FC through Mavlink
