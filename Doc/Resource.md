@@ -1,9 +1,11 @@
 ## Resource
+
+### Hardware
 MCU Chip: STM32F334C6
 Hardware: Externsion Board Rev1.0
 
 ### System
-- TIM7: Heartbeat (1Hz)
+- TIM2: Heartbeat (1Hz)
 - IWDG: Watchdog
 - Flash: Save Landing Gear status
 
@@ -26,7 +28,7 @@ Hardware: Externsion Board Rev1.0
 - I2C1: Battery communication
     - PB8(SCL)-P6.3/P7.3
     - PB9(SDA)-P6.4/P7.4
-- TIM?: Read & Send Battery message (WIP)
+- TIM7: Read & Send Battery message (WIP)
 
 ### Mavlink
 Based on mavlink-c_library_v2 from github v20171231

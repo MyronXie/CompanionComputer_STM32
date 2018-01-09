@@ -3,7 +3,7 @@
   * File Name		: main.c
   * Description		: CompanionComputer_STM32 main program
   *
-  * Version			: v0.1.1
+  * Version			: v0.2
   * Created	Date	: 2017.11.23
   * Revised	Date	: 2018.01.09
   *
@@ -20,7 +20,7 @@ static void Error_Handler(void);
 /* Extern parameter */
 extern UART_HandleTypeDef huart1,huart3;
 extern uint8_t aRxBuffer;
-extern TIM_HandleTypeDef htim6,htim7;
+extern TIM_HandleTypeDef htim2,htim6,htim7;
 
 /* System */
 uint8_t sysRunning = 0;					// Receive first heartbeat from FC, means system working.
@@ -94,20 +94,20 @@ int main(void)
 
 	printf("\r\n# Timer: Init");
 	TIM_Init();
-	HAL_TIM_Base_Start_IT(&htim6);
-	HAL_TIM_Base_Start_IT(&htim7);
 	
-//	printf("\r\n# Init Battery\r\n");
-//	Batt_Init();	
-//	batt1.id				= 0x16;
-//	batt1.current_consumed	= 100;
-//	batt1.temperature		= 2760;
-//	batt1.voltages[0]		= 24360;
-//	batt1.current_battery	= -1602;
-//	batt1.battery_function	= MAV_BATTERY_FUNCTION_ALL;
-//	batt1.type				= MAV_BATTERY_TYPE_LIPO;
-//	batt1.battery_remaining	= 99;
-
+	printf("\r\n# Battery: Init\r\n");
+	//Batt_Init();
+	// Test case
+	batt1.id				= 0x16;
+	batt1.current_consumed	= 100;
+	batt1.temperature		= 2760;
+	batt1.voltages[0]		= 24360;
+	batt1.current_battery	= -1602;
+	batt1.battery_function	= MAV_BATTERY_FUNCTION_ALL;
+	batt1.type				= MAV_BATTERY_TYPE_LIPO;
+	batt1.battery_remaining	= 99;
+	batt1.energy_consumed	= 0;
+	
 	printf("\r\n> System: Waiting...");
 
 	while(1)
@@ -128,10 +128,10 @@ int main(void)
 			{
 				//printf("\r\n[MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);		// Monitor Mavlink msg
 				
-				if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
-				{
-					printf("\r\n\t\t\t\t [MSG] Lost %d msg.", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
-				}
+				//if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
+				//{
+				//	printf("\r\n\t\t\t\t [MSG] Lost %d msg.", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+				//}
 			}
 			
 			msgSeqPrev=mavMsgRx.seq;
@@ -212,8 +212,8 @@ int main(void)
 				/* #147: Battery Status */
 				case MAVLINK_MSG_ID_BATTERY_STATUS:
 					mavlink_msg_battery_status_decode(&mavMsgRx, &batt2);
-					//printf("\r\n");
-					//printf(" {BATTERY} ID:%d,V:%.2f,I:%.2f,T:%.2f,R:%d", batt2.id, batt2.voltages[0]/1000.0, batt2.current_battery/100.0, batt2.temperature/100.0, batt2.battery_remaining);
+					printf("\r\n\t\t\t\t");
+					printf(" {BATTERY} ID:%d,V:%.2f,I:%.2f,T:%.2f,R:%d", batt2.id, batt2.voltages[0]/1000.0, batt2.current_battery/100.0, batt2.temperature/100.0, batt2.battery_remaining);
 					break;
 				
 				default:break;
@@ -314,6 +314,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	/* TIM2: HeartBeat (1Hz) */
+	if(htim->Instance == TIM2)
+	{
+		if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
+		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
+
+		printf("\r\n> Heartbeat");
+		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
+		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		
+		HAL_IWDG_Refresh(&hiwdg);					// Feed watchdog
+	}
+	
 	/* TIM6: Landing Gear PWM Adjustment (100Hz) */
 	if(htim->Instance == TIM6)
 	{
@@ -345,18 +359,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		else Relay_OFF();							// Turn off relay to power off steers
 	}
 
-	/* TIM7: HeartBeat (1Hz) */
+	/* TIM7: Send Battery Message (1Hz) */
 	if(htim->Instance == TIM7)
 	{
-		if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
-		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
-
-		printf("\r\n> Heartbeat");
-		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
+		printf("\r\n> Send Battery Message.");
+		sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, batt1.id, batt1.battery_function, batt1.type, batt1.temperature, batt1.voltages, batt1.current_battery, batt1.current_consumed, batt1.energy_consumed, batt1.battery_remaining);
 		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
-
-		HAL_IWDG_Refresh(&hiwdg);					// Feed watchdog
 	}
 }
 

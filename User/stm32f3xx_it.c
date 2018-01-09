@@ -1,5 +1,18 @@
 /**
   ******************************************************************************
+  * File Name		: stm32f3xx_it.c
+  * Description		: Main Interrupt Service Routines
+  *
+  * Version			: v0.2
+  * Created	Date	: 2017.11.23
+  * Revised	Date	: 2018.01.09
+  *
+  * Author			: Mingye Xie
+  ******************************************************************************
+  */
+
+/**
+  ******************************************************************************
   * @file    GPIO/GPIO_IOToggle/Src/stm32f3xx_it.c
   * @author  MCD Application Team
   * @brief   Main Interrupt Service Routines.
@@ -52,7 +65,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern UART_HandleTypeDef huart1,huart3;
-extern TIM_HandleTypeDef htim6,htim7;
+extern TIM_HandleTypeDef htim2,htim6,htim7;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -179,6 +192,11 @@ void USART1_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
 	HAL_UART_IRQHandler(&huart3);
+}
+
+void TIM2_IRQHandler(void)
+{
+	HAL_TIM_IRQHandler(&htim2);
 }
 
 void TIM6_DAC1_IRQHandler(void)

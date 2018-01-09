@@ -3,9 +3,9 @@
   * File Name		: bsp_usart.c
   * Description		: Drivers for usart (based on HAL)
   *
-  * Version			: v0.1.1
+  * Version			: v0.2
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.04
+  * Revised	Date	: 2018.01.09
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -31,7 +31,7 @@ void USART_Init(void)
 	huart1.Init.Mode		=	UART_MODE_TX_RX;
 	HAL_UART_Init(&huart1);
 
-	HAL_NVIC_SetPriority(USART1_IRQn, 0, 2);
+	HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
 	HAL_NVIC_EnableIRQ(USART1_IRQn);
 
 	//USART3 for debug

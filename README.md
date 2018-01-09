@@ -7,6 +7,10 @@
 
 ### Milestone
 - v0.2 (WIP) : Add Battery Management System
+    - Add Battery Management System
+        - Read status of battery through SMBus (voltage, current, remaining capacity, ...)
+        - Send battery massage to FC via Mavlink
+    - Sends F3 log to FC and report on QGC
 
 - v0.1.1 (20180104) : Improve stability of Landing Gear System
     - Improve stability of Landing Gear System
