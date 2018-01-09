@@ -1,14 +1,13 @@
-# CompanionComputer_STM32
+## CompanionComputer_STM32
 
-## Function
+### Function
 - Communicate with FC through Mavlink (bi-direction)
 - Landing Gear Control System
 - Battery Management (WIP)
 
-## Resource
-See Doc/Resource.md
+### Milestone
+- v0.2 (WIP) : Add Battery Management System
 
-## Milestone
 - v0.1.1 (20180104) : Improve stability of Landing Gear System
     - Improve stability of Landing Gear System
         - Ignore frequent commands
