@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.09
+  * Revised	Date	: 2018.01.11
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -97,12 +97,17 @@ int main(void)
 	
 	printf("\r\n# Battery: Init\r\n");
 	//Batt_Init();
-	// Test case
+	// Test case (20180111)
 	batt1.id				= 0x16;
 	batt1.current_consumed	= 100;
-	batt1.temperature		= 2760;
-	batt1.voltages[0]		= 24360;
-	batt1.current_battery	= -1602;
+	batt1.temperature		= 2345;
+	batt1.voltages[0]		= 4200;
+	batt1.voltages[1]		= 4201;
+	batt1.voltages[2]		= 4202;
+	batt1.voltages[3]		= 4203;
+	batt1.voltages[4]		= 4204;
+	batt1.voltages[5]		= 4205;
+	batt1.current_battery	= 1516;
 	batt1.battery_function	= MAV_BATTERY_FUNCTION_ALL;
 	batt1.type				= MAV_BATTERY_TYPE_LIPO;
 	batt1.battery_remaining	= 99;
@@ -317,7 +322,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM2: HeartBeat (1Hz) */
 	if(htim->Instance == TIM2)
 	{
-		if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
+		//Temp. disable this for dev
+		//if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
 		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
 
 		printf("\r\n> Heartbeat");
@@ -362,10 +368,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7: Send Battery Message (1Hz) */
 	if(htim->Instance == TIM7)
 	{
-		printf("\r\n> Send Battery Message.");
-		sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, batt1.id, batt1.battery_function, batt1.type, batt1.temperature, batt1.voltages, batt1.current_battery, batt1.current_consumed, batt1.energy_consumed, batt1.battery_remaining);
-		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		//if(sysRunning)
+		//{
+			printf("\r\n> Send Battery Message.");
+			sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, batt1.id, batt1.battery_function, batt1.type, batt1.temperature, batt1.voltages, batt1.current_battery, batt1.current_consumed, batt1.energy_consumed, batt1.battery_remaining);
+			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+			HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		//}
 	}
 }
 
