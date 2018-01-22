@@ -16,6 +16,7 @@
 
 
 #include "stm32f3xx_hal.h"
+#include "bsp_i2c.h"
 #include "math.h"
 
 
@@ -49,7 +50,7 @@
 #define	SpecificationInfo		0x0031
 
 
-void Batt_Init(void);
+//void Batt_Init(void);
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);

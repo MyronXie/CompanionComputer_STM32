@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.11
+  * Revised	Date	: 2018.01.22
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -61,7 +61,9 @@ uint8_t lgChangeStatusPrev = 0;
 uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], no use now
 
 /* Battery Control */
-uint16_t regData;
+uint8_t battStatus;
+uint8_t regData;
+uint16_t regVal;
 
 /**
   * @brief  Main program
@@ -75,6 +77,9 @@ int main(void)
 
 	USART_Init();
 	printf("\r\n*****CompanionComputer_STM32*****\r\n");
+	
+	printf("\r\n# I2C: Init");
+	I2C_Init();
 	
 	printf("\r\n# LandingGear: Init");
 	LandingGear_Init();
@@ -96,7 +101,6 @@ int main(void)
 	TIM_Init();
 	
 	printf("\r\n# Battery: Init\r\n");
-	//Batt_Init();
 	// Test case (20180111)
 	batt1.id				= 0x16;
 	batt1.current_consumed	= 100;
@@ -322,7 +326,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM2: HeartBeat (1Hz) */
 	if(htim->Instance == TIM2)
 	{
-		//Temp. disable this for dev
+		//<Dev> Temp. disable msgLostCnt for dev
 		//if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
 		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
 
@@ -368,6 +372,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7: Send Battery Message (1Hz) */
 	if(htim->Instance == TIM7)
 	{
+		//battStatus = I2C_ReadByte(0xA6, 0, &regData);
+		battStatus = I2C_ReadWord(0x16, 0x09, &regVal);
+		printf("\r\nStatus:%d, Value:%d",battStatus,regVal);
+		
 		//if(sysRunning)
 		//{
 			printf("\r\n> Send Battery Message.");
