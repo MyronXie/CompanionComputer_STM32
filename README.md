@@ -8,7 +8,7 @@
 ### Milestone
 * v0.2 (WIP) : Add Battery Management System
     + Add Battery Management System
-        + Read status of battery through SMBus (voltage, current, remaining capacity, ...)
+        + Read status of battery through SMBus/I2C (voltage, current, remaining capacity, ...)
         + Send `BATTERY_STATUS` msg to FC and report on QGC
     + *Sends F3 log to FC and report on QGC (need to verify msg type)*
 

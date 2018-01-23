@@ -3,9 +3,9 @@
   * File Name		: BattMgmt.h
   * Description		: Battery Management Drivers (through I2C)
   *
-  * Version			: v0.1
+  * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.11.27
+  * Revised	Date	: 2018.01.23
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -19,17 +19,20 @@
 #include "bsp_i2c.h"
 #include "math.h"
 
+typedef struct
+{
+	uint8_t		id;
+	uint8_t		fetStatus;
+	uint16_t	temperature;
+	uint16_t	voltage;
+	int16_t		current;
+	uint8_t 	soc;
+	uint16_t	remainingCapacity;
+	uint16_t	fullChargeCapacity;
+}BattMsg;
 
-//============I2C Address============
-#define BATT_A 		0x16
-#define BATT_B	 	0x26
 
-
-#define BATT_POWERON			0x55AA
-#define BATT_POWEROFF			0xAA55
-#define BATT_ENABLEFET			0xAA54
-
-//==============Register=============
+//===============Register==============
 #define BATT_BatteryMode		0x03
 #define BATT_Temperature		0x08
 #define BATT_Voltage			0x09
@@ -40,21 +43,39 @@
 #define BATT_RemainingCapacity	0x0F
 #define BATT_FullChargeCapacity	0x10
 #define BATT_BatteryStatus		0x16
+#define BATT_CycleCount			0x17
 #define BATT_DesignCapacity		0x18
 #define BATT_SpecificationInfo	0x1A
 #define BATT_SerialNumber		0x1C
-#define BATT_PowerControl		0x71
 
+#define BATT_PowerControl		0x71
+#define BATT_FETStatus			0x72
 
 #define	SerialNumber			0x0001
 #define	SpecificationInfo		0x0031
 
+//==========BATT_PowerControl==========
+#define BATT_POWERON			0xAA55
+#define BATT_POWEROFF			0x55AA
+#define BATT_ENABLEFET			0x54AA
 
-//void Batt_Init(void);
+//============BATT_FETStatus============
+#define PWR_ON					(1<<5)
+#define FET_LOCK				(1<<4)
+#define PRE_EN					(1<<3)
+#define DFET_EN					(1<<2)
+#define CFET_EN					(1<<1)
+#define FET_EN					(1<<0)
+
+
+void Batt_Init(void);
+
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
+
+uint8_t Batt_Measure(BattMsg* _batt);
 
 //uint8_t Battery_ReadReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
 //uint8_t Battery_WriteReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);

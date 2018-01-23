@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2018.01.22
-  * Revised	Date	: 2018.01.22
+  * Revised	Date	: 2018.01.23
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -66,8 +66,8 @@ uint8_t I2C_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {
 	uint8_t msg[2],status=0;
 	
-	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 10);
-	status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 2, 10);
+	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 1);
+	status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 2, 1);
 	
 	*_data=(uint16_t)((msg[1]<<8)+msg[0]);
 	
@@ -79,9 +79,9 @@ uint8_t I2C_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data)
 	uint8_t msg[3],status=0;
 	
 	msg[0]=_reg;
-	msg[1]=(uint8_t)(_data>>8);
-	msg[2]=(uint8_t)(_data&0xFF);
-	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 3, 10);
+	msg[1]=(uint8_t)(_data&0xFF);
+	msg[2]=(uint8_t)(_data>>8);
+	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 3, 1);
 		
 	return status;
 }
@@ -92,7 +92,7 @@ uint8_t I2C_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data)
 	
 	msg[0]=_reg;
 	msg[1]=_data;
-	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 2, 10);
+	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 2, 1);
 		
 	return status;
 }
@@ -101,8 +101,8 @@ uint8_t I2C_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data)
 {
 	uint8_t msg[1],status=0;
 	
-	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 10);
-	status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 1, 10);
+	status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 1);
+	status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 1, 1);
 	
 	*_data=msg[0];
 	
