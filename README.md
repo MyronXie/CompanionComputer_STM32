@@ -10,6 +10,7 @@
     + Add Battery Management System
         + Read status of battery through SMBus/I2C (voltage, current, remaining capacity, ...)
         + Send `BATTERY_STATUS` msg to FC and report on QGC
+        + Auto power on/off another battery when one battery is power on/off manually
     + *Sends F3 log to FC and report on QGC (need to verify msg type)*
 
 * v0.1.1 (20180104) : Improve stability of Landing Gear System

@@ -16,13 +16,14 @@
 
 
 #include "stm32f3xx_hal.h"
+#include "bsp_usart.h"
 #include "bsp_i2c.h"
 #include "math.h"
 
 typedef struct
 {
 	uint8_t		id;
-	uint8_t		fetStatus;
+	uint8_t		status;
 	uint16_t	temperature;
 	uint16_t	voltage;
 	int16_t		current;
@@ -60,6 +61,7 @@ typedef struct
 #define BATT_ENABLEFET			0x54AA
 
 //============BATT_FETStatus============
+#define BATT_OFFOBARD			(1<<7)
 #define PWR_ON					(1<<5)
 #define FET_LOCK				(1<<4)
 #define PRE_EN					(1<<3)
@@ -68,7 +70,7 @@ typedef struct
 #define FET_EN					(1<<0)
 
 
-void Batt_Init(void);
+uint8_t Batt_Init(void);
 
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
@@ -76,6 +78,7 @@ uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
 uint8_t Batt_Measure(BattMsg* _batt);
+void Batt_ReadFET(BattMsg* _batt);
 
 //uint8_t Battery_ReadReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
 //uint8_t Battery_WriteReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);

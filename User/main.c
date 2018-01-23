@@ -62,7 +62,7 @@ uint8_t lgChangeStatusPrev = 0;
 uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], no use now
 
 /* Battery Control */
-BattMsg battA,battB;
+extern BattMsg battA,battB;
 uint8_t battNum	= 0;					// Flag for send battery msg alternately
 uint8_t regSta;
 uint8_t regData;
@@ -82,39 +82,15 @@ int main(void)
 	USART_Init();
 	printf("\r\n*****CompanionComputer_STM32*****\r\n");
 	
-	printf("\r\n# I2C: Init");
+	printf("\r\n# [Init] I2C");
 	I2C_Init();
 	
-	printf("\r\n# LandingGear: Init");
-	LandingGear_Init();
-	
-	FLASH_LoadLGStatus(&lgPositionCurr,&lgChangeStatusCurr);
-	printf("\r\n# Flash: Load status (%s,%s)",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
-	/* Landing Gear not reset in last process, Reset Landing Gear */
-	if(!lgPositionCurr||!lgChangeStatusCurr)
-	{
-		printf("\r\n# LandingGear: Reset...");
-		LandingGear_Reset();
-		lgPositionCurr = 0, lgChangeStatusCurr = 0;
-		FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatusCurr);
-	}
+	printf("\r\n# [Init] Battery");
+	regSta = Batt_Init();
 
-	IWDG_Init();
-
-	printf("\r\n# Timer: Init");
-	TIM_Init();
-	
-	printf("\r\n# Battery: Init\r\n");
-	
-	//******************************
-	// <WIP> Battery initial process: power on battery, enable sysBattery, etc.
-	//******************************
 		
 	//<Dev> enable battery directly
 	sysBattery = 1;					// Flag for battery
-	
-	battA.id					= 0x16;
-	battB.id					= 0x26;
 	
 	mavBattTx.id				= 0x06;
 	mavBattTx.battery_function	= MAV_BATTERY_FUNCTION_ALL;
@@ -126,8 +102,26 @@ int main(void)
 	mavBattTx.energy_consumed	= -1;			// -1: does not provide energy consumption estimate
 	mavBattTx.battery_remaining	= 99;			// 0%: 0, 100%: 100
 	
-
+	printf("\r\n# [Init] LandingGear");
+	LandingGear_Init();
 	
+	FLASH_LoadLGStatus(&lgPositionCurr,&lgChangeStatusCurr);
+	printf("\r\n#   Load Flash: %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
+	/* Landing Gear not reset in last process, Reset Landing Gear */
+	if(!lgPositionCurr||!lgChangeStatusCurr)
+	{
+		printf("\r\n#   LandingGear: Reset...");
+		LandingGear_Reset();
+		lgPositionCurr = 0, lgChangeStatusCurr = 0;
+		FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatusCurr);
+	}
+	
+	printf("\r\n# [Init] Watchdog");
+	IWDG_Init();
+
+	printf("\r\n# [Init] Timer");
+	TIM_Init();
+
 	printf("\r\n> System: Waiting for msg from FC...");
 
 	while(1)
@@ -232,7 +226,7 @@ int main(void)
 				case MAVLINK_MSG_ID_BATTERY_STATUS:
 					mavlink_msg_battery_status_decode(&mavMsgRx, &mavBattRx);
 					printf("\r\n\t\t\t\t");
-					printf(" {BATTERY} ID:%d,V:%.2f,I:%.2f,T:%.2f,SOC:%d", mavBattRx.id, mavBattRx.voltages[0]/1000.0, mavBattRx.current_battery/100.0, mavBattRx.temperature/100.0, mavBattRx.battery_remaining);
+					printf(" {BATTERY} 0x%02X,%.2fC,%.2fV,%.2fA,%d%%", mavBattRx.id, mavBattRx.temperature/100.0, mavBattRx.voltages[0]/1000.0, mavBattRx.current_battery/100.0, mavBattRx.battery_remaining);
 					break;
 				
 				default:break;
@@ -340,10 +334,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//if(sysRunning)			msgLostCnt++;		// will turn 0 if recv mavlink msg
 		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
 
-		printf("\r\n> Heartbeat");
 		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
 		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		printf("\r\n> [Hrt] #%d",mavMsgTx.seq);
 		
 		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog
 	}
@@ -389,20 +383,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				regSta = Batt_Measure(&battA);
 				if(!regSta) 
 				{
-					printf("\r\n> BATT:0x%02x, FET:0x%02x, T:%d, V:%d, I:%d, SOC:%d", battA.id, battA.fetStatus, battA.temperature, battA.voltage, battA.current, battA.soc);		
+					printf("\r\n> [Batt]0x%02x:0x%02x,%d,%d,%d,%d", battA.id, battA.status, battA.temperature, battA.voltage, battA.current, battA.soc);		
 					Batt_MavlinkPack(&mavBattTx, battA);
 				}
-				else printf("\r\n battA not found!");
+				else printf("\r\n> battA not found!");
 			}
 			else
 			{
 				regSta = Batt_Measure(&battB);
 				if(!regSta)
 				{
-					printf("\r\n> BATT:0x%02x, FET:0x%02x, T:%d, V:%d, I:%d, SOC:%d", battB.id, battB.fetStatus, battB.temperature, battB.voltage, battB.current, battB.soc);		
+					printf("\r\n> [Batt]0x%02x:0x%02x,%d,%d,%d,%d", battB.id, battB.status, battB.temperature, battB.voltage, battB.current, battB.soc);		
 					Batt_MavlinkPack(&mavBattTx, battB);
 				}
-				else printf("\r\n battB not found!");
+				else printf("\r\n> battB not found!");
 			}
 			
 			sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
