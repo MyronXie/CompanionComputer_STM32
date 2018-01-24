@@ -25,7 +25,7 @@ extern TIM_HandleTypeDef htim2,htim6,htim7;
 /* System */
 uint8_t sysRunning = 0;					// Flag for system working (Receive first heartbeat from FC)
 uint8_t sysError = 0;					// Counter for fatal error
-uint8_t sysBattery = 0;					// Flag for battery
+uint8_t sysBattery = 0;					// Flag for battery , 0 for no problem
 
 /* Watchdog */
 IWDG_HandleTypeDef hiwdg;
@@ -86,11 +86,7 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n# [Init] Battery");
-	regSta = Batt_Init();
-
-		
-	//<Dev> enable battery directly
-	sysBattery = 1;					// Flag for battery
+	sysBattery = Batt_Init();
 	
 	mavBattTx.id				= 0x06;
 	mavBattTx.battery_function	= MAV_BATTERY_FUNCTION_ALL;
@@ -376,7 +372,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7: Send Battery Message (1Hz) */
 	if(htim->Instance == TIM7)
 	{
-		if(sysBattery)								// Send battery msg when sysBattery enabled
+		if(!sysBattery)								// Send battery msg when sysBattery enabled
 		{	
 			if(!battNum)							// Send battery msg alternately
 			{

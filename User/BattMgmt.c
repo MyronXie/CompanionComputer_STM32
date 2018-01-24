@@ -18,86 +18,114 @@ BattMsg battA,battB;
 uint8_t Batt_Init(void)
 {
 	uint8_t status = 0;
+	uint8_t attemptTimes = 0;
 	uint16_t regVal;
 	
-	//Battery Message Init
+	// Battery Message Init
 	battA.id					= 0x16;
 	battB.id					= 0x26;
 	
+	// Read 1st FET status
 	Batt_ReadFET(&battA);
 	Batt_ReadFET(&battB);
 	
-	if((battA.status&BATT_OFFOBARD)||(battB.status&BATT_OFFOBARD))	// At least one battery is offboard
-	{	
-		printf("\r\n!   Battery offboard!");
+	// Check onboard status
+	attemptTimes = 0;
+	while((battA.status&BATT_OFFOBARD)||(battB.status&BATT_OFFOBARD))
+	{
+		if(++attemptTimes>=5)
+		{
+			printf("!   Battery offboard!");
+			if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+			if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
+			HAL_Delay(2000);
+			if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+			if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
+			return 0x01;
+			
+		}
+		
+		printf("\r\n#   Link #%d",attemptTimes);	
+		Batt_ReadFET(&battA);
+		Batt_ReadFET(&battB);
+		if(battA.status&BATT_OFFOBARD) printf(" ,battA offboard");
+		if(battB.status&BATT_OFFOBARD) printf(" ,battB offboard");
+		
+		HAL_Delay(5);				
+	}
+	
+	// Check power status
+	if(!((battA.status&PWR_ON)||(battB.status&PWR_ON)))		// All batteries are power off
+	{
+		printf("\r\n!   Not powered by batteries!");
+		return 0x02;
+	}
+
+	// Read voltage
+	status = Batt_ReadWord(battA.id, BATT_Voltage, &regVal);
+	if(!status)	battA.voltage = regVal;
+	status = Batt_ReadWord(battB.id, BATT_Voltage, &regVal);
+	if(!status)	battB.voltage = regVal;
+	
+
+	// Check Voltage : difference <= 200mV
+	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=200)
+	{
+		printf("\r\n#   Voltage difference > 200mV! ");
 		if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 		if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
 		HAL_Delay(2000);
 		if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 		if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-		return 0x01;
+		return 0x04;
 	}
-	else
+
+	
+	// Power ON
+	attemptTimes = 0;
+	while(!((battA.status&PWR_ON)&&(battB.status&PWR_ON)))
 	{
-		if(!((battA.status&PWR_ON)||(battB.status&PWR_ON)))		// All batteries are power off
+		if(++attemptTimes>=5)
 		{
-			printf("\r\n!   Not powered by batteries!");
-			return 0x02;
+			printf("!   Can't power on battery!");
+			return 0x10;
 		}
-		else													// At least one battery is offboard
-		{
-			//Read voltage
-			status += Batt_ReadWord(battA.id, BATT_Voltage, &regVal);
-			if(!status)	battA.voltage = regVal;
-			status += Batt_ReadWord(battB.id, BATT_Voltage, &regVal);
-			if(!status)	battB.voltage = regVal;
-			
-			if(!status)
-			{
-				// Voltage difference small than 200mV
-				if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))<200)
-				{
-					// Power on
-					printf("\r\n#   Power On battery");
-					if(!(battA.status&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
-					if(!(battB.status&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-					HAL_Delay(2000);	
-					if(!(battA.status&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
-					if(!(battB.status&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-					
-//					if(!((battA.status&PWR_ON)&&(battB.status&PWR_ON)))
-//					{
-//						printf("\r\n! Can't power on battery!");
-//						if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-//						if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-//						HAL_Delay(2000);
-//						if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-//						if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-//						return 0x04;
-//					}
-					
-					// Enable FET
-					printf("\r\n#   Enable FET");
-					Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
-					Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
-					HAL_Delay(2000);
-					if(!(battA.status&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
-					if(!(battB.status&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-				}
-				else
-				{
-					printf("\r\n#   Voltage difference > 200mV! ");
-					if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-					if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-					HAL_Delay(2000);
-					if(battA.status&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-					if(battB.status&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-					return 0x08;
-				}
-			}
-		}
+		
+		printf("\r\n#   Power On #%d",attemptTimes);
+		if(!(battA.status&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
+		else printf(" ,battA ON");
+		if(!(battB.status&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
+		else printf(" ,battB ON");
+		
+		Batt_ReadFET(&battA);
+		Batt_ReadFET(&battB);
+		
+		HAL_Delay(1500);				
 	}
 	
+	// Enable FET
+	attemptTimes = 0;
+	while(!((battA.status&FET_LOCK)&&(battB.status&FET_LOCK)))
+	{
+		if(++attemptTimes>=5)
+		{
+			printf("!   Can't Enable FET!");
+			return 0x20;
+		}
+		
+		printf("\r\n#   Enable FET #%d",attemptTimes);
+		if(!(battA.status&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
+		else printf(" ,battA ON");
+		if(!(battB.status&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
+		else printf(" ,battB ON");
+		
+		Batt_ReadFET(&battA);
+		Batt_ReadFET(&battB);
+		
+		HAL_Delay(2000);				
+	}
+
+
 	return 0x00;
 }
 
