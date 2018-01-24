@@ -14,16 +14,20 @@
 #ifndef __BATTMGMT_H
 #define __BATTMGMT_H
 
-
 #include "stm32f3xx_hal.h"
 #include "bsp_usart.h"
 #include "bsp_i2c.h"
 #include "math.h"
 
+// <Dev> Option
+//#define SINGLE_BATTERY		1
+#define INGORE_VDIFF		1
+
 typedef struct
 {
 	uint8_t		id;
-	uint8_t		status;
+	uint8_t 	status;
+	uint8_t		fet;
 	uint16_t	temperature;
 	uint16_t	voltage;
 	int16_t		current;
@@ -61,13 +65,16 @@ typedef struct
 #define BATT_ENABLEFET			0x54AA
 
 //============BATT_FETStatus============
-#define BATT_OFFOBARD			(1<<7)
 #define PWR_ON					(1<<5)
 #define FET_LOCK				(1<<4)
 #define PRE_EN					(1<<3)
 #define DFET_EN					(1<<2)
 #define CFET_EN					(1<<1)
 #define FET_EN					(1<<0)
+
+//============BATT_BattStatus============
+#define BATT_INUSE				(1<<1)
+#define BATT_ONBOARD			(1<<0)
 
 
 uint8_t Batt_Init(void);
@@ -77,7 +84,7 @@ uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
-uint8_t Batt_Measure(BattMsg* _batt);
+void Batt_Measure(BattMsg* _batt);
 void Batt_ReadFET(BattMsg* _batt);
 
 //uint8_t Battery_ReadReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);

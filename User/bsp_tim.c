@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.09
+  * Revised	Date	: 2018.01.24
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -51,7 +51,10 @@ void TIM_Init(void)
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 	HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
-	
+}
+
+void TIM_Start(void)
+{
 	HAL_TIM_Base_Start_IT(&htim2);
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_Delay(500);							// TIM7 delay for 500ms
