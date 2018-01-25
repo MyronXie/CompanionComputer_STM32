@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2018.01.22
-  * Revised	Date	: 2018.01.24
+  * Revised	Date	: 2018.01.25
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -29,7 +29,7 @@ I2C_HandleTypeDef I2cHandle;
 void I2C_Init(void)
 {
 	I2cHandle.Instance             = I2C1;
-	I2cHandle.Init.Timing          = 0x40F39BFB;//0x50D329D0;//0x20E22EEA;
+	I2cHandle.Init.Timing          = 0x20E22EEA;//0x40F39BFB;//0x50D329D0;//0x20E22EEA;
 	I2cHandle.Init.OwnAddress1     = 0x00;//Dummy
 	I2cHandle.Init.AddressingMode  = I2C_ADDRESSINGMODE_7BIT;
 	I2cHandle.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;

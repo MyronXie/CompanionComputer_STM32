@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.24
+  * Revised	Date	: 2018.01.25
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -76,10 +76,10 @@ uint8_t Batt_Init(void)
 	Batt_ReadWord(battA.id, BATT_Voltage, &battA.voltage);
 	Batt_ReadWord(battB.id, BATT_Voltage, &battB.voltage);
 	
-	// Vdiff should small than 200mV
-	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=200)
+	// Vdiff should small than 100mV
+	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=100)
 	{
-		printf("\r\n#   Vdiff > 200mV!");
+		printf("\r\n#   Vdiff > 100mV!");
 		if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 		if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
 		HAL_Delay(2000);
@@ -107,12 +107,11 @@ uint8_t Batt_Init(void)
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);
 		if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
-		else printf(" ,battA ON");
 		if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-		else printf(" ,battB ON");
 		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
+		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
 		
 		HAL_Delay(2000);				
 	}
@@ -134,12 +133,11 @@ uint8_t Batt_Init(void)
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);
 		if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
-		else printf(" ,battA ON");
 		if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
-		else printf(" ,battB ON");
 		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
+		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
 		
 		HAL_Delay(2000);				
 	}
@@ -162,31 +160,45 @@ uint8_t Batt_Init(void)
 }
 
 
-void Batt_Measure(BattMsg* _batt)
+void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 {
 	uint8_t regSta = 0;
 	uint16_t regVal;
 	
-	regSta += Batt_ReadWord(_batt->id, BATT_FETStatus, &regVal);
-	if(!regSta)	_batt->fet = regVal;
-	
-//	regSta += Batt_ReadWord(_batt->id, BATT_Voltage, &regVal);
-//	if(!regSta)	_batt->voltage = regVal;
-//			
-//	regSta += Batt_ReadWord(_batt->id, BATT_Temperature, &regVal);
-//	if(!regSta)	_batt->temperature = (regVal-2731)*10;	// Kelvin -> Celsius
-//	
-//	regSta += Batt_ReadWord(_batt->id, BATT_Current, &regVal);
-//	if(!regSta)	_batt->current = regVal;
-
-//	regSta += Batt_ReadWord(_batt->id, BATT_FullChargeCapacity, &regVal);
-//	if(!regSta)	_batt->fullChargeCapacity = regVal*10;
-//	
-//	regSta += Batt_ReadWord(_batt->id, BATT_RemainingCapacity, &regVal);
-//	if(!regSta)	_batt->remainingCapacity = regVal*10;
-
-//	regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
-//	if(!regSta)	_batt->soc = regVal;
+	switch(_cmd)
+	{
+		case 0x00: 
+			regSta = Batt_ReadWord(_batt->id, BATT_FETStatus, &regVal);
+			if(!regSta)	_batt->fet = regVal; break;
+		
+		case 0x01:
+			regSta = Batt_ReadWord(_batt->id, BATT_Voltage, &regVal);
+			if(!regSta)	_batt->voltage = regVal; break;
+		
+		case 0x02:
+			regSta = Batt_ReadWord(_batt->id, BATT_Temperature, &regVal);
+			if(!regSta)	_batt->temperature = (regVal-2731)*10;	break;// Kelvin -> Celsius
+		
+		case 0x03:
+			regSta = Batt_ReadWord(_batt->id, BATT_Current, &regVal);
+			if(!regSta)	_batt->current = regVal; break;
+		
+		case 0x04:
+			regSta += Batt_ReadWord(_batt->id, BATT_FullChargeCapacity, &regVal);
+			if(!regSta)	_batt->fullChargeCapacity = regVal*10; break;
+		
+		case 0x05:
+			regSta += Batt_ReadWord(_batt->id, BATT_RemainingCapacity, &regVal);
+			if(!regSta)	_batt->remainingCapacity = regVal*10; break;
+		
+		case 0x06:
+			regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
+			if(!regSta)	_batt->soc = regVal; break;
+		
+		case 0x07:
+		
+		default: break;		
+	}
 	
 	if(regSta) _batt->status &= ~BATT_ONBOARD;		// Can't read battery
 }
@@ -202,7 +214,10 @@ void Batt_ReadFET(BattMsg* _batt)
 		_batt->fet = regVal;
 		_batt->status |= BATT_ONBOARD;
 	}
-	else 		_batt->status &= ~BATT_ONBOARD;		// Can't read battery
+	else
+	{	
+		_batt->status &= ~BATT_ONBOARD;		// Can't read battery
+	}
 }
 
 

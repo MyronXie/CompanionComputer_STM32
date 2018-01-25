@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.24
+  * Revised	Date	: 2018.01.25
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -41,11 +41,11 @@ void TIM_Init(void)
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 	HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
-	/* TIM7: Send Battery Message (1Hz) */
+	/* TIM7: Read & Send Battery Message (50Hz) */
 	htim7.Instance			= TIM7;
 	htim7.Init.Prescaler	= 64000-1;
 	htim7.Init.CounterMode	= TIM_COUNTERMODE_UP;
-	htim7.Init.Period		= 1000-1;
+	htim7.Init.Period		= 20-1;
 	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	HAL_TIM_Base_Init(&htim7);
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
@@ -57,7 +57,6 @@ void TIM_Start(void)
 {
 	HAL_TIM_Base_Start_IT(&htim2);
 	HAL_TIM_Base_Start_IT(&htim6);
-	HAL_Delay(500);							// TIM7 delay for 500ms
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 

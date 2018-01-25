@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.23
+  * Revised	Date	: 2018.01.25
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -76,6 +76,12 @@ typedef struct
 #define BATT_INUSE				(1<<1)
 #define BATT_ONBOARD			(1<<0)
 
+//============battCycleCnt============
+#define BATT_SYS_INDIV			(1<<5)
+#define BATT_SYS_BATTA			(1<<4)
+#define BATT_SYS_MEASURE		(1<<3)
+#define BATT_SYS_MASK_CMD		0x07
+
 
 uint8_t Batt_Init(void);
 
@@ -84,7 +90,7 @@ uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
-void Batt_Measure(BattMsg* _batt);
+void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 void Batt_ReadFET(BattMsg* _batt);
 
 //uint8_t Battery_ReadReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
