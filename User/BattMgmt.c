@@ -101,7 +101,7 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>=5)
 		{
-			printf("!   Can't power on battery!");
+			printf("!   Auto Power On Fail!");
 			return 0x10;
 		}
 		
@@ -109,11 +109,12 @@ uint8_t Batt_Init(void)
 		if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
 		if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
 		
+		HAL_Delay(2000);	
+		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
 		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
-		
-		HAL_Delay(2000);				
+					
 	}
 	
 	// Enable FET process
@@ -127,19 +128,19 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>=5)
 		{
-			printf("!   Can't Enable FET!");
+			printf("!   Enable FET Fail!");
 			return 0x20;
 		}
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);
 		if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
 		if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
+
+		HAL_Delay(2000);
 		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
 		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
-		
-		HAL_Delay(2000);				
 	}
 	
 	Batt_ReadFET(&battA);
@@ -201,6 +202,7 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 	}
 	
 	if(regSta) _batt->status &= ~BATT_ONBOARD;		// Can't read battery
+	else 	   _batt->status |= BATT_ONBOARD;
 }
 
 void Batt_ReadFET(BattMsg* _batt)

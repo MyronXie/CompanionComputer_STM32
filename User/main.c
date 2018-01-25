@@ -60,15 +60,15 @@ uint8_t lgPositionPrev = 0;
 uint8_t lgChangeDelayCnt = 0;			// Delay for prevent too fast changing
 uint8_t lgChangeStatusCurr = 0;			// Change Status of Landing Gear [Standby: 0, Changing: 1]
 uint8_t lgChangeStatusPrev = 0;
-uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], no use now
+uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], not used now
 
 /* Battery Control */
 extern BattMsg battA,battB;
 BattMsg* battX;
-uint8_t battNum	= 0;					// Flag for send battery msg alternately
-uint8_t battLostCnt = 0;				// Counter for battery lost connection
-uint8_t battCycleCnt = 0;
+uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
+uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
 void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
+
 
 /**
   * @brief  Main program
@@ -91,7 +91,7 @@ int main(void)
 		
 	mavBattTx.id				= 0x06;
 	mavBattTx.battery_function	= 0;			// Redefine this param [0: battery error, 1: battery normal]
-	mavBattTx.type				= MAV_BATTERY_TYPE_LIPO;
+	mavBattTx.type				= 1;			// Redefine this param (not used now)
 	mavBattTx.temperature		= 2018;			// in centi-degrees celsius
 	mavBattTx.voltages[0]		= 0;			// in mV
 	mavBattTx.current_battery	= 1516;			// in 10mA
@@ -376,22 +376,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM7: Read & Send Battery Message (50Hz) */
 	if(htim->Instance == TIM7)
 	{
+		/*************** Battery Management ****************/
 		if(!sysBattery)								// Send battery msg when sysBattery enabled
 		{	
-			if(!(battCycleCnt&BATT_SYS_INDIV))		// single process
+			/********** Measure & Send Process **********/
+			if(!(battCycleCnt&BATT_SYS_JUDGE))
 			{
 				// Select Battery
-				if(!(battCycleCnt&BATT_SYS_BATTA))	battX = &battA;	// battA
-				else								battX = &battB;
+				if(!(battCycleCnt&BATT_SYS_BATTA))		battX = &battA;
+				else									battX = &battB;
 				
-				if(!(battCycleCnt&BATT_SYS_MEASURE))	// Measure process
+				// Measure Process
+				if(!(battCycleCnt&BATT_SYS_SEND))
 				{
 					if(battX->status&BATT_INUSE) Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
 				}
+				// Send Process
 				else
 				{
 					switch(battCycleCnt&BATT_SYS_MASK_CMD)
 					{
+						// Pack message
 						case 0x01:
 							#ifdef SINGLE_BATTERY
 							if(!(battX.status&BATT_INUSE))
@@ -403,33 +408,99 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 							Batt_MavlinkPack(&mavBattTx, battX);
 							break;
 						
+						// Send message
 						case 0x03:
 							sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
 							mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 							HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);	
 							break;
 						
+						// Printf data
 						case 0x07:
 							if(battX->status&BATT_ONBOARD)
-									printf("\r\n> [Batt] 0x%02x:0x%02x,0x%02x,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc);
-							else 	printf("\r\n> [Batt] 0x%02x:Lost!", battX->id);
+							{
+								printf("\r\n> [Batt]0x%02x:0x%02x,0x%02x,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity);
+								battX->lostCnt = 0;
+							}
+							else
+							{
+								battX->lostCnt++;
+								printf("\r\n> [Batt]0x%02x:Lost#%d!", battX->id, battX->lostCnt);
+							}
 							break;
 
 						default: break;
 					}
 				}
 			}
-			else // Judge process
+			/********** Judge Process **********/
+			else
 			{
-				//******************************
-				// <WIP> Auto power off logic
-				//******************************
+				switch(battCycleCnt)
+				{
+					// Battery Link Lost
+					case 0x20:
+						if((battA.lostCnt>5)||(battB.lostCnt>5))
+						{
+							printf("\r\n! [Error] Battery lost!");
+						}
+						break;
+					
+					#ifndef SINGLE_BATTERY
+					#ifdef AUTO_POWEROFF
+					// Judge Auto power off
+					case 0x28:
+						if(!battAutoOff)
+						{
+							if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+							{
+								printf("\r\n# Auto Power Off Process");
+								battAutoOff = 1;	
+							}
+						}
+						break;
+						
+					// Auto Power Off Process
+					case 0x29:
+						if(battAutoOff)
+						{
+							// Attempt every 2s
+							if((battAutoOff+1)%2)
+							{
+								printf("\r\n#   Attempt#%d",(battAutoOff+1)/2);
+								if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+								if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
+							
+								Batt_ReadFET(&battA);
+								Batt_ReadFET(&battB);
+								printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
+							}
+							
+							// All Batteries have powered off
+							if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
+							{
+								printf("\r\n> Auto Power Off Success");
+								battAutoOff = 0;
+//								<Dev> Temp. disable turn off sysBattery
+//								battA.status &= ~BATT_INUSE;
+//								battB.status &= ~BATT_INUSE;
+//								sysBattery = 1;
+							}
+							else if(++battAutoOff>=10)
+							{
+								printf("! Auto Power Off Fail!");
+								battAutoOff = 0;
+							}
+						}
+						break;
+					#endif //AUTO_POWEROFF
+					#endif //SINGLE_BATTERY
+				}
 			}		
-		}
+		}/*if(!sysBattery)*/
 		
-		// Change battCycleCnt
+		// Increase battCycleCnt
 		battCycleCnt = (battCycleCnt+1)%50;
-	
 	}
 }
 
@@ -479,7 +550,7 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
 {
 	mav->id 				= batt->id;
 	mav->battery_function	= batt->status;				// Redefine this param
-	mav->type				= MAV_BATTERY_TYPE_LIPO;
+	mav->type				= 1;
 	mav->temperature		= batt->temperature;
 	mav->voltages[0]		= batt->voltage;
 	mav->current_battery	= batt->current;

@@ -21,12 +21,14 @@
 
 // <Dev> Option
 //#define SINGLE_BATTERY		1
+#define AUTO_POWEROFF		1
 #define INGORE_VDIFF		1
 
 typedef struct
 {
 	uint8_t		id;
 	uint8_t 	status;
+	uint8_t		lostCnt;
 	uint8_t		fet;
 	uint16_t	temperature;
 	uint16_t	voltage;
@@ -77,9 +79,9 @@ typedef struct
 #define BATT_ONBOARD			(1<<0)
 
 //============battCycleCnt============
-#define BATT_SYS_INDIV			(1<<5)
+#define BATT_SYS_JUDGE			(1<<5)
 #define BATT_SYS_BATTA			(1<<4)
-#define BATT_SYS_MEASURE		(1<<3)
+#define BATT_SYS_SEND			(1<<3)
 #define BATT_SYS_MASK_CMD		0x07
 
 
