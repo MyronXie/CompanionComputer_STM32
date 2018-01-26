@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.25
+  * Revised	Date	: 2018.01.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -15,7 +15,7 @@
 #define __MAIN_H
 
 // <Dev> Option
-//#define INGORE_LOSTCOMM			1
+#define INGORE_LOSTCOMM			1
 
 #include "stm32f3xx_hal.h"
 #include "bsp_usart.h"

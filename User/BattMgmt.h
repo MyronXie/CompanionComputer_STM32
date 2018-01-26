@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.25
+  * Revised	Date	: 2018.01.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -36,6 +36,7 @@ typedef struct
 	uint8_t 	soc;
 	uint16_t	remainingCapacity;
 	uint16_t	fullChargeCapacity;
+	uint16_t	designCapacity;
 }BattMsg;
 
 

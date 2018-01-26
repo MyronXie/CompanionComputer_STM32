@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.25
+  * Revised	Date	: 2018.01.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -399,7 +399,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 						// Pack message
 						case 0x01:
 							#ifdef SINGLE_BATTERY
-							if(!(battX.status&BATT_INUSE))
+							if(!(battX->status&BATT_INUSE))
 							{
 								if(battA.status&BATT_INUSE)	battX = &battA;
 								if(battB.status&BATT_INUSE)	battX = &battB;
@@ -417,15 +417,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 						
 						// Printf data
 						case 0x07:
-							if(battX->status&BATT_ONBOARD)
+							if(battX->status&BATT_INUSE)
 							{
-								printf("\r\n> [Batt]0x%02x:0x%02x,0x%02x,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity);
-								battX->lostCnt = 0;
-							}
-							else
-							{
-								battX->lostCnt++;
-								printf("\r\n> [Batt]0x%02x:Lost#%d!", battX->id, battX->lostCnt);
+								printf("\r\n> [Batt]");
+								if(battX->status&BATT_ONBOARD)
+								{
+									printf(" 0x%02x:0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
+									battX->lostCnt = 0;
+								}
+								else
+								{
+									battX->lostCnt++;
+									printf(" 0x%02x:Lost#%d!", battX->id, battX->lostCnt);
+								}
 							}
 							break;
 

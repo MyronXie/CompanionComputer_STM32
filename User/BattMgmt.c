@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.25
+  * Revised	Date	: 2018.01.26
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -113,7 +113,7 @@ uint8_t Batt_Init(void)
 		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
-		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
+		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
 					
 	}
 	
@@ -140,7 +140,7 @@ uint8_t Batt_Init(void)
 		
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);
-		printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
+		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
 	}
 	
 	Batt_ReadFET(&battA);
@@ -193,10 +193,12 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 			if(!regSta)	_batt->remainingCapacity = regVal*10; break;
 		
 		case 0x06:
-			regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
-			if(!regSta)	_batt->soc = regVal; break;
+			regSta += Batt_ReadWord(_batt->id, BATT_DesignCapacity, &regVal);
+			if(!regSta)	_batt->designCapacity = regVal*10; break;
 		
 		case 0x07:
+			regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
+			if(!regSta)	_batt->soc = regVal; break;
 		
 		default: break;		
 	}
@@ -216,9 +218,10 @@ void Batt_ReadFET(BattMsg* _batt)
 		_batt->fet = regVal;
 		_batt->status |= BATT_ONBOARD;
 	}
-	else
+	else			// Can't read battery
 	{	
-		_batt->status &= ~BATT_ONBOARD;		// Can't read battery
+		_batt->fet = 0xC0;	// dummy flag, display in boot up
+		_batt->status &= ~BATT_ONBOARD;
 	}
 }
 
