@@ -2,7 +2,7 @@
 
 ### Hardware
 - MCU Chip: STM32F334C6
-- Hardware: Externsion Board Rev1.0
+- Externsion Board Rev1.0
 
 ### System
 - TIM2: Heartbeat (1Hz)
