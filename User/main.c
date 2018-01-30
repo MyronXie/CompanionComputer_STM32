@@ -339,15 +339,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		printf("\r\n> [Hrt] #%d",++sysTicks);			// Record running time
 		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
 		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-		//HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
-		
-		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog
-		
-		//<feature-sendlog>
-		sendBytes = mavlink_msg_stm32_f3_battery_pack(1, 1, &mavMsgTx, esccurr, f3Log);
-		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
 		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
 		
+		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog		
 	}
 	
 	/* TIM6: Landing Gear PWM Adjustment (100Hz) */
@@ -515,6 +509,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		// Increase battCycleCnt
 		battCycleCnt = (battCycleCnt+1)%50;
+		
+		//<feature-sendlog>
+		if(battCycleCnt==0x0F)
+		{
+			sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+			HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);	
+		}
+		
+		if(battCycleCnt==0x24)
+		{
+			sendBytes = mavlink_msg_stm32_f3_battery_pack(1, 1, &mavMsgTx, esccurr, f3Log);
+			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+			HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		}
 	}
 }
 
@@ -566,7 +575,7 @@ void Batt_MavlinkInit(mavlink_battery_status_t* mav)
 	mav->battery_function	= 0;			// Redefine this param [0: battery error, 1: battery normal]
 	mav->type				= 1;			// Redefine this param (not used now)
 	mav->temperature		= 2018;			// in centi-degrees celsius
-	mav->voltages[0]		= 0;			// in mV
+	mav->voltages[0]		= 24567;		// in mV
 	mav->current_battery	= 1516;			// in 10mA
 	mav->current_consumed	= 0;			// in mAh, -1: does not provide mAh consumption estimate
 	mav->energy_consumed	= -1;			// -1: does not provide energy consumption estimate
