@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.26
+  * Revised	Date	: 2018.01.30
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -45,7 +45,7 @@ mavlink_heartbeat_t mavHrt;
 mavlink_status_t mavSta;
 mavlink_command_long_t mavCmdTx,mavCmdRx;
 mavlink_command_ack_t mavCmdAck;
-mavlink_battery_status_t mavBatt1,mavBattTx,mavBattRx;
+mavlink_battery_status_t mavBattTx,mavBattRx;
 
 uint16_t msgSeqPrev = 0;				// Monitor lost package number of Mavlink
 uint8_t msgRecvFin = 0;					// Mavlink Receive flag
@@ -67,6 +67,7 @@ extern BattMsg battA,battB;
 BattMsg* battX;
 uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
 uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
+void Batt_MavlinkInit(mavlink_battery_status_t* mav);
 void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
 
 
@@ -81,24 +82,16 @@ int main(void)
 	SystemClock_Config();
 
 	USART_Init();
-	printf("\r\n*****CompanionComputer_STM32*****\r\n");
+	printf("\r\n**********CompanionComputer_STM32**********r\n");
 	
 	printf("\r\n# [Init] I2C");
 	I2C_Init();
 	
 	printf("\r\n# [Init] Battery");
 	sysBattery = Batt_Init();
-		
-	mavBattTx.id				= 0x06;
-	mavBattTx.battery_function	= 0;			// Redefine this param [0: battery error, 1: battery normal]
-	mavBattTx.type				= 1;			// Redefine this param (not used now)
-	mavBattTx.temperature		= 2018;			// in centi-degrees celsius
-	mavBattTx.voltages[0]		= 0;			// in mV
-	mavBattTx.current_battery	= 1516;			// in 10mA
-	mavBattTx.current_consumed	= 0;			// in mAh, -1: does not provide mAh consumption estimate
-	mavBattTx.energy_consumed	= -1;			// -1: does not provide energy consumption estimate
-	mavBattTx.battery_remaining	= 99;			// 0%: 0, 100%: 100
+	Batt_MavlinkInit(&mavBattTx);
 	
+	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n# [Init] LandingGear");
 	LandingGear_Init();
 	
@@ -112,6 +105,7 @@ int main(void)
 		lgPositionCurr = 0, lgChangeStatusCurr = 0;
 		FLASH_SaveLGStatus(lgPositionCurr,lgChangeStatusCurr);
 	}
+	#endif //ENABLE_LANGINGGEAR
 	
 	printf("\r\n# [Init] Watchdog");
 	IWDG_Init();
@@ -165,6 +159,7 @@ int main(void)
 					switch(mavCmdRx.command)
 					{
 						/*************** Landing Gear Control ***************/
+						#ifdef ENABLE_LANGINGGEAR
 						case MAV_CMD_AIRFRAME_CONFIGURATION:			// 2520,0x09D8
 							printf("\r\n> LandingGear");
 							lgPositionRecv = (int)mavCmdRx.param2;		// param2 for landing gear position
@@ -207,6 +202,7 @@ int main(void)
 							}
 
 							break;//MAV_CMD_AIRFRAME_CONFIGURATION
+						#endif //ENABLE_LANGINGGEAR
 
 						default:break;
 					}//switch(mavCmdRx.command)
@@ -246,6 +242,7 @@ int main(void)
 		}
 		
 		/************************* Reset System *************************/
+		#ifdef ENABLE_LANGINGGEAR
 		if(sysError == 3)
 		{
 			// Reset Landing Gear
@@ -262,6 +259,7 @@ int main(void)
 			}
 			sysError++;								// Prevent frequent reset
 		}
+		#endif //ENABLE_LANGINGGEAR
 		
 		if(sysError >= 7)
 		{
@@ -328,10 +326,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* TIM2: HeartBeat (1Hz) */
 	if(htim->Instance == TIM2)
 	{
-		//<Dev> Disable msgLostCnt
 		#ifndef INGORE_LOSTCOMM
-		if(sysRunning)			msgLostCnt++;			// will turn 0 if recv mavlink msg
+		if(sysRunning)			msgLostCnt++;			// msgLostCnt will reset if receive mavlink msg
 		#endif
+
+		// Decrease lgChangeDelayCnt
 		if(lgChangeDelayCnt)	lgChangeDelayCnt--;
 		
 		printf("\r\n> [Hrt] #%d",++sysTicks);			// Record running time
@@ -343,6 +342,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	
 	/* TIM6: Landing Gear PWM Adjustment (100Hz) */
+	#ifdef ENABLE_LANGINGGEAR
 	if(htim->Instance == TIM6)
 	{
 		if(lgChangeStatusPrev != lgChangeStatusCurr)	// Change status message
@@ -372,6 +372,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 		else Relay_OFF();							// Turn off relay to power off steers
 	}
+	#endif //ENABLE_LANGINGGEAR
 
 	/* TIM7: Read & Send Battery Message (50Hz) */
 	if(htim->Instance == TIM7)
@@ -548,6 +549,19 @@ void FLASH_LoadLGStatus(uint8_t* pos, uint8_t* cng)
 {
 	*pos = *(__IO uint32_t*)(flashAddr);
 	*cng = *(__IO uint32_t*)(flashAddr+4);
+}
+
+void Batt_MavlinkInit(mavlink_battery_status_t* mav)
+{
+	mav->id 				= 0x06;			// Dummy id
+	mav->battery_function	= 0;			// Redefine this param [0: battery error, 1: battery normal]
+	mav->type				= 1;			// Redefine this param (not used now)
+	mav->temperature		= 2018;			// in centi-degrees celsius
+	mav->voltages[0]		= 0;			// in mV
+	mav->current_battery	= 1516;			// in 10mA
+	mav->current_consumed	= 0;			// in mAh, -1: does not provide mAh consumption estimate
+	mav->energy_consumed	= -1;			// -1: does not provide energy consumption estimate
+	mav->battery_remaining	= 99;			// 0%: 0, 100%: 100
 }
 
 void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)

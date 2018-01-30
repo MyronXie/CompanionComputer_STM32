@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.26
+  * Revised	Date	: 2018.01.30
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -41,24 +41,26 @@ uint8_t Batt_Init(void)
 	#endif
 	{
 		if(++attemptTimes>=5)
-		{
-			printf("\r\n!   ");
-			if(!(battA.status&BATT_ONBOARD)) printf("battA ");
-			if(!(battB.status&BATT_ONBOARD)) printf("battB ");
-			printf(" Offboard!");
+		{			
+			if(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))
+			{
+				printf("\r\n!   Both batteries Offboard!");
+				return 0x01;
+			}
 			
-			if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-			if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
-			HAL_Delay(2000);
-			if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-			if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);	
+			printf("\r\n!   ");
+			if(!(battA.status&BATT_ONBOARD)) printf("battA Offboard!");
+			else if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+			if(!(battB.status&BATT_ONBOARD)) printf("battB Offboard!");
+			else if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
+
 			return 0x01;
 		}
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);	
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);		
-		HAL_Delay(10);				
+		HAL_Delay(20);				
 	}
 	
 	// Check power status

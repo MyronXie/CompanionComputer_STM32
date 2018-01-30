@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.25
+  * Revised	Date	: 2018.01.30
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -56,7 +56,11 @@ void TIM_Init(void)
 void TIM_Start(void)
 {
 	HAL_TIM_Base_Start_IT(&htim2);
+	
+	#ifdef ENABLE_LANGINGGEAR
 	HAL_TIM_Base_Start_IT(&htim6);
+	#endif //ENABLE_LANGINGGEAR
+	
 	HAL_TIM_Base_Start_IT(&htim7);
 }
 
@@ -66,9 +70,11 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
 	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 2);
     HAL_NVIC_EnableIRQ(TIM2_IRQn);
 	
+	#ifdef ENABLE_LANGINGGEAR
     __HAL_RCC_TIM6_CLK_ENABLE();
 	HAL_NVIC_SetPriority(TIM6_DAC1_IRQn, 0, 3);
     HAL_NVIC_EnableIRQ(TIM6_DAC1_IRQn);
+	#endif //ENABLE_LANGINGGEAR
 
     __HAL_RCC_TIM7_CLK_ENABLE();
 	HAL_NVIC_SetPriority(TIM7_DAC2_IRQn, 0, 3);

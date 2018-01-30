@@ -3,7 +3,7 @@
 ### Function
 - Communication with FC through Mavlink (bi-direction)
 - Landing Gear Control System
-- Battery Management System (WIP)
+- Battery Management System
 
 ### To-Do List
 - *Sends F3 log to FC and report on QGC*
@@ -11,7 +11,7 @@
 - *Consider logic between landing gear and battery*
 
 ### Changelog
-* v0.2 (WIP) : Add Battery Management System
+* v0.2 (20180130) : Add Battery Management System
     + Add Battery Management System
         + Read status of battery through SMBus (voltage, current, remaining capacity, etc.)
         + Auto power on/off another battery when one battery is power on/off manually
