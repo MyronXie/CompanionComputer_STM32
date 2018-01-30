@@ -70,6 +70,9 @@ uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
 void Batt_MavlinkInit(mavlink_battery_status_t* mav);
 void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
 
+//<feature-sendlog>
+float esccurr[10]={1.23,12.34,23.45,34.56,45.67,-1.23,-12.34,-23.45,-34.56,-45.67};
+char f3Log[100]={"This is log from F3 board. 2018/01/30"};
 
 /**
   * @brief  Main program
@@ -336,9 +339,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		printf("\r\n> [Hrt] #%d",++sysTicks);			// Record running time
 		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
 		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		//HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
 		
 		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog
+		
+		//<feature-sendlog>
+		sendBytes = mavlink_msg_stm32_f3_battery_pack(1, 1, &mavMsgTx, esccurr, f3Log);
+		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
+		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
+		
 	}
 	
 	/* TIM6: Landing Gear PWM Adjustment (100Hz) */
