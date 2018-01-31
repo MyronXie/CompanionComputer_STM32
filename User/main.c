@@ -63,18 +63,18 @@ uint8_t lgChangeStatusPrev = 0;
 uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], not used now
 
 /* Battery Control */
-extern BattMsg battA,battB;
+extern BattMsg battA,battB,battO;
 BattMsg* battX;
 uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
 uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
-void Batt_MavlinkInit(mavlink_battery_status_t* mav);
-void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
+void Batt_MavlinkPack(mavlink_battery_status_t* mav);
 
 //<feature-sendlog>
 float esccurr[10]={1.23,12.34,23.45,34.56,45.67,-1.23,-12.34,-23.45,-34.56,-45.67};
 
 char F3LOG[100]={""};
-char LOG_0x01[25]={"Heartbeat from F3"};
+char LOG_0x01[25]={"Heartbeat"};
+char LOG_0x02[25]={"USART Reset"};
 char LOG_0x11[25]={"Battery offboard"};
 char LOG_0x12[25]={"Vdiff>100mV"};
 char LOG_0x21[25]={"Landing Gear auto reset"};
@@ -96,7 +96,6 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n# [Init] Battery");
-	Batt_MavlinkInit(&mavBattTx);
 	sysBattery = Batt_Init();
 	
 	#ifdef ENABLE_LANGINGGEAR
@@ -140,13 +139,14 @@ int main(void)
 			}
 			else
 			{
-				/*<Dev> Monitor lost percentage of Mavlink
-				printf("\r\n[MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);		// Monitor Mavlink msg
+				//<Dev> Monitor lost percentage of Mavlink
 				if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
 				{
 					printf("\r\n\t\t\t\t [MSG] Lost %d msg.", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
 				}
-				msgSeqPrev=mavMsgRx.seq;*/
+				msgSeqPrev=mavMsgRx.seq;
+				
+				//printf("\r\n\t\t\t\t [MSG]%3d,%3d;", mavMsgRx.seq, mavMsgRx.msgid);		// Monitor Mavlink msg
 			}
 	
 			switch(mavMsgRx.msgid)
@@ -244,8 +244,13 @@ int main(void)
 			
 			// Reset USART
 			printf("\r\n# USART: Reset");
+			
+			sendBytes = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x02, LOG_0x02);
+			Mavlink_SendMessage(&mavMsgTx, sendBytes);
+			
 			USART_DeInit();
 			USART_Init();
+
 		}
 		
 		/************************* Reset System *************************/
@@ -347,9 +352,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		Mavlink_SendMessage(&mavMsgTx, sendBytes);
 		
 		// <Dev> for Monitor
-		sprintf(F3LOG,"Heartbeat: #%d",sysTicks);
-		sendBytes = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x01, F3LOG);
-		Mavlink_SendMessage(&mavMsgTx, sendBytes);
+		if(!(sysTicks%5))
+		{		
+			sprintf(F3LOG,"Hrt #%d",sysTicks);
+			sendBytes = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x00, F3LOG);
+			Mavlink_SendMessage(&mavMsgTx, sendBytes);
+		}
 				
 		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog	
 	}
@@ -390,134 +398,132 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM7)
 	{
 		/*************** Battery Management ****************/
-		if(!sysBattery)								// Send battery msg when sysBattery enabled
-		{	
-			/********** Measure & Send Process **********/
-			if(!(battCycleCnt&BATT_SYS_JUDGE))
+	
+		/********** Measure & Send Process **********/
+		if(!(battCycleCnt&BATT_SYS_JUDGE))
+		{
+			// Select Battery
+			if(!(battCycleCnt&BATT_SYS_BATTA))		battX = &battA;
+			else									battX = &battB;
+			
+			// Measure Process
+			if(!(battCycleCnt&BATT_SYS_SEND))
 			{
-				// Select Battery
-				if(!(battCycleCnt&BATT_SYS_BATTA))		battX = &battA;
-				else									battX = &battB;
-				
-				// Measure Process
-				if(!(battCycleCnt&BATT_SYS_SEND))
-				{
-					if(battX->status&BATT_INUSE) Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
-				}
-				// Send Process
-				else
-				{
-					switch(battCycleCnt&BATT_SYS_MASK_CMD)
-					{
-						// Pack message
-						case 0x01:
-							#ifdef SINGLE_BATTERY
-							if(!(battX->status&BATT_INUSE))
-							{
-								if(battA.status&BATT_INUSE)	battX = &battA;
-								if(battB.status&BATT_INUSE)	battX = &battB;
-							}
-							#endif
-							Batt_MavlinkPack(&mavBattTx, battX);
-							break;
-						
-						// Send message
-						case 0x03:
-							sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-							Mavlink_SendMessage(&mavMsgTx, sendBytes);
-							break;
-						
-						// Printf data
-						case 0x07:
-							if(battX->status&BATT_INUSE)
-							{
-								printf("\r\n> [Batt]");
-								if(battX->status&BATT_ONBOARD)
-								{
-									printf(" 0x%02x:0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
-									battX->lostCnt = 0;
-								}
-								else
-								{
-									battX->lostCnt++;
-									printf(" 0x%02x:Lost#%d!", battX->id, battX->lostCnt);
-								}
-							}
-							break;
-
-						default: break;
-					}
-				}
+				if(battX->status&BATT_INUSE) Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
 			}
-			/********** Judge Process **********/
+			// Send Process
 			else
 			{
-				switch(battCycleCnt)
+				switch(battCycleCnt&BATT_SYS_MASK_CMD)
 				{
-					// Battery Link Lost
-					case 0x20:
-						if((battA.lostCnt>5)||(battB.lostCnt>5))
+					// Pack message
+					case 0x01:
+						#ifdef SINGLE_BATTERY
+						if(!(battX->status&BATT_INUSE))
 						{
-							printf("\r\n! [Error] Battery lost!");
+							if(battA.status&BATT_INUSE)	battX = &battA;
+							if(battB.status&BATT_INUSE)	battX = &battB;
 						}
+						#endif
+						Batt_MavlinkPack(&mavBattTx);
 						break;
 					
-					#ifndef SINGLE_BATTERY
-					#ifdef AUTO_POWEROFF
-					// Judge Auto power off
-					case 0x28:
-						if(!battAutoOff)
+					// Send message
+					case 0x03:
+						sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+						Mavlink_SendMessage(&mavMsgTx, sendBytes);
+						break;
+					
+					// Printf data
+					case 0x07:
+						if(battX->status&BATT_INUSE)
 						{
-							if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+							printf("\r\n> [Batt]");
+							if(battX->status&BATT_ONBOARD)
 							{
-								printf("\r\n# Auto Power Off Process");
-								battAutoOff = 1;	
+								printf(" 0x%02x:0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
+								battX->lostCnt = 0;
+							}
+							else
+							{
+								battX->lostCnt++;
+								if(battX->lostCnt<=3) printf(" 0x%02x:Lost#%d!", battX->id, battX->lostCnt);
 							}
 						}
 						break;
-						
-					// Auto Power Off Process
-					case 0x29:
-						if(battAutoOff)
-						{
-							// Attempt every 2s
-							if((battAutoOff+1)%2)
-							{
-								printf("\r\n#   Attempt#%d",(battAutoOff+1)/2);
-								if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-								if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-							
-								Batt_ReadFET(&battA);
-								Batt_ReadFET(&battB);
-								printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
-							}
-							
-							// All Batteries have powered off
-							if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
-							{
-								printf("\r\n> Auto Power Off Success");
-								battAutoOff = 0;
-//								<Dev> Temp. disable turn off sysBattery
-//								battA.status &= ~BATT_INUSE;
-//								battB.status &= ~BATT_INUSE;
-//								sysBattery = 1;
-							}
-							else if(++battAutoOff>=10)
-							{
-								printf("! Auto Power Off Fail!");
-								battAutoOff = 0;
-							}
-						}
-						break;
-					#endif //AUTO_POWEROFF
-					#endif //SINGLE_BATTERY
+
+					default: break;
 				}
-			}		
-		}/*if(!sysBattery)*/
+			}
+		}
+		/********** Judge Process **********/
+		else
+		{
+			switch(battCycleCnt)
+			{
+				// Battery Link Lost
+				case 0x20:
+					if((battA.lostCnt>5)||(battB.lostCnt>5))
+					{
+						printf("\r\n! [Error] Battery lost!");
+					}
+					break;
+				
+				#ifndef SINGLE_BATTERY
+				#ifdef AUTO_POWEROFF
+				// Judge Auto power off
+				case 0x28:
+					if(!battAutoOff)
+					{
+						if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+						{
+							printf("\r\n# Auto Power Off Process");
+							battAutoOff = 1;	
+						}
+					}
+					break;
+					
+				// Auto Power Off Process
+				case 0x29:
+					if(battAutoOff)
+					{
+						// Attempt every 2s
+						if((battAutoOff+1)%2)
+						{
+							printf("\r\n#   Attempt#%d",(battAutoOff+1)/2);
+							if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+							if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
+						
+							Batt_ReadFET(&battA);
+							Batt_ReadFET(&battB);
+							printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
+						}
+						
+						// All Batteries have powered off
+						if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
+						{
+							printf("\r\n> Auto Power Off Success");
+							battAutoOff = 0;
+//							<Dev> Temp. disable turn off sysBattery
+//							battA.status &= ~BATT_INUSE;
+//							battB.status &= ~BATT_INUSE;
+							sysBattery = 0x13;
+						}
+						else if(++battAutoOff>=8)
+						{
+							printf("! Auto Power Off Fail!");
+							sysBattery = 0x16;
+							battAutoOff = 0;
+						}
+					}
+					break;
+				#endif //AUTO_POWEROFF
+				#endif //SINGLE_BATTERY
+			}
+		}		
 		
 		// Increase battCycleCnt
 		battCycleCnt = (battCycleCnt+1)%50;
-	
 	}
 }
 
@@ -563,36 +569,36 @@ void FLASH_LoadLGStatus(uint8_t* pos, uint8_t* cng)
 	*cng = *(__IO uint32_t*)(flashAddr+4);
 }
 
-void Batt_MavlinkInit(mavlink_battery_status_t* mav)
+void Batt_MavlinkPack(mavlink_battery_status_t* mav)
 {
-	mav->id 				= 0x06;			// Dummy id
-	mav->battery_function	= 0;			// Redefine this param [0: battery error, 1: battery normal]
-	mav->type				= 1;			// Redefine this param (not used now)
-	mav->temperature		= 2018;			// in centi-degrees celsius
-	mav->voltages[0]		= 24567;		// in mV
-	mav->current_battery	= 1516;			// in 10mA
-	mav->current_consumed	= 0;			// in mAh, -1: does not provide mAh consumption estimate
-	mav->energy_consumed	= -1;			// -1: does not provide energy consumption estimate
-	mav->battery_remaining	= 99;			// 0%: 0, 100%: 100
-}
-
-void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
-{
-	mav->id 				= batt->id;
-	mav->battery_function	= batt->status;				// Redefine this param
-	mav->type				= 1;
-	mav->temperature		= batt->temperature;
-	mav->voltages[0]		= batt->voltage;
-	mav->current_battery	= batt->current;
-	mav->current_consumed	= batt->fullChargeCapacity - batt->remainingCapacity;
+	#ifndef SINGLE_BATTERY
+	mav->id 				= 0x36;
+	mav->battery_function	= ((battA.status<<4)&0xF0)+(battB.status&0x0F);	// Redefine this param
+	mav->type				= sysBattery;									// Redefine this param
+	mav->temperature		= (battA.temperature + battB.temperature)/2;	// in centi-degrees celsius
+	mav->voltages[0]		= (battA.voltage + battB.voltage)/2;			// in mV
+	mav->current_battery	= battA.current + battB.current;				// in 10mA
+	mav->current_consumed	= (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
+	mav->energy_consumed	= -1;											// -1: does not provide
+	mav->battery_remaining	= (battA.soc + battB.soc)/2;						// 0%: 0, 100%: 100
+	#else
+	mav->id 				= battX->id;
+	mav->battery_function	= battX->status;									// Redefine this param
+	mav->type				= sysBattery;
+	mav->temperature		= battX->temperature;
+	mav->voltages[0]		= battX->voltage;
+	mav->current_battery	= battX->current;
+	mav->current_consumed	= battX->fullChargeCapacity - battX->remainingCapacity;
 	mav->energy_consumed	= -1;
-	mav->battery_remaining	= batt->soc;
+	mav->battery_remaining	= battX->soc;
+	#endif
 }
 
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length)
 {
 	uint8_t buffer[263];								// Mavlink max length is 263
 	mavlink_msg_to_send_buffer(buffer, msg);
+	//HAL_UART_Transmit_IT(&huart1, buffer, length);
 	HAL_UART_Transmit(&huart1, buffer, length, 1);	
 }
 

@@ -15,7 +15,7 @@
 #define __MAIN_H
 
 // <Dev> Option
-#define INGORE_LOSTCOMM			1
+//#define INGORE_LOSTCOMM			1
 #define ENABLE_LANGINGGEAR		1
 
 #include "stm32f3xx_hal.h"

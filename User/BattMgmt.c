@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.30
+  * Revised	Date	: 2018.01.31
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -20,8 +20,8 @@ uint8_t Batt_Init(void)
 	uint8_t attemptTimes = 0;
 	
 	// Battery Message Init
-	battA.id					= 0x16;
-	battB.id					= 0x26;
+	battA.id				= 0x16;
+	battB.id				= 0x26;
 	
 	#ifdef SINGLE_BATTERY
 	printf(": SINGLE_BATTERY");
@@ -40,21 +40,22 @@ uint8_t Batt_Init(void)
 	while(!((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))		// Both batteries should onboard
 	#endif
 	{
-		if(++attemptTimes>=5)
+		if(++attemptTimes>=4)
 		{			
 			if(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))
 			{
 				printf("\r\n!   Both batteries Offboard!");
-				return 0x01;
+			}
+			else
+			{
+				printf("\r\n!   ");
+				if(!(battA.status&BATT_ONBOARD)) printf("battA Offboard!");
+				else if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
+				if(!(battB.status&BATT_ONBOARD)) printf("battB Offboard!");
+				else if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
 			}
 			
-			printf("\r\n!   ");
-			if(!(battA.status&BATT_ONBOARD)) printf("battA Offboard!");
-			else if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-			if(!(battB.status&BATT_ONBOARD)) printf("battB Offboard!");
-			else if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-
-			return 0x01;
+			return 0x11;
 		}
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);	
@@ -87,7 +88,8 @@ uint8_t Batt_Init(void)
 		HAL_Delay(2000);
 		if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 		if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-		return 0x04;
+		
+		return 0x12;
 	}
 	#endif //INGORE_VDIFF
 	#endif //SINGLE_BATTERY
@@ -104,7 +106,7 @@ uint8_t Batt_Init(void)
 		if(++attemptTimes>=5)
 		{
 			printf("!   Auto Power On Fail!");
-			return 0x10;
+			return 0x13;
 		}
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);
@@ -131,7 +133,7 @@ uint8_t Batt_Init(void)
 		if(++attemptTimes>=5)
 		{
 			printf("!   Enable FET Fail!");
-			return 0x20;
+			return 0x14;
 		}
 		
 		printf("\r\n#     Attempt#%d",attemptTimes);
@@ -157,7 +159,7 @@ uint8_t Batt_Init(void)
 	#endif
 	{
 		printf("\r\n!   Battery Init Error!");
-		return 0x80;
+		return 0x15;
 	}
 	return 0x00;
 }

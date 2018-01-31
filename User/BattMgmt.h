@@ -27,9 +27,9 @@
 typedef struct
 {
 	uint8_t		id;
-	uint8_t 	status;
+	uint8_t 	status;				// High 4-bit for BattA, Low 4-bit for BattB
 	uint8_t		lostCnt;
-	uint8_t		fet;
+	uint8_t		fet;				// Read from SMBUS
 	uint16_t	temperature;
 	uint16_t	voltage;
 	int16_t		current;
