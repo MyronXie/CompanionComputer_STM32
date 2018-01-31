@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.30
+  * Revised	Date	: 2018.01.31
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -19,7 +19,6 @@ static void Error_Handler(void);
 
 /* Extern parameter */
 extern UART_HandleTypeDef huart1,huart3;
-extern uint8_t aRxBuffer;
 extern TIM_HandleTypeDef htim2,htim6,htim7;
 
 /* System */
@@ -43,14 +42,14 @@ void FLASH_LoadLGStatus(uint8_t* pos, uint8_t* cng);
 mavlink_message_t mavMsgTx,mavMsgRx;
 mavlink_heartbeat_t mavHrt;
 mavlink_status_t mavSta;
-mavlink_command_long_t mavCmdTx,mavCmdRx;
+mavlink_command_long_t mavCmdRx;
 mavlink_command_ack_t mavCmdAck;
 mavlink_battery_status_t mavBattTx,mavBattRx;
+void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 uint16_t msgSeqPrev = 0;				// Monitor lost package number of Mavlink
 uint8_t msgRecvFin = 0;					// Mavlink Receive flag
 uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
-uint8_t bufferTx[263];					// Mavlink max length is 263
 uint16_t sendBytes = 0; 				// Length of Mavlink package
 
 /* Landing Gear */
@@ -185,8 +184,7 @@ int main(void)
 									printf(": Igrore!");
 									sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
 								}
-								mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-								HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
+								Mavlink_SendMessage(&mavMsgTx, sendBytes);
 							}
 							/* Landing Gear is standby, respond recv command */
 							else
@@ -338,10 +336,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		printf("\r\n> [Hrt] #%d",++sysTicks);			// Record running time
 		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
-		mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-		HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
-		
-		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog		
+		Mavlink_SendMessage(&mavMsgTx, sendBytes);
+				
+		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog	
 	}
 	
 	/* TIM6: Landing Gear PWM Adjustment (100Hz) */
@@ -361,8 +358,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				printf("\r\n# LandingGear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
 				sendBytes = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
 			}
-			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-			HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);
+			Mavlink_SendMessage(&mavMsgTx, sendBytes);
 			FLASH_SaveLGStatus(lgPositionCurr, lgChangeStatusCurr);
 		}
 		/* Landing Gear changing process */
@@ -415,8 +411,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 						// Send message
 						case 0x03:
 							sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-							mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-							HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);	
+							Mavlink_SendMessage(&mavMsgTx, sendBytes);
 							break;
 						
 						// Printf data
@@ -509,21 +504,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		// Increase battCycleCnt
 		battCycleCnt = (battCycleCnt+1)%50;
-		
-		//<feature-sendlog>
-		if(battCycleCnt==0x0F)
-		{
-			sendBytes = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-			HAL_UART_Transmit_IT(&huart1, bufferTx, sendBytes);	
-		}
-		
-		if(battCycleCnt==0x24)
-		{
-			sendBytes = mavlink_msg_stm32_f3_battery_pack(1, 1, &mavMsgTx, esccurr, f3Log);
-			mavlink_msg_to_send_buffer(bufferTx, &mavMsgTx);
-			HAL_UART_Transmit_IT(&huart1,bufferTx,sendBytes);
-		}
 	}
 }
 
@@ -593,6 +573,13 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
 	mav->current_consumed	= batt->fullChargeCapacity - batt->remainingCapacity;
 	mav->energy_consumed	= -1;
 	mav->battery_remaining	= batt->soc;
+}
+
+void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length)
+{
+	uint8_t buffer[263];								// Mavlink max length is 263
+	mavlink_msg_to_send_buffer(buffer, msg);
+	HAL_UART_Transmit(&huart1, buffer, length, 1);	
 }
 
 static void Error_Handler(void)
