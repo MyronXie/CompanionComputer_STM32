@@ -18,8 +18,7 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 
 /* Extern parameter */
-extern UART_HandleTypeDef huart1,huart3;
-extern uint8_t aRxBuffer;
+extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim2,htim6,htim7;
 
 /* System */
@@ -27,6 +26,13 @@ uint8_t sysRunning = 0;					// Flag for system working (Receive first heartbeat 
 uint8_t sysError = 0;					// Counter for fatal error
 uint8_t sysBattery = 0;					// Flag for battery , 0 for no problem
 uint16_t sysTicks = 0;					// Record system running time
+
+/* Serial */
+uint8_t rxData;
+uint8_t msgRecvFin = 0;					// Mavlink Receive flag
+uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
+uint16_t sendBytes = 0; 				// Length of Mavlink package
+uint16_t msgSeqPrev = 0;				// Monitor lost package number of Mavlink
 
 /* Watchdog */
 IWDG_HandleTypeDef hiwdg;
@@ -48,11 +54,6 @@ mavlink_command_ack_t mavCmdAck;
 mavlink_battery_status_t mavBattTx,mavBattRx;
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
-uint16_t msgSeqPrev = 0;				// Monitor lost package number of Mavlink
-uint8_t msgRecvFin = 0;					// Mavlink Receive flag
-uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
-uint16_t sendBytes = 0; 				// Length of Mavlink package
-
 /* Landing Gear */
 uint8_t lgPositionRecv = 0;				// Position of Landing Gear [Down: 0, Up: 1]
 uint8_t lgPositionCurr = 0;
@@ -68,9 +69,6 @@ BattMsg* battX;
 uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
 uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
 void Batt_MavlinkPack(mavlink_battery_status_t* mav);
-
-//<feature-sendlog>
-float esccurr[10]={1.23,12.34,23.45,34.56,45.67,-1.23,-12.34,-23.45,-34.56,-45.67};
 
 char F3LOG[100]={""};
 char LOG_0x01[25]={"Heartbeat"};
@@ -125,6 +123,18 @@ int main(void)
 	
 	while(1)
 	{	
+		/************************* Mavlink Receive Process *************************/
+		if(Serial_Available())
+		{
+			rxData = Serial_GetNextByte();
+			
+			/* Receive MavLink massage */
+			if(mavlink_parse_char(MAVLINK_COMM_0, rxData, &mavMsgRx, &mavSta))
+			{
+				msgRecvFin = 1;						// Receive one mavlink message (decode sucuess)
+			}	
+		}
+			
 		/************************* Mavlink Decode Process *************************/
 		if(msgRecvFin)
 		{
@@ -320,19 +330,6 @@ static void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart->Instance == USART1)
-	{
-		/* Receive MavLink massage */
-		if(mavlink_parse_char(MAVLINK_COMM_0, aRxBuffer, &mavMsgRx, &mavSta))
-		{
-			msgRecvFin = 1;								// Receive one mavlink message (decode sucuess)
-		}	
-		HAL_UART_Receive_IT(&huart1, &aRxBuffer, 1); 	// Restart usart1's IT for next receive process
-	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -580,7 +577,7 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav)
 	mav->current_battery	= battA.current + battB.current;				// in 10mA
 	mav->current_consumed	= (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
 	mav->energy_consumed	= -1;											// -1: does not provide
-	mav->battery_remaining	= (battA.soc + battB.soc)/2;						// 0%: 0, 100%: 100
+	mav->battery_remaining	= (battA.soc + battB.soc)/2;					// 0%: 0, 100%: 100
 	#else
 	mav->id 				= battX->id;
 	mav->battery_function	= battX->status;									// Redefine this param

@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.09
+  * Revised	Date	: 2018.01.31
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -14,10 +14,11 @@
 #include "bsp_usart.h"
 
 UART_HandleTypeDef huart1,huart3;
-uint8_t aRxBuffer;
+uint8_t aRxBuffer[BUFFSIZE];
+uint8_t *rxBufFront,*rxBufRear;
 
 uint16_t UART_Rx_Status;
-uint8_t UART_Rx_Buff[256];
+
 
 void USART_Init(void)
 {
@@ -47,14 +48,15 @@ void USART_Init(void)
 	HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
 	HAL_NVIC_EnableIRQ(USART3_IRQn);
 
-	HAL_UART_Receive_IT(&huart1,&aRxBuffer,1);
+	rxBufFront = aRxBuffer;
+	rxBufRear  = aRxBuffer;
+	HAL_UART_Receive_IT(&huart1,aRxBuffer,1);
 }
 
 void USART_DeInit(void)
 {
 	HAL_UART_DeInit(&huart1);
 	HAL_UART_DeInit(&huart3);
-
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)
@@ -101,6 +103,36 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 		__HAL_RCC_USART3_CLK_DISABLE();
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
 	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART1)
+	{ 
+		if(++rxBufRear >= (aRxBuffer + BUFFSIZE)) rxBufRear = aRxBuffer;  
+		
+		HAL_UART_Receive_IT(&huart1, rxBufRear, 1); 	// Restart usart1's IT for next receive process
+	}
+}
+
+uint8_t Serial_Available(void)
+{
+	if(rxBufFront != rxBufRear)	return 1;
+	else return 0;
+}
+
+uint8_t Serial_GetNextByte(void)  
+{  
+	uint8_t tmp;
+	
+	tmp = (uint8_t)*(rxBufFront);
+	
+	rxBufFront++;  
+
+	if (rxBufFront >= (aRxBuffer+BUFFSIZE))  
+		rxBufFront = aRxBuffer;  
+
+    return tmp; 
 }
 
 int fputc(int ch, FILE *f)			//->printf()
