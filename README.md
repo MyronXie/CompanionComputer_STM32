@@ -6,17 +6,16 @@
 - Battery Management System
 
 ### To-Do List
-- *Sends F3 log to FC and report on QGC*
 - *Improve stability of USART: Rx occasionally failed and step into ReInit Process*
-- *Consider logic between landing gear and battery*
 
 ### Changelog
-* v0.2 (20180130) : Add Battery Management System
+* v0.2 (20180131) : Add Battery Management System
     + Add Battery Management System
         + Read status of battery through SMBus (voltage, current, remaining capacity, etc.)
         + Auto power on/off another battery when one battery is power on/off manually
     * Improve communication with FC through Mavlink
         + Send `BATTERY_STATUS` to FC and report on QGC
+        + Send `STM32_F3_COMMAND` to FC
 
 * v0.1.1 (20180104) : Improve stability of Landing Gear System
     * Improve stability of Landing Gear System

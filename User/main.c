@@ -19,6 +19,7 @@ static void Error_Handler(void);
 
 /* Extern parameter */
 extern UART_HandleTypeDef huart1,huart3;
+extern uint8_t aRxBuffer;
 extern TIM_HandleTypeDef htim2,htim6,htim7;
 
 /* System */
@@ -71,7 +72,12 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
 
 //<feature-sendlog>
 float esccurr[10]={1.23,12.34,23.45,34.56,45.67,-1.23,-12.34,-23.45,-34.56,-45.67};
-char f3Log[100]={"This is log from F3 board. 2018/01/30"};
+
+char F3LOG[100]={""};
+char LOG_0x01[25]={"Heartbeat from F3"};
+char LOG_0x11[25]={"Battery offboard"};
+char LOG_0x12[25]={"Vdiff>100mV"};
+char LOG_0x21[25]={"Landing Gear auto reset"};
 
 /**
   * @brief  Main program
@@ -90,8 +96,8 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n# [Init] Battery");
-	sysBattery = Batt_Init();
 	Batt_MavlinkInit(&mavBattTx);
+	sysBattery = Batt_Init();
 	
 	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n# [Init] LandingGear");
@@ -129,8 +135,8 @@ int main(void)
 			
 			if(!sysRunning)							// Receive first mavlink msg, start system
 			{
-				printf("\r\n# System: Running!\r\n");
-				sysRunning = 1;
+				printf("\r\n# [SYS] Receive msg from FC\r\n");
+				sysRunning = 1;				
 			}
 			else
 			{
@@ -252,9 +258,11 @@ int main(void)
 				HAL_TIM_Base_Stop_IT(&htim6);		// Stop general changing process temp.
 				printf("\r\n# LandingGear: Reset...");
 				LandingGear_Reset();
-				//******************************
-				// <WIP> Need sending F3 log to FC via Mavlink
-				//******************************
+
+				// Send log to FC
+				sendBytes = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x21, LOG_0x21);
+				Mavlink_SendMessage(&mavMsgTx, sendBytes);
+
 				lgPositionCurr = 0, lgPositionPrev = 0;
 				HAL_TIM_Base_Start_IT(&htim6);		// Restart general changing process
 			}
@@ -336,6 +344,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		printf("\r\n> [Hrt] #%d",++sysTicks);			// Record running time
 		sendBytes = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
+		Mavlink_SendMessage(&mavMsgTx, sendBytes);
+		
+		// <Dev> for Monitor
+		sprintf(F3LOG,"Heartbeat: #%d",sysTicks);
+		sendBytes = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x01, F3LOG);
 		Mavlink_SendMessage(&mavMsgTx, sendBytes);
 				
 		HAL_IWDG_Refresh(&hiwdg);						// Feed watchdog	
@@ -504,6 +517,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		// Increase battCycleCnt
 		battCycleCnt = (battCycleCnt+1)%50;
+	
 	}
 }
 
