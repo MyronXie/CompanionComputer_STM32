@@ -22,6 +22,7 @@
 
 void USART_Init(void);
 void USART_DeInit(void);
+void USART_ReInit(void);
 
 uint8_t Serial_Available(void);
 uint8_t Serial_GetNextByte(void);

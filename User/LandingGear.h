@@ -3,9 +3,9 @@
   * File Name		: LandingGear.h
   * Description		: Landing Gear Drivers
   *
-  * Version			: v0.1.1
+  * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.04
+  * Revised	Date	: 2018.02.01
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -33,11 +33,11 @@
 #define Relay_ON() 		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
 #define Relay_OFF()		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)
 
-uint8_t LandingGear_Control(uint8_t pos, uint8_t* prog);
-void LandingGear_Init(void);
+uint8_t LG_Control(uint8_t pos, uint8_t* prog);
+void LG_Init(void);
 void LG_Relay_Init(void);
 void LG_TIM_Init(void);
-void LandingGear_Reset(void);
+void LG_Reset(void);
 
 #endif /* __LANDING_GEAR_H */
 

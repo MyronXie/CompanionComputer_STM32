@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.31
+  * Revised	Date	: 2018.02.01
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -33,7 +33,6 @@ uint8_t Batt_Init(void)
 		
 	// Check onboard status
 	attemptTimes = 0;
-	printf("\r\n#   Link Process");
 	#ifdef SINGLE_BATTERY
 	while(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))		// At least one battery is onboard
 	#else  //DUAL_BATTERY
@@ -44,21 +43,22 @@ uint8_t Batt_Init(void)
 		{			
 			if(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))
 			{
-				printf("\r\n!   Both batteries Offboard!");
+				printf("\r\n [ERR]  Both batteries Offboard!");
 			}
 			else
 			{
-				printf("\r\n!   ");
-				if(!(battA.status&BATT_ONBOARD)) printf("battA Offboard!");
+				printf("\r\n [ERR]  ");
+				if(!(battA.status&BATT_ONBOARD)) printf("battA ");
 				else if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-				if(!(battB.status&BATT_ONBOARD)) printf("battB Offboard!");
+				if(!(battB.status&BATT_ONBOARD)) printf("battB ");
 				else if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
+				printf("Offboard");
 			}
 			
 			return 0x11;
 		}
 		
-		printf("\r\n#     Attempt#%d",attemptTimes);	
+		printf("\r\n [ACT]  Link Attempt#%d",attemptTimes);	
 		Batt_ReadFET(&battA);
 		Batt_ReadFET(&battB);		
 		HAL_Delay(20);				
@@ -68,7 +68,7 @@ uint8_t Batt_Init(void)
 	#ifndef SINGLE_BATTERY
 	if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))		// All batteries are power off
 	{
-		printf("\r\n!   Not powered by batteries!");
+		printf("\r\n [INFO] Not powered by batteries!");
 		//return 0x02;
 	}
 	
@@ -82,7 +82,7 @@ uint8_t Batt_Init(void)
 	// Vdiff should small than 100mV
 	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=100)
 	{
-		printf("\r\n#   Vdiff > 100mV!");
+		printf("\r\n [ERR]  Vdiff > 100mV!");
 		if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 		if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
 		HAL_Delay(2000);
@@ -96,7 +96,6 @@ uint8_t Batt_Init(void)
 
 	// Power ON Process
 	attemptTimes = 0;
-	printf("\r\n#   Power On Process");
 	#ifdef SINGLE_BATTERY
 	while(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))		// Both battery is powered off
 	#else  //DUAL_BATTERY
@@ -105,11 +104,11 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>=5)
 		{
-			printf("!   Auto Power On Fail!");
+			printf("\r\n [ERR]  Auto Power On Fail!");
 			return 0x13;
 		}
 		
-		printf("\r\n#     Attempt#%d",attemptTimes);
+		printf("\r\n [ACT]  Auto-On Attempt#%d",attemptTimes);
 		if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
 		if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
 		
@@ -123,7 +122,6 @@ uint8_t Batt_Init(void)
 	
 	// Enable FET process
 	attemptTimes = 0;
-	printf("\r\n#   Enable FET Process");
 	#ifdef SINGLE_BATTERY
 	while(!((battA.fet&FET_LOCK)||(battB.fet&FET_LOCK)))
 	#else  //DUAL_BATTERY
@@ -132,11 +130,11 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>=5)
 		{
-			printf("!   Enable FET Fail!");
+			printf("\r\n [ERR]  Enable FET Fail!");
 			return 0x14;
 		}
 		
-		printf("\r\n#     Attempt#%d",attemptTimes);
+		printf("\r\n [ACT]  Enable FET Attempt#%d",attemptTimes);
 		if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
 		if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
 
@@ -158,7 +156,7 @@ uint8_t Batt_Init(void)
 	if(!((battA.status&BATT_INUSE)&&(battB.status&BATT_INUSE)))
 	#endif
 	{
-		printf("\r\n!   Battery Init Error!");
+		printf("\r\n [ERR]  Battery Init Error!");
 		return 0x15;
 	}
 	return 0x00;

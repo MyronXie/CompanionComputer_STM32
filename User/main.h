@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.30
+  * Revised	Date	: 2018.02.01
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -22,6 +22,7 @@
 #include "bsp_usart.h"
 #include "bsp_tim.h"
 #include "bsp_i2c.h"
+#include "bsp_misc.h"
 #include "LandingGear.h"
 #include "BattMgmt.h"
 #include "mavlink.h"

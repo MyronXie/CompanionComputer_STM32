@@ -17,7 +17,9 @@ UART_HandleTypeDef huart1,huart3;
 uint8_t aRxBuffer[BUFFSIZE];
 uint8_t *rxBufFront,*rxBufRear;
 
-uint16_t UART_Rx_Status;
+uint16_t bufCnt = 0;
+uint16_t bufCntLst = 0;
+uint16_t bufCntFlag = 0;
 
 
 void USART_Init(void)
@@ -55,8 +57,16 @@ void USART_Init(void)
 
 void USART_DeInit(void)
 {
+	rxBufFront = aRxBuffer;
+	rxBufRear  = aRxBuffer;
 	HAL_UART_DeInit(&huart1);
 	HAL_UART_DeInit(&huart3);
+}
+
+void USART_ReInit(void)
+{
+	USART_DeInit();
+	USART_Init();
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)
@@ -96,12 +106,14 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 	{
 		__HAL_RCC_USART1_CLK_DISABLE();
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6|GPIO_PIN_7);
+		HAL_NVIC_DisableIRQ(USART1_IRQn); 
 	}
 	
 	if(huart->Instance == USART3)
 	{
 		__HAL_RCC_USART3_CLK_DISABLE();
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_10|GPIO_PIN_11);
+		HAL_NVIC_DisableIRQ(USART3_IRQn); 
 	}
 }
 
@@ -131,7 +143,7 @@ uint8_t Serial_GetNextByte(void)
 
 	if (rxBufFront >= (aRxBuffer+BUFFSIZE))  
 		rxBufFront = aRxBuffer;  
-
+	
     return tmp; 
 }
 

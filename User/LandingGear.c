@@ -3,9 +3,9 @@
   * File Name		: LandingGear.c
   * Description		: Landing Gear Drivers
   *
-  * Version			: v0.1.1
+  * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2017.12.27
+  * Revised	Date	: 2018.02.01
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -20,7 +20,7 @@ uint16_t lgPulseR=PUL_RIGHT_DOWN;
 TIM_HandleTypeDef htim3;
 TIM_OC_InitTypeDef hocl,hocr;
 
-void LandingGear_Init()
+void LG_Init()
 {
 	LG_Relay_Init();
 	LG_TIM_Init();
@@ -71,7 +71,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
   * @param  prog precentage of changing progress
   * @retval new langding gear changing status
   */
-uint8_t LandingGear_Control(uint8_t pos, uint8_t* prog)
+uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 {
 	uint8_t changeStatus=1;
 	
@@ -111,7 +111,7 @@ uint8_t LandingGear_Control(uint8_t pos, uint8_t* prog)
 	return changeStatus;
 }
 
-void LandingGear_Reset(void)
+void LG_Reset(void)
 {
 	Relay_ON();
 	

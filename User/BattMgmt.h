@@ -20,7 +20,7 @@
 #include "math.h"
 
 // <Dev> Option
-//#define SINGLE_BATTERY		1
+#define SINGLE_BATTERY		1
 #define AUTO_POWEROFF		1
 #define INGORE_VDIFF		1
 
