@@ -43,6 +43,7 @@ mavlink_status_t mavSta;
 mavlink_command_long_t mavCmdRx;
 mavlink_command_ack_t mavCmdAck;
 mavlink_battery_status_t mavBattTx,mavBattRx;
+mavlink_stm32_f3_command_t mavF3Cmd;
 void Mavlink_Decode(mavlink_message_t* msg);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
@@ -314,6 +315,12 @@ void Mavlink_Decode(mavlink_message_t* msg)
 		case MAVLINK_MSG_ID_BATTERY_STATUS:
 			mavlink_msg_battery_status_decode(msg, &mavBattRx);
 			printf("\r\n [FMU]  #147: 0x%02X,%dC,%dV,%dA,%d%%", mavBattRx.id, mavBattRx.temperature, mavBattRx.voltages[0], mavBattRx.current_battery, mavBattRx.battery_remaining);
+			break;
+		
+		/* STM32_F3_COMMAND (#500)*/
+		case MAVLINK_MSG_ID_STM32_F3_COMMAND:
+			mavlink_msg_stm32_f3_command_decode(msg, &mavF3Cmd);
+			printf("\r\n [FMU]  #500: 0x%02X,%s", mavF3Cmd.command, mavF3Cmd.f3_log);
 			break;
 		
 		default:break;

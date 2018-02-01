@@ -1572,14 +1572,19 @@
               <FilePath>..\User\bsp_i2c.c</FilePath>
             </File>
             <File>
-              <FileName>LandingGear.c</FileName>
+              <FileName>bsp_misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\LandingGear.c</FilePath>
+              <FilePath>..\User\bsp_misc.c</FilePath>
             </File>
             <File>
               <FileName>BattMgmt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\BattMgmt.c</FilePath>
+            </File>
+            <File>
+              <FileName>LandingGear.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\LandingGear.c</FilePath>
             </File>
           </Files>
         </Group>
