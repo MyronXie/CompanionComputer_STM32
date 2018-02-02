@@ -26,15 +26,16 @@ uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
 mavlink_message_t mavMsgTx;
 uint16_t sendByteCnt = 0;
 
-char F3LOG[100]={""};
-char* logList[256]={"","System Reboot","Serial Reset","","","","","","","","","","","","","",
-					"Battery Init Success","Battery Offboard","Voltage difference","PowerOn Fail","FET Enable Fail","Battery Init Fail","PowerOff Fail"};
+char* logList[64]={
+	LOG_00,LOG_01,LOG_02,"","","","","","","","","","","","","",
+	LOG_10,LOG_11,LOG_12,LOG_13,LOG_14,LOG_15,LOG_16,"","","","","","","","","",
+	LOG_20,LOG_21};
 
-extern void LandingGear_Reset(void);
+extern uint8_t LandingGear_Reset(void);
 
 void System_Heartbeat(void)
 {	
-	printf("\r\n\r\n [INFO] Hrt#%d",++sysTicks);			// Record running time
+	printf("\r\n\r\n [HRT]  #%d",++sysTicks);			// Record running time
 	sendByteCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
 	Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 	
@@ -65,17 +66,18 @@ void System_ErrorHandler(void)
 	#endif
 
 	// Lost connect with from FMU
-	if(msgLostCnt>=3)
+	if(msgLostCnt>=2)
 	{
 		printf("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
 		
-		if(!(msgLostCnt%3)) 
+		if(!(msgLostCnt%3)) sysWarning++;
+		
+		if(msgLostCnt==3||msgLostCnt==6||msgLostCnt==10) 
 		{
-			sysWarning++;
 			printf("\r\n [ACT]  USART1: Reset");
 			USART_ReInit();						// Reset USART
 			
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x02, logList[0x02]);
+			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
 			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 		}
 	}
@@ -84,7 +86,8 @@ void System_ErrorHandler(void)
 	// Reset Landing Gear
 	if(sysWarning == 2)
 	{
-		LandingGear_Reset();
+		sysError = LandingGear_Reset();
+		if(sysError) sysReport = 1;
 	}
 	#endif //ENABLE_LANGINGGEAR
 	
@@ -92,7 +95,7 @@ void System_ErrorHandler(void)
 	if(sysWarning >= 4)
 	{
 		printf("\r\n [ACT]  System: Reset...");
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x01, logList[0x01]);
+		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
 		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 		NVIC_SystemReset();
 	}

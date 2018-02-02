@@ -45,7 +45,7 @@ void LG_Reset(void);
 void LandingGear_Init(void);
 void LandingGear_Control(mavlink_command_long_t* cmd);
 void LandingGear_Adjustment(void);
-void LandingGear_Reset(void);
+uint8_t LandingGear_Reset(void);
 
 #endif /* __LANDING_GEAR_H */
 

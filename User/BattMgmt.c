@@ -216,6 +216,7 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 //  N=0~7 type
 // Judge   : 0010 0NNN
 //  N=0~7 judge type
+//
 uint8_t Battery_Management(void)
 {
 	/********** Measure & Send Process **********/
@@ -241,13 +242,13 @@ uint8_t Battery_Management(void)
 					{
 						if(battX->status&BATT_ONBOARD)
 						{
-							printf("\r\n [INFO] Batt_0x%02x:0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
+							printf("\r\n [INFO] Batt: 0x%02x,0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
 							battX->lostCnt = 0;
 						}
 						else
 						{
 							battX->lostCnt++;
-							if(battX->lostCnt<=3) printf("\r\n [INFO] Batt_0x%02x:Lost#%d!", battX->id, battX->lostCnt);
+							if(battX->lostCnt<=3) printf("\r\n [INFO] Batt: 0x%02x Lost#%d!", battX->id, battX->lostCnt);
 						}
 					}
 					break;
@@ -277,7 +278,7 @@ uint8_t Battery_Management(void)
 
 			// Battery Link Lost
 			case 0x02:
-				if((battA.lostCnt>=3)||(battB.lostCnt>=3))
+				if((battA.lostCnt==3)||(battB.lostCnt==3))
 				{
 					printf("\r\n [ERR]  Batt: Connect lost");
 					return ERR_BATT_OFFBOARD;
@@ -292,7 +293,9 @@ uint8_t Battery_Management(void)
 				{
 					if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
 					{
-						battAutoOff = 1;	
+						battAutoOff = 1;
+						sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x10, "Start Power Off Process");
+						Mavlink_SendMessage(&mavMsgTx, sendByteCnt);						
 					}
 				}
 				break;

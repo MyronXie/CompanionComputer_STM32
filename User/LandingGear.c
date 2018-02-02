@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.02.01
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -27,8 +27,6 @@ uint32_t flashParam[FLASHSIZE];
 
 uint16_t lgPulseL=PUL_LEFT_DOWN;
 uint16_t lgPulseR=PUL_RIGHT_DOWN;
-
-char LOG_0x21[25]={"Landing Gear Auto Reset"};
 
 TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
@@ -128,7 +126,7 @@ void LandingGear_Adjustment(void)
 	else Relay_OFF();							// Turn off relay to power off steers
 }
 
-void LandingGear_Reset(void)
+uint8_t LandingGear_Reset(void)
 {
 	if(lgPositionCurr)						// Changing Landing Gear cost 1~2s approx., no need to judge change status
 	{
@@ -140,10 +138,9 @@ void LandingGear_Reset(void)
 		FLASH_SaveParam(flashParam,2);
 		HAL_TIM_Base_Start_IT(&htim6);		// Restart general changing process
 
-		// Send log to FC
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x21, LOG_0x21);
-		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+		return ERR_LG_RESET;
 	}
+	return 0x00;
 }
 
 void LG_TIM_Init(void)
