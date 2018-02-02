@@ -1402,11 +1402,6 @@
               <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_statustext.h</FilePath>
             </File>
             <File>
-              <FileName>mavlink_msg_stm32_f3_battery.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_stm32_f3_battery.h</FilePath>
-            </File>
-            <File>
               <FileName>mavlink_msg_storage_information.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_storage_information.h</FilePath>
@@ -1540,6 +1535,16 @@
               <FileName>protocol.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Drivers\mavlink-c_library_v2\protocol.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_stm32_f3_command.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_stm32_f3_command.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_stm32_f3_motor_curr.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_stm32_f3_motor_curr.h</FilePath>
             </File>
           </Files>
         </Group>

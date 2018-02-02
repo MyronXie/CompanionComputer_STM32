@@ -20,7 +20,7 @@
 #include "math.h"
 
 // <Dev> Option
-#define SINGLE_BATTERY		1
+//#define SINGLE_BATTERY		1
 #define AUTO_POWEROFF		1
 #define INGORE_VDIFF		1
 
@@ -81,7 +81,7 @@ typedef struct
 
 //============battCycleCnt============
 #define BATT_SYS_JUDGE			(1<<5)
-#define BATT_SYS_BATTA			(1<<4)
+#define BATT_SYS_BATTB			(1<<4)
 #define BATT_SYS_SEND			(1<<3)
 #define BATT_SYS_MASK_CMD		0x07
 

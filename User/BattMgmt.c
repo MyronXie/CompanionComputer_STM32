@@ -194,6 +194,7 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 			regSta += Batt_ReadWord(_batt->id, BATT_RemainingCapacity, &regVal);
 			if(!regSta)	_batt->remainingCapacity = regVal*10; break;
 		
+		// can be removed when battery is stable
 		case 0x06:
 			regSta += Batt_ReadWord(_batt->id, BATT_DesignCapacity, &regVal);
 			if(!regSta)	_batt->designCapacity = regVal*10; break;

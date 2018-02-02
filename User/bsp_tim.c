@@ -41,11 +41,11 @@ void TIM_Init(void)
 	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
 	HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
-	/* TIM7: Read & Send Battery Message (50Hz) */
+	/* TIM7: Read & Send Battery Message (40Hz) */
 	htim7.Instance			= TIM7;
 	htim7.Init.Prescaler	= 64000-1;
 	htim7.Init.CounterMode	= TIM_COUNTERMODE_UP;
-	htim7.Init.Period		= 20-1;
+	htim7.Init.Period		= 25-1;
 	htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 	HAL_TIM_Base_Init(&htim7);
 	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;

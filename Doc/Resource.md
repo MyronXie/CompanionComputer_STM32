@@ -28,7 +28,7 @@
 - I2C1: Battery communication
     - PB8(SCL)-P6.3/P7.3
     - PB9(SDA)-P6.4/P7.4
-- TIM7: Read & Send Battery message (50Hz)
+- TIM7: Read & Send Battery message (40Hz)
 
 ### Mavlink
 Based on mavlink-c_library_v2 from github v20171231
