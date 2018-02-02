@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.02.01
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -16,6 +16,9 @@
 
 
 #include "stm32f3xx_hal.h"
+#include "bsp_usart.h"
+#include "bsp_misc.h"
+#include "System.h"
 #include "math.h"
 
 /* Parameters of Landing Gear Control */
@@ -34,7 +37,7 @@
 #define Relay_OFF()		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)
 
 uint8_t LG_Control(uint8_t pos, uint8_t* prog);
-void LG_Init(void);
+
 void LG_Relay_Init(void);
 void LG_TIM_Init(void);
 void LG_Reset(void);

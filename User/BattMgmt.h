@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.01.26
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -17,12 +17,8 @@
 #include "stm32f3xx_hal.h"
 #include "bsp_usart.h"
 #include "bsp_i2c.h"
+#include "System.h"
 #include "math.h"
-
-// <Dev> Option
-//#define SINGLE_BATTERY		1
-#define AUTO_POWEROFF		1
-#define INGORE_VDIFF		1
 
 typedef struct
 {
@@ -94,10 +90,6 @@ uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
-void Batt_ReadFET(BattMsg* _batt);
-
-//uint8_t Battery_ReadReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
-//uint8_t Battery_WriteReg(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
 
 #endif /* __BATTMGMT_H */
 

@@ -1,13 +1,14 @@
 ## Resource
 
 ### Hardware
-- MCU Chip: STM32F334C6
-- Externsion Board Rev1.0
+- Externsion Board Rev1.0 (STM32F334C6)
 
 ### System
 - TIM2: Heartbeat (1Hz)
 - IWDG: Watchdog
-- Flash: Save Landing Gear status
+- Flash: Save params of system
+    - [0]: lgPositionCurr
+    - [1]: lgChangeStatusCurr
 
 ### Communication
 - USART1: F3<->FC for communication

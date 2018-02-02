@@ -22,7 +22,7 @@
 #define FLASHSIZE 10
 
 void FLASH_SaveParam(uint32_t* param, uint8_t size);
-void FLASH_LoadParam(uint32_t* param, uint8_t size);
+uint32_t FLASH_LoadParam(uint8_t id);
 
 void IWDG_Init(void);
 void IWDG_Feed(void);

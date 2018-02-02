@@ -20,12 +20,6 @@ uint16_t lgPulseR=PUL_RIGHT_DOWN;
 TIM_HandleTypeDef htim3;
 TIM_OC_InitTypeDef hocl,hocr;
 
-void LG_Init()
-{
-	LG_Relay_Init();
-	LG_TIM_Init();
-	Relay_OFF();
-}
 
 void LG_TIM_Init(void)
 {

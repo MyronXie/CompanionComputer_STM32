@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2018.02.01
-  * Revised	Date	: 2018.02.01
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -53,14 +53,9 @@ void FLASH_SaveParam(uint32_t* param, uint8_t size)
   *         cng change status of Landing Gear
   * @retval None
   */
-void FLASH_LoadParam(uint32_t* param, uint8_t size)
+uint32_t FLASH_LoadParam(uint8_t id)
 {
-	uint8_t cnt = 0;
-	
-	for(cnt=0;cnt<size;cnt++)
-	{
-		*(param+cnt) = *(__IO uint32_t*)(FLASHADDR+4*(cnt));
-	}
+	return *(__IO uint32_t*)(FLASHADDR+4*id);
 }
 
 void IWDG_Init(void)

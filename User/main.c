@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.02.01
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -18,13 +18,13 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 
 /* Extern parameter */
-extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim6;
 
 /* System */
 uint8_t sysConnect = 0;					// Flag for system working (Receive first heartbeat from FC)
 uint8_t sysError = 0;					// Counter for fatal error
 uint8_t sysBattery = 0;					// Flag for battery , 0 for no problem
+uint8_t sysReport = 0;					// Flag for report error msg
 uint16_t sysTicks = 0;					// Record system running time
 void System_Heartbeat(void);
 void System_ErrorHandler(void);
@@ -45,7 +45,7 @@ mavlink_command_ack_t mavCmdAck;
 mavlink_battery_status_t mavBattTx,mavBattRx;
 mavlink_stm32_f3_command_t mavF3Cmd;
 void Mavlink_Decode(mavlink_message_t* msg);
-void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
+
 
 /* Landing Gear */
 uint8_t lgPositionRecv = 0;				// Position of Landing Gear [Down: 0, Up: 1]
@@ -69,8 +69,11 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav);
 
 /* Log list */
 char F3LOG[100]={""};
+char* f3LogList[256];
+
 char LOG_0x01[15]={"System Reboot"};
 char LOG_0x02[15]={"Serial Reset"};
+char LOG_0x10[15]={"Report Test"};
 char LOG_0x11[20]={"Battery Offboard"};
 char LOG_0x12[15]={"Vdiff>100mV"};
 char LOG_0x16[25]={"Power Off Fail"};
@@ -97,6 +100,10 @@ int main(void)
 	
 	printf("\r\n [INFO] Init: Battery");
 	sysBattery = Batt_Init();
+	// <Dev>
+	sysBattery = 0x10;
+	f3LogList[0x10]="Report Test";
+	if(sysBattery) sysReport=1;
 	
 	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n [INFO] Init: LandingGear");
@@ -131,13 +138,12 @@ int main(void)
 				}
 				else
 				{
-					// Monitor lost package number of Mavlink
+					// <Dev> Monitor lost package number of Mavlink
 					if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
 					{
-						printf("\r\n [FMU]  LOST: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+//						printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
 					}
 				}
-
 				msgSeqPrev=mavMsgRx.seq;
 				
 				Mavlink_Decode(&mavMsgRx);
@@ -181,7 +187,7 @@ void System_Heartbeat(void)
 	Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 	
 	// <Dev> for Monitor
-	if(!(sysTicks%10))
+	if(!(sysTicks%30))
 	{		
 		sprintf(F3LOG,"Heartbeat #%d",sysTicks);
 		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x00, F3LOG);
@@ -200,6 +206,7 @@ void System_ErrorHandler(void)
 	if(msgLostCnt>=3)
 	{
 		printf("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
+		//sysConnect = 0;
 		
 		if(!(msgLostCnt%3)) 
 		{
@@ -291,20 +298,16 @@ void Mavlink_Decode(mavlink_message_t* msg)
 }
 
 
-void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length)
-{
-	uint8_t buffer[263];								// Mavlink max length is 263
-	mavlink_msg_to_send_buffer(buffer, msg);
-	HAL_UART_Transmit(&huart1, buffer, length, 1);	
-	//HAL_UART_Transmit_IT(&huart1, buffer, length);	
-}
+
 
 void LandingGear_Init(void)
 {
-	LG_Init();											// Low-layer init
+	LG_Relay_Init();										// Low-layer init
+	LG_TIM_Init();
+	Relay_OFF();											
 	
-	FLASH_LoadParam(flashParam,2);
-	lgPositionCurr = flashParam[0];		lgChangeStatusCurr = flashParam[1];
+	lgPositionCurr = FLASH_LoadParam(0);
+	lgChangeStatusCurr = FLASH_LoadParam(1);
 	printf(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
 	/* Landing Gear not reset in last process, Reset Landing Gear */
 	if(lgPositionCurr||lgChangeStatusCurr)
@@ -442,8 +445,42 @@ void Battery_Management(void)
 	{
 		switch(battCycleCnt&BATT_SYS_MASK_CMD)
 		{
+			// Report Error Message
+			case 0x00:
 
-			// Pack & Send message
+				if(sysConnect&&sysBattery&&sysReport)
+				{
+					sysReport = 0;
+					switch(sysBattery)
+					{
+						case 0x10:
+							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x10, f3LogList[0x10]);
+							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+							break;
+						
+						case 0x11:
+							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x11, LOG_0x11);
+							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+							break;
+						
+						case 0x16:
+							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x16, LOG_0x16);
+							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+							break;
+						
+						case 0x17:
+							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x17, LOG_0x17);
+							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+							break;
+						
+						case 0: 
+						default: break;
+					}
+				}
+			
+				break;
+			
+			// Pack & Send battery status message
 			case 0x01:
 				#ifdef SINGLE_BATTERY
 				if(!(battX->status&BATT_INUSE))
@@ -462,9 +499,9 @@ void Battery_Management(void)
 				if((battA.lostCnt>=3)||(battB.lostCnt>=3))
 				{
 					printf("\r\n [ERR]  Batt: Connect lost");
-					sysBattery = 0x11;
-					sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x11, LOG_0x11);
-					Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+					sysBattery = ERR_BATT_OFFBOARD;
+					sysReport = 1;
+
 				}
 				break;
 			
@@ -492,8 +529,8 @@ void Battery_Management(void)
 						if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 						if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
 					
-						Batt_ReadFET(&battA);
-						Batt_ReadFET(&battB);
+						Batt_Measure(&battA, 0x00);
+						Batt_Measure(&battB, 0x00);
 						printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
 					}
 					
@@ -505,21 +542,20 @@ void Battery_Management(void)
 						battA.status &= ~BATT_INUSE;
 						battB.status &= ~BATT_INUSE;
 						sysBattery = 0x17;
-						sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x17, LOG_0x17);
-						Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+						sysReport = 1;
 					}
 					else if(++battAutoOff>=7)
 					{
 						printf("\r\n [ERR]  Batt: Auto Power Off Fail");
 						battAutoOff = 0;
-						sysBattery = 0x16;
-						sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x16, LOG_0x16);
-						Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+						sysBattery = ERR_BATT_POWEROFF;
+						sysReport = 1;
 					}
 				}
 				break;
 			#endif //AUTO_POWEROFF
 			#endif //SINGLE_BATTERY
+
 		}
 	}		
 	
@@ -532,8 +568,10 @@ void Batt_MavlinkPack(mavlink_battery_status_t* mav)
 {
 	#ifndef SINGLE_BATTERY
 	mav->id 				= 0x36;
-	mav->battery_function	= ((battA.status<<4)&0xF0)+(battB.status&0x0F);	// Redefine this param
-	mav->type				= sysBattery;									// Redefine this param
+	mav->battery_function	= 1;	// Redefine this param
+	mav->type				= 1;									// Redefine this param
+//	mav->battery_function	= ((battA.status<<4)&0xF0)+(battB.status&0x0F);	// Redefine this param
+//	mav->type				= sysBattery;									// Redefine this param
 	mav->temperature		= (battA.temperature + battB.temperature)/2;	// in centi-degrees celsius
 	mav->voltages[0]		= (battA.voltage + battB.voltage)/2;			// in mV
 	mav->current_battery	= battA.current + battB.current;				// in 10mA

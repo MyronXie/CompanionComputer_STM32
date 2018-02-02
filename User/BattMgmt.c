@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.02.01
+  * Revised	Date	: 2018.02.02
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -24,12 +24,12 @@ uint8_t Batt_Init(void)
 	battB.id				= 0x26;
 	
 	#ifdef SINGLE_BATTERY
-	printf(": SINGLE_BATTERY");
+	printf(" <SINGLE_BATTERY>");
 	#endif
 	
-	// Read 1st FET status
-	Batt_ReadFET(&battA);
-	Batt_ReadFET(&battB);
+	// Read FET status
+	Batt_Measure(&battA, 0x00);
+	Batt_Measure(&battB, 0x00);
 		
 	// Check onboard status
 	attemptTimes = 0;
@@ -39,7 +39,7 @@ uint8_t Batt_Init(void)
 	while(!((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))		// Both batteries should onboard
 	#endif
 	{
-		if(++attemptTimes>=4)
+		if(++attemptTimes>3)
 		{			
 			if(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))
 			{
@@ -49,27 +49,23 @@ uint8_t Batt_Init(void)
 			{
 				printf("\r\n [ERR]  ");
 				if(!(battA.status&BATT_ONBOARD)) printf("battA ");
-				else if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
 				if(!(battB.status&BATT_ONBOARD)) printf("battB ");
-				else if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
 				printf("Offboard");
 			}
-			
-			return 0x11;
+			return ERR_BATT_OFFBOARD;
 		}
 		
 		printf("\r\n [ACT]  Link Attempt#%d",attemptTimes);	
-		Batt_ReadFET(&battA);
-		Batt_ReadFET(&battB);		
-		HAL_Delay(20);				
+		Batt_Measure(&battA, 0x00);
+		Batt_Measure(&battB, 0x00);		
+		HAL_Delay(50);				
 	}
 	
 	// Check power status
 	#ifndef SINGLE_BATTERY
 	if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))		// All batteries are power off
 	{
-		printf("\r\n [INFO] Not powered by batteries!");
-		//return 0x02;
+		printf("\r\n [INFO] <Dev> Not powered by batteries!");
 	}
 	
 	// Check Voltage Difference
@@ -83,13 +79,7 @@ uint8_t Batt_Init(void)
 	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=100)
 	{
 		printf("\r\n [ERR]  Vdiff > 100mV!");
-		if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-		if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-		HAL_Delay(2000);
-		if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-		if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-		
-		return 0x12;
+		return ERR_BATT_VDIFF;
 	}
 	#endif //INGORE_VDIFF
 	#endif //SINGLE_BATTERY
@@ -105,7 +95,7 @@ uint8_t Batt_Init(void)
 		if(++attemptTimes>=5)
 		{
 			printf("\r\n [ERR]  Auto Power On Fail!");
-			return 0x13;
+			return ERR_BATT_POWERON;
 		}
 		
 		printf("\r\n [ACT]  Auto-On Attempt#%d",attemptTimes);
@@ -114,8 +104,8 @@ uint8_t Batt_Init(void)
 		
 		HAL_Delay(2000);	
 		
-		Batt_ReadFET(&battA);
-		Batt_ReadFET(&battB);
+		Batt_Measure(&battA, 0x00);
+		Batt_Measure(&battB, 0x00);
 		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
 					
 	}
@@ -131,7 +121,7 @@ uint8_t Batt_Init(void)
 		if(++attemptTimes>=5)
 		{
 			printf("\r\n [ERR]  Enable FET Fail!");
-			return 0x14;
+			return ERR_BATT_ENABLEFET;
 		}
 		
 		printf("\r\n [ACT]  Enable FET Attempt#%d",attemptTimes);
@@ -140,14 +130,14 @@ uint8_t Batt_Init(void)
 
 		HAL_Delay(2000);
 		
-		Batt_ReadFET(&battA);
-		Batt_ReadFET(&battB);
+		Batt_Measure(&battA, 0x00);
+		Batt_Measure(&battB, 0x00);
 		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
 	}
 	
-	Batt_ReadFET(&battA);
+	Batt_Measure(&battA, 0x00);
 	if((battA.status&BATT_ONBOARD)&&(battA.fet&PWR_ON)&&(battA.fet&FET_LOCK))	battA.status |= BATT_INUSE;
-	Batt_ReadFET(&battB);
+	Batt_Measure(&battB, 0x00);
 	if((battB.status&BATT_ONBOARD)&&(battB.fet&PWR_ON)&&(battB.fet&FET_LOCK))	battB.status |= BATT_INUSE;
 	
 	#ifdef SINGLE_BATTERY
@@ -157,7 +147,7 @@ uint8_t Batt_Init(void)
 	#endif
 	{
 		printf("\r\n [ERR]  Battery Init Error!");
-		return 0x15;
+		return ERR_BATT_INIT;
 	}
 	return 0x00;
 }
@@ -172,7 +162,9 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 	{
 		case 0x00: 
 			regSta = Batt_ReadWord(_batt->id, BATT_FETStatus, &regVal);
-			if(!regSta)	_batt->fet = regVal; break;
+			if(!regSta)	_batt->fet = regVal; 
+			else		_batt->fet = 0xC0;		// dummy flag, display in boot up
+			break;
 		
 		case 0x01:
 			regSta = Batt_ReadWord(_batt->id, BATT_Voltage, &regVal);
@@ -209,25 +201,6 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
 	if(regSta) _batt->status &= ~BATT_ONBOARD;		// Can't read battery
 	else 	   _batt->status |= BATT_ONBOARD;
 }
-
-void Batt_ReadFET(BattMsg* _batt)
-{
-	uint8_t regSta = 0;
-	uint16_t regVal;
-	
-	regSta = Batt_ReadWord(_batt->id, BATT_FETStatus, &regVal);
-	if(!regSta)	
-	{
-		_batt->fet = regVal;
-		_batt->status |= BATT_ONBOARD;
-	}
-	else			// Can't read battery
-	{	
-		_batt->fet = 0xC0;	// dummy flag, display in boot up
-		_batt->status &= ~BATT_ONBOARD;
-	}
-}
-
 
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {
