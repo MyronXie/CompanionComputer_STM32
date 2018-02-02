@@ -42,6 +42,11 @@ void LG_Relay_Init(void);
 void LG_TIM_Init(void);
 void LG_Reset(void);
 
+void LandingGear_Init(void);
+void LandingGear_Control(mavlink_command_long_t* cmd);
+void LandingGear_Adjustment(void);
+void LandingGear_Reset(void);
+
 #endif /* __LANDING_GEAR_H */
 
 /******************************END OF FILE******************************/

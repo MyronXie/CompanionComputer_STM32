@@ -4,7 +4,7 @@
 - Externsion Board Rev1.0 (STM32F334C6)
 
 ### System
-- TIM2: Heartbeat (1Hz)
+- TIM2: System Management (1Hz)
 - IWDG: Watchdog
 - Flash: Save params of system
     - [0]: lgPositionCurr

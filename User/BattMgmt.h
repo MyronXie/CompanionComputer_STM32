@@ -91,6 +91,9 @@ uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 
+uint8_t Battery_Management(void);
+void Battery_MavlinkPack(mavlink_battery_status_t* mav);
+
 #endif /* __BATTMGMT_H */
 
 /******************************END OF FILE******************************/

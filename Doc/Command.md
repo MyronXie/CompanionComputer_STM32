@@ -17,7 +17,6 @@ Cmd |Name               |Content
 0x14|ERR_BATT_ENABLEFET |FET Enable Fail
 0x15|ERR_BATT_INIT      |Battery Init Fail
 0x16|ERR_BATT_POWEROFF  |Auto PowerOff Fail
-0x17|                   |Auto PowerOff Success
 -   |-                  |-
 **0x20**||**Landing Gear**
 0x21|                   |Landing Gear Auto Reset

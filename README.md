@@ -9,13 +9,14 @@
 * *Rx of USART1 become dummy occasionally (WIP)*
 
 ### Changelog
-* v0.2 (20180201) : Add Battery Management System
+* v0.2 (20180202) : Add Battery Management System
     + Add Battery Management System
         + Read status of battery through SMBus (voltage, current, remaining capacity, etc.)
         + Auto power on/off another battery when one battery is power on/off manually
     * Improve communication with FMU through Mavlink
         + Send `BATTERY_STATUS` to FMU and report on QGC
         + Send `STM32_F3_COMMAND` to FMU
+    * Adjust architecture of code
 
 * v0.1.1 (20180104) : Improve stability of Landing Gear System
     * Improve stability of Landing Gear System

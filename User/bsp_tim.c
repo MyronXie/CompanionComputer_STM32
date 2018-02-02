@@ -19,7 +19,7 @@ TIM_MasterConfigTypeDef sMasterConfig;
 
 void TIM_Init(void)
 {
-	/* TIM2: HeartBeat (1Hz) */
+	/* TIM2: System Management (1Hz) */
 	htim2.Instance			= TIM2;
 	htim2.Init.Prescaler	= 64000-1;
 	htim2.Init.CounterMode	= TIM_COUNTERMODE_UP;

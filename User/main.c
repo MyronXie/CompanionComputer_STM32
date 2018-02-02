@@ -17,68 +17,19 @@
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
-/* Extern parameter */
-extern TIM_HandleTypeDef htim6;
-
-/* System */
-uint8_t sysConnect = 0;					// Flag for system working (Receive first heartbeat from FC)
-uint8_t sysError = 0;					// Counter for fatal error
-uint8_t sysBattery = 0;					// Flag for battery , 0 for no problem
-uint8_t sysReport = 0;					// Flag for report error msg
-uint16_t sysTicks = 0;					// Record system running time
-void System_Heartbeat(void);
-void System_ErrorHandler(void);
-
-/* Flash */
-uint32_t flashParam[FLASHSIZE];
-
 /* Serial & Mavlink */
 uint8_t recvByte = 0;
-uint16_t sendByteCnt = 0; 				// Length of Mavlink package
-uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
+
 uint16_t msgSeqPrev = 0;				// Monitor lost package number of Mavlink
-mavlink_message_t mavMsgTx,mavMsgRx;
+mavlink_message_t mavMsgRx;
 mavlink_heartbeat_t mavHrt;
 mavlink_status_t mavSta;
 mavlink_command_long_t mavCmdRx;
 mavlink_command_ack_t mavCmdAck;
-mavlink_battery_status_t mavBattTx,mavBattRx;
+mavlink_battery_status_t mavBattRx;
 mavlink_stm32_f3_command_t mavF3Cmd;
 void Mavlink_Decode(mavlink_message_t* msg);
 
-
-/* Landing Gear */
-uint8_t lgPositionRecv = 0;				// Position of Landing Gear [Down: 0, Up: 1]
-uint8_t lgPositionCurr = 0;
-uint8_t lgPositionPrev = 0;
-uint8_t lgChangeDelayCnt = 0;			// Delay for prevent too fast changing
-uint8_t lgChangeStatusCurr = 0;			// Change Status of Landing Gear [Standby: 0, Changing: 1]
-uint8_t lgChangeStatusPrev = 0;
-uint8_t lgChangeProgress = 50;			// Change Progress of Landing Gear [0-100(%)], not used now
-void LandingGear_Init(void);
-void LandingGear_Control(void);
-void LandingGear_Adjustment(void);
-
-/* Battery Mgmt */
-extern BattMsg battA,battB,battO;
-BattMsg* battX;
-uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
-uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
-void Battery_Management(void);
-void Batt_MavlinkPack(mavlink_battery_status_t* mav);
-
-/* Log list */
-char F3LOG[100]={""};
-char* f3LogList[256];
-
-char LOG_0x01[15]={"System Reboot"};
-char LOG_0x02[15]={"Serial Reset"};
-char LOG_0x10[15]={"Report Test"};
-char LOG_0x11[20]={"Battery Offboard"};
-char LOG_0x12[15]={"Vdiff>100mV"};
-char LOG_0x16[25]={"Power Off Fail"};
-char LOG_0x17[25]={"Power Off Success"};
-char LOG_0x21[25]={"Landing Gear Auto Reset"};
 
 /**
   * @brief  Main program
@@ -99,11 +50,8 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n [INFO] Init: Battery");
-	sysBattery = Batt_Init();
-	// <Dev>
-	sysBattery = 0x10;
-	f3LogList[0x10]="Report Test";
-	if(sysBattery) sysReport=1;
+	sysError = Batt_Init();
+	if(sysError) sysReport = 1;
 	
 	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n [INFO] Init: LandingGear");
@@ -129,7 +77,7 @@ int main(void)
 			if(mavlink_parse_char(MAVLINK_COMM_0, recvByte, &mavMsgRx, &mavSta))
 			{
 				msgLostCnt = 0;							// Clear Communication Lost flag
-				sysError = 0;							// Current for communication error
+				sysWarning = 0;							// Current for communication error
 				
 				if(!sysConnect)							// Receive first mavlink msg, start system
 				{
@@ -159,9 +107,10 @@ int main(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if(htim->Instance == TIM2)		// TIM2: HeartBeat (1Hz)
+	if(htim->Instance == TIM2)		// TIM2: System Management (1Hz)
 	{
 		System_Heartbeat();
+		System_ErrorReporter();
 		System_ErrorHandler();
 		IWDG_Feed();				// Feed watchdog	
 	}
@@ -175,78 +124,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	if(htim->Instance == TIM7)		// TIM7: Read & Send Battery Message (40Hz)
 	{
-		Battery_Management();
-	}
-}
-
-
-void System_Heartbeat(void)
-{	
-	printf("\r\n\r\n [INFO] Hrt#%d",++sysTicks);			// Record running time
-	sendByteCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
-	Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-	
-	// <Dev> for Monitor
-	if(!(sysTicks%30))
-	{		
-		sprintf(F3LOG,"Heartbeat #%d",sysTicks);
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x00, F3LOG);
-		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-	}	
-}
-
-
-void System_ErrorHandler(void)
-{
-	#ifndef INGORE_LOSTCOMM
-	if(sysConnect)		msgLostCnt++;			// msgLostCnt will reset if receive mavlink msg
-	#endif
-
-	// Lost connect with from FMU
-	if(msgLostCnt>=3)
-	{
-		printf("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
-		//sysConnect = 0;
-		
-		if(!(msgLostCnt%3)) 
-		{
-			sysError++;
-			printf("\r\n [ACT]  USART1: Reset");
-			USART_ReInit();						// Reset USART
-			
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x02, LOG_0x02);
-			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		}
-	}
-	
-	#ifdef ENABLE_LANGINGGEAR
-	// Reset Landing Gear
-	if(sysError == 2)
-	{
-		if(lgPositionCurr)						// Changing Landing Gear cost 1~2s approx., no need to judge change status
-		{
-			printf("\r\n [ACT]  LandingGear: Reset...");
-			HAL_TIM_Base_Stop_IT(&htim6);		// Stop general changing process temp.
-			LG_Reset();
-			lgPositionCurr = 0, lgChangeStatusCurr = 0;
-			flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
-			FLASH_SaveParam(flashParam,2);
-			HAL_TIM_Base_Start_IT(&htim6);		// Restart general changing process
-
-			// Send log to FC
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x21, LOG_0x21);
-			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		}
-	}
-	#endif //ENABLE_LANGINGGEAR
-	
-	// Reset System
-	if(sysError >= 4)
-	{
-		printf("\r\n [ACT]  System: Reset...");
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x01, LOG_0x01);
-		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		NVIC_SystemReset();
+		sysError = Battery_Management();
+		if(sysError) sysReport = 1;
 	}
 }
 
@@ -268,7 +147,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
 			switch(mavCmdRx.command)
 			{
 				case MAV_CMD_AIRFRAME_CONFIGURATION:			// 2520,0x09D8
-					LandingGear_Control();
+					LandingGear_Control(&mavCmdRx);
 					break;//MAV_CMD_AIRFRAME_CONFIGURATION
 
 				default:break;
@@ -295,311 +174,6 @@ void Mavlink_Decode(mavlink_message_t* msg)
 		
 		default:break;
 	}
-}
-
-
-
-
-void LandingGear_Init(void)
-{
-	LG_Relay_Init();										// Low-layer init
-	LG_TIM_Init();
-	Relay_OFF();											
-	
-	lgPositionCurr = FLASH_LoadParam(0);
-	lgChangeStatusCurr = FLASH_LoadParam(1);
-	printf(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
-	/* Landing Gear not reset in last process, Reset Landing Gear */
-	if(lgPositionCurr||lgChangeStatusCurr)
-	{
-		printf("\r\n [ACT]  Reset Landing Gear");
-		LG_Reset();
-		lgPositionCurr = 0, lgChangeStatusCurr = 0;
-		flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
-		FLASH_SaveParam(flashParam,2);
-	}
-}
-
-void LandingGear_Control(void)
-{
-	lgPositionRecv = (int)mavCmdRx.param2;		// .param2 for landing gear position
-	if(lgPositionRecv==0||lgPositionRecv==1)	// Param check
-	{
-		printf("\r\n [INFO] Landing Gear: %s", lgPositionRecv?"UP":"DOWN");
-		/* Landing Gear is changing or in delay time, ignore recv command */
-		if(lgChangeStatusCurr||lgChangeDelayCnt)
-		{
-			if(lgPositionRecv!=lgPositionCurr)	// Opposite direction, send reject message to FMU
-			{
-				printf(", Reject");
-				sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
-			}
-			else								// Same direction, send ignore message to FMU
-			{
-				printf(", Igrore");
-				sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
-			}
-			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		}
-		/* Landing Gear is standby, respond recv command */
-		else
-		{
-			lgPositionCurr = lgPositionRecv;
-			if(lgPositionPrev != lgPositionCurr)	// Opposite direction, set change status of Landing Gear
-			{
-				printf(", Respond");
-				lgChangeStatusCurr = 1;
-				lgPositionPrev = lgPositionCurr;
-			}
-			else									// Same direction, ignore command
-			{
-				printf(", Igrore");
-			}
-		}						
-	}
-}
-
-void LandingGear_Adjustment(void)
-{
-	// Decrease lgChangeDelayCnt
-	if(lgChangeDelayCnt)	lgChangeDelayCnt--;
-
-	if(lgChangeStatusPrev != lgChangeStatusCurr)	// Change status message
-	{
-		lgChangeStatusPrev = lgChangeStatusCurr;
-		if(lgChangeStatusCurr)						// Changing Process Start
-		{
-			printf("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
-			sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
-		}
-		else										// Changing Process Finish
-		{
-			printf("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
-			sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
-		}
-		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
-		FLASH_SaveParam(flashParam,2);
-	}
-	/* Landing Gear changing process */
-	if(lgChangeStatusCurr)
-	{
-		Relay_ON();								// Turn on relay to power on steers
-		// If changing process finished, lgChangeStatus turns 0
-		lgChangeStatusCurr = LG_Control(lgPositionCurr, &lgChangeProgress);
-		lgChangeDelayCnt = 200;					// Ignore cmd for 2s (guard time)
-	}
-	else Relay_OFF();							// Turn off relay to power off steers
-}
-
-// battCycleCnt(0x00~0x27)
-// 
-// Measure : 000X 0NNN
-// Send    : 000X 1NNN
-//  X=0 battA, X=1 battB
-//  N=0~7 type
-// Judge   : 0010 0NNN
-//  N=0~7 judge type
-void Battery_Management(void)
-{
-	/********** Measure & Send Process **********/
-	if(!(battCycleCnt&BATT_SYS_JUDGE))
-	{
-		// Select Battery
-		if(!(battCycleCnt&BATT_SYS_BATTB))		battX = &battA;
-		else									battX = &battB;
-		
-		// Measure Process
-		if(!(battCycleCnt&BATT_SYS_SEND))
-		{
-			if(battX->status&BATT_INUSE) Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
-		}
-		// Send Process
-		else
-		{
-			switch(battCycleCnt&BATT_SYS_MASK_CMD)
-			{
-				// Printf data
-				case 0x01:
-					if(battX->status&BATT_INUSE)
-					{
-						if(battX->status&BATT_ONBOARD)
-						{
-							printf("\r\n [INFO] Batt_0x%02x:0x%02x%02x,%d,%d,%d,%d,%d,%d,%d", battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current, battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
-							battX->lostCnt = 0;
-						}
-						else
-						{
-							battX->lostCnt++;
-							if(battX->lostCnt<=3) printf("\r\n [INFO] Batt_0x%02x:Lost#%d!", battX->id, battX->lostCnt);
-						}
-					}
-					break;
-
-				default: break;
-			}
-		}
-	}
-	/********** Judge Process **********/
-	else
-	{
-		switch(battCycleCnt&BATT_SYS_MASK_CMD)
-		{
-			// Report Error Message
-			case 0x00:
-
-				if(sysConnect&&sysBattery&&sysReport)
-				{
-					sysReport = 0;
-					switch(sysBattery)
-					{
-						case 0x10:
-							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x10, f3LogList[0x10]);
-							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-							break;
-						
-						case 0x11:
-							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x11, LOG_0x11);
-							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-							break;
-						
-						case 0x16:
-							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x16, LOG_0x16);
-							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-							break;
-						
-						case 0x17:
-							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x17, LOG_0x17);
-							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-							break;
-						
-						case 0: 
-						default: break;
-					}
-				}
-			
-				break;
-			
-			// Pack & Send battery status message
-			case 0x01:
-				#ifdef SINGLE_BATTERY
-				if(!(battX->status&BATT_INUSE))
-				{
-					if(battA.status&BATT_INUSE)	battX = &battA;
-					if(battB.status&BATT_INUSE)	battX = &battB;
-				}
-				#endif
-				Batt_MavlinkPack(&mavBattTx);
-				sendByteCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type, mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery, mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-				Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-				break;
-
-			// Battery Link Lost
-			case 0x02:
-				if((battA.lostCnt>=3)||(battB.lostCnt>=3))
-				{
-					printf("\r\n [ERR]  Batt: Connect lost");
-					sysBattery = ERR_BATT_OFFBOARD;
-					sysReport = 1;
-
-				}
-				break;
-			
-			#ifndef SINGLE_BATTERY
-			#ifdef AUTO_POWEROFF
-			// Judge Auto power off
-			case 0x03:
-				if(!battAutoOff)
-				{
-					if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
-					{
-						battAutoOff = 1;	
-					}
-				}
-				break;
-				
-			// Auto Power Off Process
-			case 0x04:
-				if(battAutoOff)
-				{
-					// Attempt every 2s
-					if((battAutoOff+1)%2)
-					{
-						printf("\r\n [ACT]  Batt: Auto-Off Attempt#%d",(battAutoOff+1)/2);
-						if(battA.fet&PWR_ON) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
-						if(battB.fet&PWR_ON) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-					
-						Batt_Measure(&battA, 0x00);
-						Batt_Measure(&battB, 0x00);
-						printf(": A-0x%02x, B-0x%02x",battA.fet,battB.fet);
-					}
-					
-					// All Batteries have powered off
-					if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
-					{
-						printf("\r\n [INFO] Batt: Auto Power Off Success");
-						battAutoOff = 0;
-						battA.status &= ~BATT_INUSE;
-						battB.status &= ~BATT_INUSE;
-						sysBattery = 0x17;
-						sysReport = 1;
-					}
-					else if(++battAutoOff>=7)
-					{
-						printf("\r\n [ERR]  Batt: Auto Power Off Fail");
-						battAutoOff = 0;
-						sysBattery = ERR_BATT_POWEROFF;
-						sysReport = 1;
-					}
-				}
-				break;
-			#endif //AUTO_POWEROFF
-			#endif //SINGLE_BATTERY
-
-		}
-	}		
-	
-	// Increase battCycleCnt
-	battCycleCnt = (battCycleCnt+1)%40;
-}
-
-
-void Batt_MavlinkPack(mavlink_battery_status_t* mav)
-{
-	#ifndef SINGLE_BATTERY
-	mav->id 				= 0x36;
-	mav->battery_function	= 1;	// Redefine this param
-	mav->type				= 1;									// Redefine this param
-//	mav->battery_function	= ((battA.status<<4)&0xF0)+(battB.status&0x0F);	// Redefine this param
-//	mav->type				= sysBattery;									// Redefine this param
-	mav->temperature		= (battA.temperature + battB.temperature)/2;	// in centi-degrees celsius
-	mav->voltages[0]		= (battA.voltage + battB.voltage)/2;			// in mV
-	mav->current_battery	= battA.current + battB.current;				// in 10mA
-	mav->current_consumed	= (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
-	mav->energy_consumed	= -1;											// -1: does not provide
-	mav->battery_remaining	= (battA.soc + battB.soc)/2;					// 0%: 0, 100%: 100
-
-// <Dev> Test Data	
-//	mav->id 				= 0x36;
-//	mav->battery_function	= 4;	// Redefine this param
-//	mav->type				= 3;									// Redefine this param
-//	mav->temperature		= 1234;	// in centi-degrees celsius
-//	mav->voltages[0]		= 23456;			// in mV
-//	mav->current_battery	= 987;				// in 10mA
-//	mav->current_consumed	= 345;	// in mAh
-//	mav->energy_consumed	= -1;											// -1: does not provide
-//	mav->battery_remaining	= 89;						// 0%: 0, 100%: 100
-	#else
-	mav->id 				= battX->id;
-	mav->battery_function	= battX->status;									// Redefine this param
-	mav->type				= sysBattery;
-	mav->temperature		= battX->temperature;
-	mav->voltages[0]		= battX->voltage;
-	mav->current_battery	= battX->current;
-	mav->current_consumed	= battX->fullChargeCapacity - battX->remainingCapacity;
-	mav->energy_consumed	= -1;
-	mav->battery_remaining	= battX->soc;
-	#endif
 }
 
 

@@ -20,14 +20,13 @@
 #include "mavlink_helpers.h"
 
 // <Dev> Option
+//#define INGORE_LOSTCOMM
+//#define SINGLE_BATTERY
+//#define INGORE_VDIFF
 
-//#define INGORE_LOSTCOMM			1
+#define ENABLE_LANGINGGEAR
+#define AUTO_POWEROFF
 
-#define ENABLE_LANGINGGEAR		1
-
-//#define SINGLE_BATTERY		1
-#define AUTO_POWEROFF		1
-#define INGORE_VDIFF		1
 
 
 // ErrorCode
@@ -40,6 +39,22 @@
 #define ERR_BATT_POWEROFF		0x16
 
 
+extern mavlink_message_t mavMsgTx;
+extern uint16_t sendByteCnt;
+
+extern uint8_t sysConnect;					// Flag for system working (Receive first heartbeat from FC)
+extern uint8_t sysWarning;					// Counter for fatal error
+extern uint8_t sysError;					// Flag for battery , 0 for no problem
+extern uint8_t sysReport;					// Flag for report error msg
+extern uint16_t sysTicks;					// Record system running time
+
+extern uint8_t msgLostCnt;					// Mavlink Communication Lost Counter
+
+extern char* logList[256];
+
+void System_Heartbeat(void);
+void System_ErrorReporter(void);
+void System_ErrorHandler(void);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 #endif /* __SYSTEM_H */
