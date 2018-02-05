@@ -34,6 +34,7 @@
 #define MSG_LANDINGGEAR         0x20
 
 // ErrorCode
+#define NO_ERR                  0x00
 #define ERR_SYS_GENERAL         0x01
 #define ERR_SYS_SERIAL          0x02
 #define ERR_BATT_OFFBOARD       0x11

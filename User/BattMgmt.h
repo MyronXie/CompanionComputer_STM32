@@ -35,6 +35,7 @@ typedef struct
     uint16_t    designCapacity;
 }BattMsg;
 
+#define ATTEMPT_TIMES     4
 
 //===============Register==============
 #define BATT_BatteryMode        0x03
@@ -81,8 +82,15 @@ typedef struct
 #define BATT_SYS_SEND           (1<<3)
 #define BATT_SYS_MASK_CMD       0x07
 
+//============BATT_Measure============
 #define BATT_MEAS_FET           0x00
 #define BATT_MEAS_VOLT          0x01
+#define BATT_MEAS_TEMP          0x02
+#define BATT_MEAS_CURR          0x03
+#define BATT_MEAS_SOC           0x04
+#define BATT_MEAS_RCAP          0x05
+#define BATT_MEAS_FCCAP         0x06
+#define BATT_MEAS_DCAP          0x07
 
 uint8_t Batt_Init(void);
 

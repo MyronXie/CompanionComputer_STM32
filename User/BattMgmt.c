@@ -42,7 +42,7 @@ uint8_t Batt_Init(void)
     while(!((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))      // Both batteries should onboard
     #endif
     {
-        if(++attemptTimes>3)
+        if(++attemptTimes>ATTEMPT_TIMES)
         {			
             printf("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?"battA":"",(!(battB.status&BATT_ONBOARD))?"battB":"");
             if(!(battA.status&BATT_ONBOARD))    sysBattery|=ERR_BATTA;
@@ -95,7 +95,7 @@ uint8_t Batt_Init(void)
     while(!((battA.fet&PWR_ON)&&(battB.fet&PWR_ON)))        // At least one battery is powered off
     #endif
     {
-        if(++attemptTimes>4)
+        if(++attemptTimes>ATTEMPT_TIMES)
         {
             printf("\r\n [ERR]  %s %s Power On Fail",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
             if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
@@ -120,7 +120,7 @@ uint8_t Batt_Init(void)
     while(!((battA.fet&FET_LOCK)&&(battB.fet&FET_LOCK)))
     #endif
     {
-        if(++attemptTimes>4)
+        if(++attemptTimes>ATTEMPT_TIMES)
         {
             printf("\r\n [ERR]  %s %s Enable FET Fail",(!(battA.fet&FET_LOCK))?"battA":"",(!(battB.fet&FET_LOCK))?"battB":"");
             if(!(battA.fet&FET_LOCK))   sysBattery|=ERR_BATTA;
@@ -156,7 +156,7 @@ uint8_t Batt_Init(void)
     }
 
     printf("\r\n [INFO] Battery Init Success");
-    return 0x00;
+    return NO_ERR;
 }
 
 
@@ -167,40 +167,41 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd)
     
     switch(_cmd)
     {
-        case 0x00: 
+        case BATT_MEAS_FET: 
             regSta = Batt_ReadWord(_batt->id, BATT_FETStatus, &regVal);
             if(!regSta) _batt->fet = regVal; 
             else        _batt->fet = 0xC0;          // dummy flag, display in boot up
             break;
         
-        case 0x01:
+        case BATT_MEAS_VOLT:
             regSta = Batt_ReadWord(_batt->id, BATT_Voltage, &regVal);
             if(!regSta) _batt->voltage = regVal; break;
         
-        case 0x02:
+        case BATT_MEAS_TEMP:
             regSta = Batt_ReadWord(_batt->id, BATT_Temperature, &regVal);
             if(!regSta) _batt->temperature = (regVal-2731)*10;	break;  // Kelvin -> Celsius
         
-        case 0x03:
+        case BATT_MEAS_CURR:
             regSta = Batt_ReadWord(_batt->id, BATT_Current, &regVal);
             if(!regSta) _batt->current = regVal; break;
+
+        case BATT_MEAS_SOC:
+            regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
+            if(!regSta) _batt->soc = regVal; break;
         
-        case 0x04:
-            regSta += Batt_ReadWord(_batt->id, BATT_FullChargeCapacity, &regVal);
-            if(!regSta) _batt->fullChargeCapacity = regVal*10; break;
-        
-        case 0x05:
+        case BATT_MEAS_RCAP:
             regSta += Batt_ReadWord(_batt->id, BATT_RemainingCapacity, &regVal);
             if(!regSta) _batt->remainingCapacity = regVal*10; break;
-        
-        // can be removed when battery is stable
-        case 0x06:
+
+        case BATT_MEAS_FCCAP:
+            regSta += Batt_ReadWord(_batt->id, BATT_FullChargeCapacity, &regVal);
+            if(!regSta) _batt->fullChargeCapacity = regVal*10; break;
+
+        case BATT_MEAS_DCAP:
             regSta += Batt_ReadWord(_batt->id, BATT_DesignCapacity, &regVal);
             if(!regSta) _batt->designCapacity = regVal*10; break;
         
-        case 0x07:
-            regSta += Batt_ReadWord(_batt->id, BATT_RelativeSOC, &regVal);
-            if(!regSta) _batt->soc = regVal; break;
+
         
         default: break;		
     }
@@ -252,7 +253,7 @@ uint8_t Battery_Management(void)
                         if(battX->status&BATT_INUSE)
                         {
                             battX->lostCnt++;
-                            if(battX->lostCnt<=3) printf("\r\n [INFO] Batt: 0x%02X Lost#%d!", battX->id, battX->lostCnt);
+                            if(battX->lostCnt<ATTEMPT_TIMES) printf("\r\n [INFO] Batt: 0x%02X Lost#%d!", battX->id, battX->lostCnt);
                         }
                     }
 
@@ -283,11 +284,11 @@ uint8_t Battery_Management(void)
 
             // Battery Link Lost
             case 0x02:
-                if((battA.lostCnt==4)||(battB.lostCnt==4))
+                if((battA.lostCnt==ATTEMPT_TIMES)||(battB.lostCnt==ATTEMPT_TIMES))
                 {
                     printf("\r\n [ERR]  Batt: Connect lost");
-                    if(battA.lostCnt==4) sysBattery|=ERR_BATTA;
-                    if(battB.lostCnt==4) sysBattery|=ERR_BATTB;
+                    if(battA.lostCnt==ATTEMPT_TIMES) sysBattery|=ERR_BATTA;
+                    if(battB.lostCnt==ATTEMPT_TIMES) sysBattery|=ERR_BATTB;
                     return ERR_BATT_OFFBOARD;
                 }
                 break;
@@ -338,8 +339,8 @@ uint8_t Battery_Management(void)
                         if(battA.fet&PWR_ON)    Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
                         if(battB.fet&PWR_ON)    Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
                     
-                        Batt_Measure(&battA, 0x00);
-                        Batt_Measure(&battB, 0x00);
+                        Batt_Measure(&battA, BATT_MEAS_FET);
+                        Batt_Measure(&battB, BATT_MEAS_FET);
                         printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
                     }
                     
