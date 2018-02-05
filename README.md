@@ -5,25 +5,24 @@
 - Landing Gear Control System
 - Battery Management System
 
-### To-Do List
-* *Rx of USART1 become dummy occasionally (WIP)*
-
 ### Changelog
-* v0.2 (20180202) : Add Battery Management System
+* v0.2 (20180205) : Add Battery Management System
     + Add Battery Management System
         + Read status of battery through SMBus (voltage, current, remaining capacity, etc.)
         + Auto power on/off another battery when one battery is power on/off manually
     * Improve communication with FMU through Mavlink
-        + Send `BATTERY_STATUS` to FMU and report on QGC
-        + Send `STM32_F3_COMMAND` to FMU
-    * Adjust architecture of code
+        + Send `BATTERY_STATUS` to FMU for battery status reporting
+        + Send `STM32_F3_COMMAND` to FMU for error reporting
+    * Improve F3 board system
+        * Adjust architecture of code
+        + Send system status to FMU and report on QGC
 
 * v0.1.1 (20180104) : Improve stability of Landing Gear System
     * Improve stability of Landing Gear System
         + Ignore frequent commands
         + Put down Landing Gear when communication lost or system reboot
     * Improve communication with FMU through Mavlink
-        + Send `COMMAND_ACK` to FMU and report on QGC
+        + Send `COMMAND_ACK` to FMU for response landing gear command
     * Improve stability of USART
         + Auto Reinit USART when Rx is dummy
 
@@ -36,3 +35,4 @@
 
 ### Document
 * [Resource](Doc/Resource.md)
+* [Command](Doc/Command.md)

@@ -30,7 +30,6 @@ mavlink_battery_status_t mavBattRx;
 mavlink_stm32_f3_command_t mavF3CmdRx;
 void Mavlink_Decode(mavlink_message_t* msg);
 
-
 /**
   * @brief  Main program
   * @param  None
@@ -50,8 +49,8 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n [INFO] Init: Battery");
-	sysStatus = Batt_Init();
-	if(sysStatus) sysReport = 1;
+	sysStatusTemp = Batt_Init();
+	if(sysStatusTemp) sysStatus = sysStatusTemp;
 	
 	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n [INFO] Init: LandingGear");
@@ -124,8 +123,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	if(htim->Instance == TIM7)		// TIM7: Read & Send Battery Message (40Hz)
 	{
-		sysStatus = Battery_Management();
-		if(sysStatus) sysReport = 1;
+		sysStatusTemp = Battery_Management();
+		if(sysStatusTemp) sysStatus = sysStatusTemp;
 	}
 }
 

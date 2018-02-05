@@ -17,8 +17,8 @@ extern UART_HandleTypeDef huart1;
 
 uint8_t sysConnect = 0;					// Flag for system working (Receive first heartbeat from FC)
 uint8_t sysWarning = 0;					// Counter for fatal error
+uint8_t sysStatusTemp = 0;
 uint8_t sysStatus = 0;					// Flag for battery , 0 for no problem
-uint8_t sysReport = 0;					// Flag for report error msg
 uint16_t sysTicks = 0;					// Record system running time
 uint8_t sysBattery = 0;
 
@@ -45,24 +45,25 @@ void System_Heartbeat(void)
 
 void System_StatusReporter(void)
 {
-	if(sysConnect&&sysStatus&&sysReport)			// Must report after connected with FMU, otherwise it's dummy
+	if(sysConnect&&sysStatus)			// Must report after connected with FMU, otherwise it's dummy
 	{
-		sysReport = 0;
-		//Mavlink_SendLog(sysStatus, logList[sysStatus]);
 		if(sysStatus>=0x10&&sysStatus<0x20)
 		{
-			if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))	sprintf(logSend,"All batt ");
-			else if((sysBattery&ERR_BATTA))							sprintf(logSend,"battA ");
-			else if((sysBattery&ERR_BATTB))							sprintf(logSend,"battB ");
+			if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))	sprintf(logSend,"All battery ");
+			else if((sysBattery&ERR_BATTA))							sprintf(logSend,"battery A ");
+			else if((sysBattery&ERR_BATTB))							sprintf(logSend,"battery B ");
 			else 													sprintf(logSend,"");
+			sysBattery = 0;
 			strcat(logSend,logList[sysStatus]);
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logSend);
+			Mavlink_SendLog(sysStatus, logSend);
 		}
 		else
 		{
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logList[sysStatus]);
+			Mavlink_SendLog(sysStatus, logList[sysStatus]);
 		}
 		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+		printf("\r\n [INFO] Status Reporter Trigged");
+		sysStatus = 0;
 	}
 }
 
@@ -80,7 +81,7 @@ void System_ErrorHandler(void)
 	#endif
 
 	// Lost connect with from FMU
-	if(msgLostCnt>=2)
+	if(msgLostCnt>=3)
 	{
 		printf("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
 		
@@ -89,11 +90,8 @@ void System_ErrorHandler(void)
 		if(msgLostCnt==3||msgLostCnt==6||msgLostCnt==10) 
 		{
 			printf("\r\n [ACT]  USART1: Reset");
+			Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
 			USART_ReInit();						// Reset USART
-			
-			//Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
-			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
-			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 		}
 	}
 	
@@ -101,20 +99,18 @@ void System_ErrorHandler(void)
 	// Reset Landing Gear
 	if(sysWarning == 2)
 	{
-		sysStatus = LandingGear_Reset();
-		if(sysStatus) sysReport = 1;
+		sysStatusTemp = LandingGear_Reset();
+		if(sysStatusTemp) sysStatus = sysStatusTemp;
 	}
 	#endif //ENABLE_LANGINGGEAR
 	
 	// Reset System
-	if(sysWarning >= 4)
-	{
-		printf("\r\n [ACT]  System: Reset...");
-		//Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
-		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-		NVIC_SystemReset();
-	}
+//	if(sysWarning >= 4)
+//	{
+//		printf("\r\n [ACT]  System: Reset...");
+//		Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
+//		NVIC_SystemReset();					// Temp disable for improve battery logic
+//	}
 }
 
 

@@ -67,8 +67,8 @@ extern uint16_t sendByteCnt;
 
 extern uint8_t sysConnect;					// Flag for system working (Receive first heartbeat from FC)
 extern uint8_t sysWarning;					// Counter for fatal error
+extern uint8_t sysStatusTemp;
 extern uint8_t sysStatus;					// Flag for battery , 0 for no problem
-extern uint8_t sysReport;					// Flag for report error msg
 extern uint16_t sysTicks;					// Record system running time
 extern uint8_t sysBattery;
 
