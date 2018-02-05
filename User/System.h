@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2018.02.02
-  * Revised	Date	: 2018.02.02
+  * Revised	Date	: 2018.02.05
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -18,6 +18,7 @@
 #include "bsp_usart.h"
 #include "mavlink.h"
 #include "mavlink_helpers.h"
+#include "string.h"
 
 // <Dev> Option
 //#define INGORE_LOSTCOMM
@@ -48,14 +49,18 @@
 #define LOG_01	"System Error"
 #define LOG_02	"Serial Error"
 #define	LOG_10	""
-#define	LOG_11	"Battery Offboard"
-#define	LOG_12	"Voltage difference"
-#define	LOG_13	"PowerOn Fail"
+#define	LOG_11	"Offboard"
+#define	LOG_12	"Voltage mismatch"
+#define	LOG_13	"Power On Fail"
 #define	LOG_14	"FET Enable Fail"
-#define	LOG_15	"Battery Init Fail"
-#define	LOG_16	"PowerOff Fail"
+#define	LOG_15	"Init Fail"
+#define	LOG_16	"Power Off Fail"
 #define LOG_20	""
 #define LOG_21	"Landing Gear Auto Reset"
+
+#define ERR_BATTA				(1<<0)
+#define ERR_BATTB				(1<<1)
+
 
 extern mavlink_message_t mavMsgTx;
 extern uint16_t sendByteCnt;
@@ -65,6 +70,7 @@ extern uint8_t sysWarning;					// Counter for fatal error
 extern uint8_t sysStatus;					// Flag for battery , 0 for no problem
 extern uint8_t sysReport;					// Flag for report error msg
 extern uint16_t sysTicks;					// Record system running time
+extern uint8_t sysBattery;
 
 extern uint8_t msgLostCnt;					// Mavlink Communication Lost Counter
 

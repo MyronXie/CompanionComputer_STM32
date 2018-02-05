@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2018.02.02
-  * Revised	Date	: 2018.02.02
+  * Revised	Date	: 2018.02.05
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -20,6 +20,7 @@ uint8_t sysWarning = 0;					// Counter for fatal error
 uint8_t sysStatus = 0;					// Flag for battery , 0 for no problem
 uint8_t sysReport = 0;					// Flag for report error msg
 uint16_t sysTicks = 0;					// Record system running time
+uint8_t sysBattery = 0;
 
 uint8_t msgLostCnt = 0;					// Mavlink Communication Lost Counter
 
@@ -30,6 +31,8 @@ char* logList[64]={
 	LOG_00,LOG_01,LOG_02,"","","","","","","","","","","","","",
 	LOG_10,LOG_11,LOG_12,LOG_13,LOG_14,LOG_15,LOG_16,"","","","","","","","","",
 	LOG_20,LOG_21};
+
+char logSend[100]={""};
 
 extern uint8_t LandingGear_Reset(void);
 
@@ -46,7 +49,19 @@ void System_StatusReporter(void)
 	{
 		sysReport = 0;
 		//Mavlink_SendLog(sysStatus, logList[sysStatus]);
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logList[sysStatus]);
+		if(sysStatus>=0x10&&sysStatus<0x20)
+		{
+			if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))	sprintf(logSend,"All batt ");
+			else if((sysBattery&ERR_BATTA))							sprintf(logSend,"battA ");
+			else if((sysBattery&ERR_BATTB))							sprintf(logSend,"battB ");
+			else 													sprintf(logSend,"");
+			strcat(logSend,logList[sysStatus]);
+			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logSend);
+		}
+		else
+		{
+			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logList[sysStatus]);
+		}
 		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 	}
 }

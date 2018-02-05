@@ -5,7 +5,7 @@
   *
   * Version			: v0.2
   * Created	Date	: 2017.09.25
-  * Revised	Date	: 2018.02.02
+  * Revised	Date	: 2018.02.05
   *
   * Author			: Mingye Xie
   ******************************************************************************
@@ -84,7 +84,6 @@ typedef struct
 #define BATT_MEAS_FET			0x00
 #define BATT_MEAS_VOLT			0x01
 
-
 uint8_t Batt_Init(void);
 
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
@@ -95,7 +94,7 @@ uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 
 uint8_t Battery_Management(void);
-void Battery_MavlinkPack(mavlink_battery_status_t* mav);
+void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t num);
 
 #endif /* __BATTMGMT_H */
 
