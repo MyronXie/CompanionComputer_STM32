@@ -1,13 +1,13 @@
 /**
   ******************************************************************************
-  * File Name		: bsp_i2c.h
-  * Description		: Drivers for I2C (based on HAL)
+  * File Name       : bsp_i2c.h
+  * Description     : Drivers for I2C (based on HAL)
   *
-  * Version			: v0.2
-  * Created	Date	: 2018.01.22
-  * Revised	Date	: 2018.01.22
+  * Version         : v0.2
+  * Created Date    : 2018.01.22
+  * Revised Date    : 2018.01.22
   *
-  * Author			: Mingye Xie
+  * Author          : Mingye Xie
   ******************************************************************************
   */
 

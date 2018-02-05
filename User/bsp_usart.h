@@ -1,13 +1,13 @@
 /**
   ******************************************************************************
-  * File Name		: bsp_usart.h
-  * Description		: Drivers for usart (based on HAL)
+  * File Name       : bsp_usart.h
+  * Description     : Drivers for usart (based on HAL)
   *
-  * Version			: v0.2
-  * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.31
+  * Version         : v0.2
+  * Created Date    : 2017.10.18
+  * Revised Date    : 2018.01.31
   *
-  * Author			: Mingye Xie
+  * Author          : Mingye Xie
   ******************************************************************************
   */
 
@@ -18,7 +18,7 @@
 
 #include "stm32f3xx_hal.h"
 
-#define BUFFSIZE	300
+#define BUFFSIZE    300
 
 void USART_Init(void);
 void USART_DeInit(void);

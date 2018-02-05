@@ -1,13 +1,13 @@
 /**
   ******************************************************************************
-  * File Name		: main.h
-  * Description		: CompanionComputer_STM32 main program
+  * File Name       : main.h
+  * Description     : CompanionComputer_STM32 main program
   *
-  * Version			: v0.2
-  * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.02.02
+  * Version         : v0.2
+  * Created Date    : 2017.11.23
+  * Revised Date    : 2018.02.02
   *
-  * Author			: Mingye Xie
+  * Author          : Mingye Xie
   ******************************************************************************
   */
 

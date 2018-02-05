@@ -1,18 +1,5 @@
 /**
   ******************************************************************************
-  * File Name		: stm32f3xx_it.c
-  * Description		: Main Interrupt Service Routines
-  *
-  * Version			: v0.2
-  * Created	Date	: 2017.11.23
-  * Revised	Date	: 2018.01.09
-  *
-  * Author			: Mingye Xie
-  ******************************************************************************
-  */
-
-/**
-  ******************************************************************************
   * @file    GPIO/GPIO_IOToggle/Src/stm32f3xx_it.c
   * @author  MCD Application Team
   * @brief   Main Interrupt Service Routines.
@@ -168,7 +155,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+    HAL_IncTick();
 }
 
 /******************************************************************************/
@@ -186,27 +173,27 @@ void SysTick_Handler(void)
 
 void USART1_IRQHandler(void)
 {
-	HAL_UART_IRQHandler(&huart1);
+    HAL_UART_IRQHandler(&huart1);
 }
 
 void USART3_IRQHandler(void)
 {
-	HAL_UART_IRQHandler(&huart3);
+    HAL_UART_IRQHandler(&huart3);
 }
 
 void TIM2_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&htim2);
+    HAL_TIM_IRQHandler(&htim2);
 }
 
 void TIM6_DAC1_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&htim6);
+    HAL_TIM_IRQHandler(&htim6);
 }
 
 void TIM7_DAC2_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&htim7);
+    HAL_TIM_IRQHandler(&htim7);
 }
 
 /*void PPP_IRQHandler(void)

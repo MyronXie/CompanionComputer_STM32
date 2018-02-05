@@ -1,13 +1,13 @@
 /**
   ******************************************************************************
-  * File Name		: bsp_tim.h
-  * Description		: Drivers for Timer (based on HAL)
+  * File Name       : bsp_tim.h
+  * Description     : Drivers for Timer (based on HAL)
   *
-  * Version			: v0.2
-  * Created	Date	: 2017.10.18
-  * Revised	Date	: 2018.01.24
+  * Version         : v0.2
+  * Created Date    : 2017.10.18
+  * Revised Date    : 2018.01.24
   *
-  * Author			: Mingye Xie
+  * Author          : Mingye Xie
   ******************************************************************************
   */
 
