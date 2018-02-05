@@ -13,7 +13,8 @@
 
 #include "BattMgmt.h"
 
-BattMsg battA,battB;
+BattMsg battA={0x16};
+BattMsg battB={0x26};
 BattMsg* battX;
 uint8_t battCycleCnt = 0;				// Counter for dispatch command for battmgmt system
 uint8_t battAutoOff = 0;				// Flag for enable Auto Power Off Function
@@ -24,17 +25,13 @@ uint8_t Batt_Init(void)
 {
 	uint8_t attemptTimes = 0;
 	
-	// Battery Message Init
-	battA.id				= 0x16;
-	battB.id				= 0x26;
-	
 	#ifdef SINGLE_BATTERY
 	printf(" <SINGLE_BATTERY>");
 	#endif
 	
 	// Read FET status
-	Batt_Measure(&battA, 0x00);
-	Batt_Measure(&battB, 0x00);
+	Batt_Measure(&battA, BATT_MEAS_FET);
+	Batt_Measure(&battB, BATT_MEAS_FET);
 		
 	// Check onboard status
 	attemptTimes = 0;
@@ -46,24 +43,15 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>3)
 		{			
-			if(!((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD)))
-			{
-				printf("\r\n [ERR]  Both batteries Offboard!");
-			}
-			else
-			{
-				printf("\r\n [ERR]  ");
-				if(!(battA.status&BATT_ONBOARD)) printf("battA ");
-				if(!(battB.status&BATT_ONBOARD)) printf("battB ");
-				printf("Offboard");
-			}
+			printf("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?"battA":"",(!(battB.status&BATT_ONBOARD))?"battB":"");
+			// <WIP> Report specific battery offboard message
 			return ERR_BATT_OFFBOARD;
 		}
 		
-		printf("\r\n [ACT]  Link Attempt#%d",attemptTimes);	
-		Batt_Measure(&battA, 0x00);
-		Batt_Measure(&battB, 0x00);		
-		HAL_Delay(50);				
+		HAL_Delay(20);
+		printf("\r\n [ACT]  Link Attempt#%d",attemptTimes);
+		Batt_Measure(&battA, BATT_MEAS_FET);
+		Batt_Measure(&battB, BATT_MEAS_FET);	
 	}
 	
 	// Check power status
@@ -75,16 +63,18 @@ uint8_t Batt_Init(void)
 	
 	// Check Voltage Difference
 	#ifndef INGORE_VDIFF
-	
+
 	// Read voltage
-	Batt_ReadWord(battA.id, BATT_Voltage, &battA.voltage);
-	Batt_ReadWord(battB.id, BATT_Voltage, &battB.voltage);
+	Batt_Measure(&battA, BATT_MEAS_VOLT);
+	Batt_Measure(&battB, BATT_MEAS_VOLT);
 	
 	// Vdiff should small than 100mV
 	if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=100)
 	{
-		printf("\r\n [ERR]  Vdiff > 100mV: %d, %d",battA.voltage,battB.voltage);
+		printf("\r\n [ERR]  Vdiff>100mV: A-%d, B-%d",battA.voltage,battB.voltage);
+		// <WIP> Report specific battery voltage message
 		return ERR_BATT_VDIFF;
+
 	}
 	#endif //INGORE_VDIFF
 	#endif //SINGLE_BATTERY
@@ -99,20 +89,18 @@ uint8_t Batt_Init(void)
 	{
 		if(++attemptTimes>4)
 		{
-			printf("\r\n [ERR]  Auto Power On Fail!");
+			printf("\r\n [ERR]  Power On Fail!");
+			// <WIP> Report specific battery message
 			return ERR_BATT_POWERON;
 		}
 		
-		printf("\r\n [ACT]  Auto-On Attempt#%d",attemptTimes);
+		printf("\r\n [ACT]  Power On Attempt#%d",attemptTimes);
 		if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
 		if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-		
-		HAL_Delay(2000);	
-		
-		Batt_Measure(&battA, 0x00);
-		Batt_Measure(&battB, 0x00);
-		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
-					
+		HAL_Delay(2000);
+		Batt_Measure(&battA, BATT_MEAS_FET);
+		Batt_Measure(&battB, BATT_MEAS_FET);
+		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);	
 	}
 	
 	// Enable FET process
@@ -126,23 +114,23 @@ uint8_t Batt_Init(void)
 		if(++attemptTimes>4)
 		{
 			printf("\r\n [ERR]  Enable FET Fail!");
+			// <WIP> Report specific battery message
 			return ERR_BATT_ENABLEFET;
 		}
 		
 		printf("\r\n [ACT]  Enable FET Attempt#%d",attemptTimes);
 		if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
 		if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
-
 		HAL_Delay(2000);
-		
-		Batt_Measure(&battA, 0x00);
-		Batt_Measure(&battB, 0x00);
+		Batt_Measure(&battA, BATT_MEAS_FET);
+		Batt_Measure(&battB, BATT_MEAS_FET);
 		printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
 	}
 	
-	Batt_Measure(&battA, 0x00);
+	// Check battery is/is not init success
+	Batt_Measure(&battA, BATT_MEAS_FET);
+	Batt_Measure(&battB, BATT_MEAS_FET);
 	if((battA.status&BATT_ONBOARD)&&(battA.fet&PWR_ON)&&(battA.fet&FET_LOCK))	battA.status |= BATT_INUSE;
-	Batt_Measure(&battB, 0x00);
 	if((battB.status&BATT_ONBOARD)&&(battB.fet&PWR_ON)&&(battB.fet&FET_LOCK))	battB.status |= BATT_INUSE;
 	
 	#ifdef SINGLE_BATTERY
@@ -152,6 +140,7 @@ uint8_t Batt_Init(void)
 	#endif
 	{
 		printf("\r\n [ERR]  Battery Init Error!");
+		// <WIP> Report specific battery message
 		return ERR_BATT_INIT;
 	}
 	return 0x00;
@@ -289,13 +278,17 @@ uint8_t Battery_Management(void)
 			#ifdef AUTO_POWEROFF
 			// Judge Auto power off
 			case 0x03:
-				if((!battAutoOff)&&(!sysError))
+				if((!battAutoOff)&&(!sysStatus))
 				{
-					if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+					if((battA.status&BATT_INUSE)&&(battB.status&BATT_INUSE))
 					{
-						battAutoOff = 1;
-						sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x10, "Start Power Off Process");
-						Mavlink_SendMessage(&mavMsgTx, sendByteCnt);						
+						if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+						{
+							battAutoOff = 1;
+							//Mavlink_SendLog(MSG_BATTERY, "Start Power Off Process");
+							sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x10, "Start Power Off Process");
+							Mavlink_SendMessage(&mavMsgTx, sendByteCnt);						
+						}
 					}
 				}
 				break;
@@ -371,7 +364,7 @@ void Battery_MavlinkPack(mavlink_battery_status_t* mav)
 	#else
 	mav->id 				= battX->id;
 	mav->battery_function	= battX->status;									// Redefine this param
-	mav->type				= sysError;
+	mav->type				= sysStatus;
 	mav->temperature		= battX->temperature;
 	mav->voltages[0]		= battX->voltage;
 	mav->current_battery	= battX->current;

@@ -1582,6 +1582,11 @@
               <FilePath>..\User\bsp_misc.c</FilePath>
             </File>
             <File>
+              <FileName>System.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\System.c</FilePath>
+            </File>
+            <File>
               <FileName>BattMgmt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\BattMgmt.c</FilePath>

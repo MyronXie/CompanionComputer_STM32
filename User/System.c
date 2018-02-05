@@ -17,7 +17,7 @@ extern UART_HandleTypeDef huart1;
 
 uint8_t sysConnect = 0;					// Flag for system working (Receive first heartbeat from FC)
 uint8_t sysWarning = 0;					// Counter for fatal error
-uint8_t sysError = 0;					// Flag for battery , 0 for no problem
+uint8_t sysStatus = 0;					// Flag for battery , 0 for no problem
 uint8_t sysReport = 0;					// Flag for report error msg
 uint16_t sysTicks = 0;					// Record system running time
 
@@ -38,26 +38,25 @@ void System_Heartbeat(void)
 	printf("\r\n\r\n [HRT]  #%d",++sysTicks);			// Record running time
 	sendByteCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
 	Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-	
-//  <Dev> Monitor
-//	if(!(sysTicks%30))
-//	{		
-//		sprintf(F3LOG,"Heartbeat #%d",sysTicks);
-//		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, 0x00, F3LOG);
-//		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-//	}	
 }
 
-void System_ErrorReporter(void)
+void System_StatusReporter(void)
 {
-	if(sysConnect&&sysError&&sysReport)
+	if(sysConnect&&sysStatus&&sysReport)			// Must report after connected with FMU, otherwise it's dummy
 	{
 		sysReport = 0;
-		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysError, logList[sysError]);
+		//Mavlink_SendLog(sysStatus, logList[sysStatus]);
+		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, sysStatus, logList[sysStatus]);
 		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 	}
 }
 
+void Mavlink_SendLog(uint8_t id, char* msg)
+{
+	uint16_t cnt;
+	cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, id, msg);
+	Mavlink_SendMessage(&mavMsgTx, cnt);
+}
 
 void System_ErrorHandler(void)
 {
@@ -77,6 +76,7 @@ void System_ErrorHandler(void)
 			printf("\r\n [ACT]  USART1: Reset");
 			USART_ReInit();						// Reset USART
 			
+			//Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
 			sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
 			Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 		}
@@ -86,8 +86,8 @@ void System_ErrorHandler(void)
 	// Reset Landing Gear
 	if(sysWarning == 2)
 	{
-		sysError = LandingGear_Reset();
-		if(sysError) sysReport = 1;
+		sysStatus = LandingGear_Reset();
+		if(sysStatus) sysReport = 1;
 	}
 	#endif //ENABLE_LANGINGGEAR
 	
@@ -95,6 +95,7 @@ void System_ErrorHandler(void)
 	if(sysWarning >= 4)
 	{
 		printf("\r\n [ACT]  System: Reset...");
+		//Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
 		sendByteCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
 		Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
 		NVIC_SystemReset();

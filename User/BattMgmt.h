@@ -81,6 +81,9 @@ typedef struct
 #define BATT_SYS_SEND			(1<<3)
 #define BATT_SYS_MASK_CMD		0x07
 
+#define BATT_MEAS_FET			0x00
+#define BATT_MEAS_VOLT			0x01
+
 
 uint8_t Batt_Init(void);
 

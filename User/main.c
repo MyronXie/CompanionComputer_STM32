@@ -27,7 +27,7 @@ mavlink_status_t mavSta;
 mavlink_command_long_t mavCmdRx;
 mavlink_command_ack_t mavCmdAck;
 mavlink_battery_status_t mavBattRx;
-mavlink_stm32_f3_command_t mavF3Cmd;
+mavlink_stm32_f3_command_t mavF3CmdRx;
 void Mavlink_Decode(mavlink_message_t* msg);
 
 
@@ -50,8 +50,8 @@ int main(void)
 	I2C_Init();
 	
 	printf("\r\n [INFO] Init: Battery");
-	sysError = Batt_Init();
-	if(sysError) sysReport = 1;
+	sysStatus = Batt_Init();
+	if(sysStatus) sysReport = 1;
 	
 	#ifdef ENABLE_LANGINGGEAR
 	printf("\r\n [INFO] Init: LandingGear");
@@ -84,15 +84,15 @@ int main(void)
 					printf("\r\n [SYS]  Connected with FMU");
 					sysConnect = 1;					
 				}
-				else
-				{
-					// <Dev> Monitor lost package number of Mavlink
-					if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
-					{
-						printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
-					}
-				}
-				msgSeqPrev=mavMsgRx.seq;
+//				else
+//				{
+//					// <Dev> Monitor lost package number of Mavlink
+//					if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
+//					{
+//						printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+//					}
+//				}
+//				msgSeqPrev=mavMsgRx.seq;
 				
 				Mavlink_Decode(&mavMsgRx);
 			}
@@ -110,7 +110,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM2)		// TIM2: System Management (1Hz)
 	{
 		System_Heartbeat();
-		System_ErrorReporter();
+		System_StatusReporter();
 		System_ErrorHandler();
 		IWDG_Feed();				// Feed watchdog	
 	}
@@ -124,8 +124,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	if(htim->Instance == TIM7)		// TIM7: Read & Send Battery Message (40Hz)
 	{
-		sysError = Battery_Management();
-		if(sysError) sysReport = 1;
+		sysStatus = Battery_Management();
+		if(sysStatus) sysReport = 1;
 	}
 }
 
@@ -168,8 +168,8 @@ void Mavlink_Decode(mavlink_message_t* msg)
 		
 		/* STM32_F3_COMMAND (#500)*/
 		case MAVLINK_MSG_ID_STM32_F3_COMMAND:
-			mavlink_msg_stm32_f3_command_decode(msg, &mavF3Cmd);
-			printf("\r\n [FMU]  #500: 0x%02X,%s", mavF3Cmd.command, mavF3Cmd.f3_log);
+			mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
+			printf("\r\n [FMU]  #500: 0x%02X,%s", mavF3CmdRx.command, mavF3CmdRx.f3_log);
 			break;
 		
 		default:break;

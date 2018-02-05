@@ -27,7 +27,10 @@
 #define ENABLE_LANGINGGEAR
 #define AUTO_POWEROFF
 
-
+// MsgCode
+#define MSG_SYSTEM				0x00
+#define MSG_BATTERY				0x10
+#define MSG_LANDINGGEAR			0x20
 
 // ErrorCode
 #define ERR_SYS_GENERAL			0x01
@@ -44,7 +47,7 @@
 #define LOG_00	""
 #define LOG_01	"System Error"
 #define LOG_02	"Serial Error"
-#define	LOG_10	"Battery Init Success"
+#define	LOG_10	""
 #define	LOG_11	"Battery Offboard"
 #define	LOG_12	"Voltage difference"
 #define	LOG_13	"PowerOn Fail"
@@ -59,7 +62,7 @@ extern uint16_t sendByteCnt;
 
 extern uint8_t sysConnect;					// Flag for system working (Receive first heartbeat from FC)
 extern uint8_t sysWarning;					// Counter for fatal error
-extern uint8_t sysError;					// Flag for battery , 0 for no problem
+extern uint8_t sysStatus;					// Flag for battery , 0 for no problem
 extern uint8_t sysReport;					// Flag for report error msg
 extern uint16_t sysTicks;					// Record system running time
 
@@ -68,8 +71,9 @@ extern uint8_t msgLostCnt;					// Mavlink Communication Lost Counter
 extern char* logList[64];
 
 void System_Heartbeat(void);
-void System_ErrorReporter(void);
+void System_StatusReporter(void);
 void System_ErrorHandler(void);
+void Mavlink_SendLog(uint8_t id, char* msg);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 #endif /* __SYSTEM_H */
