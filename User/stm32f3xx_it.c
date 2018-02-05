@@ -52,7 +52,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern UART_HandleTypeDef huart1,huart3;
-extern TIM_HandleTypeDef htim6,htim7;
+extern TIM_HandleTypeDef htim2,htim6,htim7;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -155,7 +155,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+    HAL_IncTick();
 }
 
 /******************************************************************************/
@@ -173,22 +173,27 @@ void SysTick_Handler(void)
 
 void USART1_IRQHandler(void)
 {
-	HAL_UART_IRQHandler(&huart1);
+    HAL_UART_IRQHandler(&huart1);
 }
 
 void USART3_IRQHandler(void)
 {
-	HAL_UART_IRQHandler(&huart3);
+    HAL_UART_IRQHandler(&huart3);
+}
+
+void TIM2_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&htim2);
 }
 
 void TIM6_DAC1_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&htim6);
+    HAL_TIM_IRQHandler(&htim6);
 }
 
 void TIM7_DAC2_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&htim7);
+    HAL_TIM_IRQHandler(&htim7);
 }
 
 /*void PPP_IRQHandler(void)

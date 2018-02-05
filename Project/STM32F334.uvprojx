@@ -1536,16 +1536,21 @@
               <FileType>5</FileType>
               <FilePath>..\Drivers\mavlink-c_library_v2\protocol.h</FilePath>
             </File>
+            <File>
+              <FileName>mavlink_msg_stm32_f3_command.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_stm32_f3_command.h</FilePath>
+            </File>
+            <File>
+              <FileName>mavlink_msg_stm32_f3_motor_curr.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\mavlink-c_library_v2\common\mavlink_msg_stm32_f3_motor_curr.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>User</GroupName>
           <Files>
-            <File>
-              <FileName>LandingGear.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\LandingGear.c</FilePath>
-            </File>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
@@ -1567,9 +1572,29 @@
               <FilePath>..\User\bsp_usart.c</FilePath>
             </File>
             <File>
+              <FileName>bsp_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\bsp_i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_misc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\bsp_misc.c</FilePath>
+            </File>
+            <File>
+              <FileName>System.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\System.c</FilePath>
+            </File>
+            <File>
               <FileName>BattMgmt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\BattMgmt.c</FilePath>
+            </File>
+            <File>
+              <FileName>LandingGear.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\LandingGear.c</FilePath>
             </File>
           </Files>
         </Group>
