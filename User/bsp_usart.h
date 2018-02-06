@@ -17,6 +17,7 @@
 
 
 #include "stm32f3xx_hal.h"
+#include "string.h"
 
 #define BUFFSIZE    300
 
@@ -24,8 +25,11 @@ void USART_Init(void);
 void USART_DeInit(void);
 void USART_ReInit(void);
 
-uint8_t Serial_Available(void);
-uint8_t Serial_GetNextByte(void);
+uint8_t Serial_Rx_Available(void);
+uint8_t Serial_Rx_NextByte(void);
+
+void Serial_Tx_Send(void);
+void Serial_Tx_Package(uint8_t* buf, uint16_t length);
 
 #endif /* __BSP_USART_H */
 

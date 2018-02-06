@@ -69,9 +69,9 @@ int main(void)
     while(1)
     {	
         /************************* Mavlink Receive Process *************************/
-        if(Serial_Available())
+        if(Serial_Rx_Available())
         {
-            recvByte = Serial_GetNextByte();
+            recvByte = Serial_Rx_NextByte();
 
             if(mavlink_parse_char(MAVLINK_COMM_0, recvByte, &mavMsgRx, &mavSta))
             {
@@ -83,19 +83,22 @@ int main(void)
                     printf("\r\n [SYS]  Connected with FMU");
                     sysConnect = 1;					
                 }
-//              else
-//              {
-//                  // <Dev> Monitor lost package number of Mavlink
-//                  if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
-//                  {
-//                      printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
-//                  }
-//              }
-//              msgSeqPrev=mavMsgRx.seq;
+                else
+                {
+                    // <Dev> Monitor lost package number of Mavlink
+                    if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
+                    {
+                      printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+                    }
+                }
+              msgSeqPrev=mavMsgRx.seq;
                 
-                Mavlink_Decode(&mavMsgRx);
+              Mavlink_Decode(&mavMsgRx);
             }
-        }			
+        }
+        
+        Serial_Tx_Send();
+
     }//while 
 }//main  
 

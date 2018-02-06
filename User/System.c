@@ -119,8 +119,7 @@ void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length)
 {
     uint8_t buffer[263];                        // Mavlink max length is 263 (v1)
     mavlink_msg_to_send_buffer(buffer, msg);
-    HAL_UART_Transmit(&huart1, buffer, length, 1);	
-    //HAL_UART_Transmit_IT(&huart1, buffer, length);	
+    Serial_Tx_Package(buffer, length);
 }
 
 

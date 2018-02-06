@@ -14,13 +14,10 @@
 #include "bsp_usart.h"
 
 UART_HandleTypeDef huart1,huart3;
-uint8_t aRxBuffer[BUFFSIZE];
-uint8_t *rxBufFront,*rxBufRear;
+uint8_t aRxBuffer[BUFFSIZE],aTxBuffer[BUFFSIZE];
+uint8_t *RxBufFront,*RxBufRear,*TxBufFront,*TxBufRear;
 
-uint16_t bufCnt = 0;
-uint16_t bufCntLst = 0;
-uint16_t bufCntFlag = 0;
-
+uint8_t TxFlag = 0;
 
 void USART_Init(void)
 {
@@ -50,15 +47,15 @@ void USART_Init(void)
     HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
 
-    rxBufFront  = aRxBuffer;
-    rxBufRear   = aRxBuffer;
+    RxBufFront  = aRxBuffer;
+    RxBufRear   = aRxBuffer;
     HAL_UART_Receive_IT(&huart1,aRxBuffer,1);
 }
 
 void USART_DeInit(void)
 {
-    rxBufFront  = aRxBuffer;
-    rxBufRear   = aRxBuffer;
+    RxBufFront  = aRxBuffer;
+    RxBufRear   = aRxBuffer;
     HAL_UART_DeInit(&huart1);
     HAL_UART_DeInit(&huart3);
 }
@@ -121,31 +118,81 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance == USART1)
     { 
-        if(++rxBufRear >= (aRxBuffer + BUFFSIZE))   rxBufRear = aRxBuffer;  
+        if(++RxBufRear >= (aRxBuffer + BUFFSIZE))   RxBufRear = aRxBuffer;  
         
-        HAL_UART_Receive_IT(&huart1, rxBufRear, 1);     // Restart usart1's IT for next receive process
+        HAL_UART_Receive_IT(&huart1, RxBufRear, 1);     // Restart usart1's IT for next receive process
     }
 }
 
-uint8_t Serial_Available(void)
+
+uint8_t Serial_Rx_Available(void)
 {
-    if(rxBufFront != rxBufRear)	return 1;
+    if(RxBufFront != RxBufRear)	return 1;
     else return 0;
 }
 
-uint8_t Serial_GetNextByte(void)  
+void Serial_Tx_Send(void)
+{
+    if(!TxFlag)
+    {
+        if(TxBufFront != TxBufRear)	TxFlag = 1;
+        HAL_UART_Transmit_IT(&huart1, TxBufFront, 1);
+    }
+}
+
+uint8_t Serial_Rx_NextByte(void)  
 {  
     uint8_t tmp;
     
-    tmp = (uint8_t)*(rxBufFront);
+    tmp = (uint8_t)*(RxBufFront);
     
-    rxBufFront++;  
+    RxBufFront++;  
 
-    if (rxBufFront >= (aRxBuffer+BUFFSIZE))  
-        rxBufFront = aRxBuffer;  
+    if (RxBufFront >= (aRxBuffer+BUFFSIZE))  
+        RxBufFront = aRxBuffer;  
     
     return tmp; 
 }
+
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    uint8_t tmp;
+    
+    if(huart->Instance == USART1)
+    { 
+        if(RxBufFront != RxBufRear)
+        {
+            tmp = (uint8_t)*(TxBufFront);
+        
+            TxBufFront++;
+
+            if (TxBufFront >= (aTxBuffer+BUFFSIZE))  
+                TxBufFront = aTxBuffer;  
+                
+            HAL_UART_Transmit_IT(&huart1, &tmp, 1);
+        }
+        else TxFlag = 0;
+    }
+}
+
+void Serial_Tx_Package(uint8_t* buf, uint16_t length)
+{
+    uint16_t lentmp;
+    if((TxBufRear+length)<(aTxBuffer+BUFFSIZE))
+    {
+        memcpy(TxBufRear,buf,length);
+        TxBufRear+=length;
+    }
+    else
+    {
+        lentmp = (aTxBuffer+BUFFSIZE)-TxBufRear;
+        memcpy(TxBufRear,buf,lentmp);
+        memcpy(aTxBuffer,buf+lentmp,length-lentmp);
+        TxBufRear=aTxBuffer+(length-lentmp);
+    }
+}
+
 
 int fputc(int ch, FILE *f)          //->printf()
 {
