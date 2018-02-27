@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.10.18
-  * Revised Date    : 2018.01.31
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -49,6 +49,8 @@ void USART_Init(void)
 
     RxBufFront  = aRxBuffer;
     RxBufRear   = aRxBuffer;
+    TxBufFront  = aTxBuffer;
+    TxBufRear   = aTxBuffer;
     HAL_UART_Receive_IT(&huart1,aRxBuffer,1);
 }
 
@@ -135,8 +137,11 @@ void Serial_Tx_Send(void)
 {
     if(!TxFlag)
     {
-        if(TxBufFront != TxBufRear)	TxFlag = 1;
-        HAL_UART_Transmit_IT(&huart1, TxBufFront, 1);
+        if(TxBufFront != TxBufRear) 
+        {
+            HAL_UART_Transmit_IT(&huart1, TxBufFront++, 1);
+            HAL_Delay(1);//Need delay???
+        }
     }
 }
 
@@ -144,33 +149,25 @@ uint8_t Serial_Rx_NextByte(void)
 {  
     uint8_t tmp;
     
-    tmp = (uint8_t)*(RxBufFront);
-    
-    RxBufFront++;  
+    tmp = (uint8_t)*(RxBufFront++);
 
-    if (RxBufFront >= (aRxBuffer+BUFFSIZE))  
-        RxBufFront = aRxBuffer;  
+    if (RxBufFront >= (aRxBuffer+BUFFSIZE)) RxBufFront = aRxBuffer;  
     
     return tmp; 
 }
 
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    uint8_t tmp;
-    
+{   
     if(huart->Instance == USART1)
     { 
-        if(RxBufFront != RxBufRear)
-        {
-            tmp = (uint8_t)*(TxBufFront);
-        
-            TxBufFront++;
-
-            if (TxBufFront >= (aTxBuffer+BUFFSIZE))  
-                TxBufFront = aTxBuffer;  
-                
-            HAL_UART_Transmit_IT(&huart1, &tmp, 1);
+        if(TxBufFront != TxBufRear)
+        {           
+            TxFlag = 1;
+            
+            HAL_UART_Transmit_IT(&huart1, TxBufFront++, 1);
+            
+            if (TxBufFront >= (aTxBuffer+BUFFSIZE)) TxBufFront = aTxBuffer;
         }
         else TxFlag = 0;
     }
