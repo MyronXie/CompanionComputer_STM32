@@ -38,9 +38,10 @@ extern uint8_t LandingGear_Reset(void);
 
 void System_Heartbeat(void)
 {	
-    printf("\r\n\r\n [HRT]  #%d",++sysTicks);   // Record running time
     sendByteCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
     Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+	printf("\r\n #%d",sysTicks);		// Record running time <Dev> Will interfere mavlink receive process???
+	sysTicks++;
 }
 
 void System_StatusReporter(void)

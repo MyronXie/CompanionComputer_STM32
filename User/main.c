@@ -88,12 +88,12 @@ int main(void)
                     // <Dev> Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
-                      printf("\r\n [WARN] Mavkink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+                      printf("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
-              msgSeqPrev=mavMsgRx.seq;
-                
-              Mavlink_Decode(&mavMsgRx);
+                msgSeqPrev=mavMsgRx.seq;
+
+                Mavlink_Decode(&mavMsgRx);
             }
         }
         

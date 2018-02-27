@@ -30,20 +30,18 @@ void USART_Init(void)
     huart1.Init.HwFlowCtl   = UART_HWCONTROL_NONE;
     huart1.Init.Mode        = UART_MODE_TX_RX;
     HAL_UART_Init(&huart1);
-
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
     // USART3 for debug
     huart3.Instance         = USART3;
-    huart3.Init.BaudRate    = 115200;
+    huart3.Init.BaudRate    = 921600;
     huart3.Init.WordLength  = UART_WORDLENGTH_8B;
     huart3.Init.StopBits    = UART_STOPBITS_1;
     huart3.Init.Parity      = UART_PARITY_NONE;
     huart3.Init.HwFlowCtl   = UART_HWCONTROL_NONE;
     huart3.Init.Mode        = UART_MODE_TX_RX;
     HAL_UART_Init(&huart3);
-
     HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
 
@@ -51,13 +49,12 @@ void USART_Init(void)
     RxBufRear   = aRxBuffer;
     TxBufFront  = aTxBuffer;
     TxBufRear   = aTxBuffer;
+
     HAL_UART_Receive_IT(&huart1,aRxBuffer,1);
 }
 
 void USART_DeInit(void)
 {
-    RxBufFront  = aRxBuffer;
-    RxBufRear   = aRxBuffer;
     HAL_UART_DeInit(&huart1);
     HAL_UART_DeInit(&huart3);
 }
@@ -120,8 +117,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance == USART1)
     { 
-        if(++RxBufRear >= (aRxBuffer + BUFFSIZE))   RxBufRear = aRxBuffer;  
-        
+        if(++RxBufRear >= (aRxBuffer + BUFFSIZE))   RxBufRear = aRxBuffer;
         HAL_UART_Receive_IT(&huart1, RxBufRear, 1);     // Restart usart1's IT for next receive process
     }
 }
@@ -150,7 +146,6 @@ uint8_t Serial_Rx_NextByte(void)
     uint8_t tmp;
     
     tmp = (uint8_t)*(RxBufFront++);
-
     if (RxBufFront >= (aRxBuffer+BUFFSIZE)) RxBufFront = aRxBuffer;  
     
     return tmp; 
