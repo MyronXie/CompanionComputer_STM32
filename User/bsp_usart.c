@@ -14,10 +14,7 @@
 #include "bsp_usart.h"
 
 UART_HandleTypeDef huart1,huart3;
-uint8_t aRxBuffer[BUFFSIZE],aTxBuffer[BUFFSIZE];
-uint8_t *RxBufFront,*RxBufRear,*TxBufFront,*TxBufRear;
-
-uint8_t TxFlag = 0;
+SerialType USART1_Tx,USART1_Rx,USART3_Tx;
 
 void USART_Init(void)
 {
@@ -35,7 +32,7 @@ void USART_Init(void)
 
     // USART3 for debug
     huart3.Instance         = USART3;
-    huart3.Init.BaudRate    = 921600;
+    huart3.Init.BaudRate    = 256000;
     huart3.Init.WordLength  = UART_WORDLENGTH_8B;
     huart3.Init.StopBits    = UART_STOPBITS_1;
     huart3.Init.Parity      = UART_PARITY_NONE;
@@ -45,12 +42,25 @@ void USART_Init(void)
     HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
 
-    RxBufFront  = aRxBuffer;
-    RxBufRear   = aRxBuffer;
-    TxBufFront  = aTxBuffer;
-    TxBufRear   = aTxBuffer;
+    USART1_Tx.handle = &huart1;
+    USART1_Tx.length = 300;
+    USART1_Tx.front  = USART1_Tx.buffer;
+    USART1_Tx.rear   = USART1_Tx.buffer;
+    USART1_Tx.flag   = 0;
+    
+    USART1_Rx.handle = &huart1;
+    USART1_Rx.length = 300;
+    USART1_Rx.front  = USART1_Rx.buffer;
+    USART1_Rx.rear   = USART1_Rx.buffer;
+    USART1_Rx.flag   = 0;
+    
+    USART3_Tx.handle = &huart3;
+    USART3_Tx.length = 300;
+    USART3_Tx.front  = USART3_Tx.buffer;
+    USART3_Tx.rear   = USART3_Tx.buffer;
+    USART3_Tx.flag   = 0;
 
-    HAL_UART_Receive_IT(&huart1,aRxBuffer,1);
+    HAL_UART_Receive_IT(USART1_Rx.handle,USART1_Rx.rear,1);
 }
 
 void USART_DeInit(void)
@@ -117,85 +127,88 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance == USART1)
     { 
-        if(++RxBufRear >= (aRxBuffer + BUFFSIZE))   RxBufRear = aRxBuffer;
-        HAL_UART_Receive_IT(&huart1, RxBufRear, 1);     // Restart usart1's IT for next receive process
+        if(++USART1_Rx.rear >= (USART1_Rx.buffer + USART1_Rx.length))   USART1_Rx.rear = USART1_Rx.buffer;
+        HAL_UART_Receive_IT(USART1_Rx.handle, USART1_Rx.rear, 1);     // Restart usart1's IT for next receive process
     }
 }
-
 
 uint8_t Serial_Rx_Available(void)
 {
-    if(RxBufFront != RxBufRear)	return 1;
+    if(USART1_Rx.front != USART1_Rx.rear)	return 1;
     else return 0;
-}
-
-void Serial_Tx_Send(void)
-{
-    if(!TxFlag)
-    {
-        if(TxBufFront != TxBufRear) 
-        {
-            HAL_UART_Transmit_IT(&huart1, TxBufFront++, 1);
-            HAL_Delay(1);//Need delay???
-        }
-    }
 }
 
 uint8_t Serial_Rx_NextByte(void)  
 {  
     uint8_t tmp;
     
-    tmp = (uint8_t)*(RxBufFront++);
-    if (RxBufFront >= (aRxBuffer+BUFFSIZE)) RxBufFront = aRxBuffer;  
+    tmp = (uint8_t)(*USART1_Rx.front++);
+    if (USART1_Rx.front >= (USART1_Rx.buffer+USART1_Rx.length)) USART1_Rx.front = USART1_Rx.buffer;  
     
     return tmp; 
 }
-
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {   
     if(huart->Instance == USART1)
     { 
-        if(TxBufFront != TxBufRear)
+        if(USART1_Tx.front != USART1_Tx.rear)
         {           
-            TxFlag = 1;
-            
-            HAL_UART_Transmit_IT(&huart1, TxBufFront++, 1);
-            
-            if (TxBufFront >= (aTxBuffer+BUFFSIZE)) TxBufFront = aTxBuffer;
+            HAL_UART_Transmit_IT(USART1_Tx.handle, USART1_Tx.front++, 1);
+            if (USART1_Tx.front >= (USART1_Tx.buffer+USART1_Tx.length)) USART1_Tx.front = USART1_Tx.buffer;
         }
-        else TxFlag = 0;
+        else USART1_Tx.flag = 0;
+    }
+    
+    if(huart->Instance == USART3)
+    { 
+        if(USART3_Tx.front != USART3_Tx.rear)
+        {           
+            HAL_UART_Transmit_IT(USART3_Tx.handle, USART3_Tx.front++, 1);
+            if (USART3_Tx.front >= (USART3_Tx.buffer + USART3_Tx.length)) USART3_Tx.front = USART3_Tx.buffer;
+        }
+        else USART3_Tx.flag = 0;
     }
 }
 
-void Serial_Tx_Package(uint8_t* buf, uint16_t length)
+void Serial_Send(SerialType* serial, uint8_t* buf, uint16_t len)
 {
     uint16_t lentmp;
-    if((TxBufRear+length)<(aTxBuffer+BUFFSIZE))
+    
+    // Package process
+    if((serial->rear + len) < (serial->buffer + serial->length))
     {
-        memcpy(TxBufRear,buf,length);
-        TxBufRear+=length;
+        memcpy(serial->rear, buf, len);
+        serial->rear += len;
     }
-    else
+    else    // Exceed end of buffer
     {
-        lentmp = (aTxBuffer+BUFFSIZE)-TxBufRear;
-        memcpy(TxBufRear,buf,lentmp);
-        memcpy(aTxBuffer,buf+lentmp,length-lentmp);
-        TxBufRear=aTxBuffer+(length-lentmp);
+        lentmp = (serial->buffer + serial->length) - serial->rear;
+        memcpy(serial->rear, buf, lentmp);
+        memcpy(serial->buffer, buf+lentmp, len-lentmp);
+        serial->rear = serial->buffer + (len-lentmp);
+    }
+    
+    // Start sending process
+    if(!serial->flag)
+    {
+        serial->flag = 1;
+        HAL_UART_Transmit_IT(serial->handle, serial->front++, 1);
     }
 }
 
+// These function is not used now.
 
-int fputc(int ch, FILE *f)          //->printf()
-{
-    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1);
-    return ch;
-}
+//int fputc(int ch, FILE *f)          //->printf()
+//{
+//    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 1);
+//    return ch;
+//}
 
-int fgetc(FILE * f)                 //->scanf()
-{
-    uint8_t ch = 0;
-    HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 1);
-    return ch;
-}
+//int fgetc(FILE * f)                 //->scanf()
+//{
+//    uint8_t ch = 0;
+//    HAL_UART_Receive(&huart3, (uint8_t *)&ch, 1, 1);
+//    return ch;
+//}
 /******************************END OF FILE******************************/

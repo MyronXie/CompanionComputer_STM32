@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.05
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -27,7 +27,7 @@ uint8_t Batt_Init(void)
     uint8_t attemptTimes = 0;
     
     #ifdef SINGLE_BATTERY
-    printf(" <SINGLE_BATTERY>");
+    PRINTLOG(" <SINGLE_BATTERY>");
     #endif
     
     // Connect to battery
@@ -44,7 +44,7 @@ uint8_t Batt_Init(void)
     {
         if(++attemptTimes>ATTEMPT_TIMES)
         {			
-            printf("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?"battA":"",(!(battB.status&BATT_ONBOARD))?"battB":"");
+            PRINTLOG("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?"battA":"",(!(battB.status&BATT_ONBOARD))?"battB":"");
             if(!(battA.status&BATT_ONBOARD))    sysBattery|=ERR_BATTA;
             else battNum++;
             if(!(battB.status&BATT_ONBOARD))    sysBattery|=ERR_BATTB;
@@ -53,7 +53,7 @@ uint8_t Batt_Init(void)
         }
         
         HAL_Delay(20);
-        printf("\r\n [ACT]  Link Attempt#%d",attemptTimes);
+        PRINTLOG("\r\n [ACT]  Link Attempt#%d",attemptTimes);
         Batt_Measure(&battA, BATT_MEAS_FET);
         Batt_Measure(&battB, BATT_MEAS_FET);	
     }
@@ -65,7 +65,7 @@ uint8_t Batt_Init(void)
     #ifndef SINGLE_BATTERY
     if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))       // All batteries are power off
     {
-        printf("\r\n [INFO] Not powered by batteries!");
+        PRINTLOG("\r\n [INFO] Not powered by batteries!");
     }
     
     // Check Voltage Difference
@@ -78,7 +78,7 @@ uint8_t Batt_Init(void)
     // Vdiff should small than 100mV
     if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage))>=100)
     {
-        printf("\r\n [ERR]  Voltage mismatch: A-%d, B-%d",battA.voltage,battB.voltage);
+        PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%d, B-%d",battA.voltage,battB.voltage);
         if(battA.voltage>battB.voltage) sysBattery|=ERR_BATTA;
         else                            sysBattery|=ERR_BATTB;
         return ERR_BATT_VDIFF;
@@ -97,19 +97,19 @@ uint8_t Batt_Init(void)
     {
         if(++attemptTimes>ATTEMPT_TIMES)
         {
-            printf("\r\n [ERR]  %s %s Power On Fail",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
+            PRINTLOG("\r\n [ERR]  %s %s Power On Fail",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
             if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
             if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
             return ERR_BATT_POWERON;
         }
         
-        printf("\r\n [ACT]  Power On Attempt#%d",attemptTimes);
+        PRINTLOG("\r\n [ACT]  Power On Attempt#%d",attemptTimes);
         if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
         if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
         HAL_Delay(2000);
         Batt_Measure(&battA, BATT_MEAS_FET);
         Batt_Measure(&battB, BATT_MEAS_FET);
-        printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);	
+        PRINTLOG(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);	
     }
     
     // Enable FET process
@@ -122,19 +122,19 @@ uint8_t Batt_Init(void)
     {
         if(++attemptTimes>ATTEMPT_TIMES)
         {
-            printf("\r\n [ERR]  %s %s Enable FET Fail",(!(battA.fet&FET_LOCK))?"battA":"",(!(battB.fet&FET_LOCK))?"battB":"");
+            PRINTLOG("\r\n [ERR]  %s %s Enable FET Fail",(!(battA.fet&FET_LOCK))?"battA":"",(!(battB.fet&FET_LOCK))?"battB":"");
             if(!(battA.fet&FET_LOCK))   sysBattery|=ERR_BATTA;
             if(!(battB.fet&FET_LOCK))   sysBattery|=ERR_BATTB;
             return ERR_BATT_ENABLEFET;
         }
         
-        printf("\r\n [ACT]  Enable FET Attempt#%d",attemptTimes);
+        PRINTLOG("\r\n [ACT]  Enable FET Attempt#%d",attemptTimes);
         if(!(battA.fet&FET_LOCK))   Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
         if(!(battB.fet&FET_LOCK))   Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
         HAL_Delay(2000);
         Batt_Measure(&battA, BATT_MEAS_FET);
         Batt_Measure(&battB, BATT_MEAS_FET);
-        printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
+        PRINTLOG(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
     }
     
     // Check battery init status
@@ -149,13 +149,13 @@ uint8_t Batt_Init(void)
     if(!((battA.status&BATT_INUSE)&&(battB.status&BATT_INUSE)))
     #endif
     {
-        printf("\r\n [ERR]  %s %s Battery Init Error",(!(battA.status&BATT_INUSE))?"battA":"",(!(battB.status&BATT_INUSE))?"battB":"");
+        PRINTLOG("\r\n [ERR]  %s %s Battery Init Error",(!(battA.status&BATT_INUSE))?"battA":"",(!(battB.status&BATT_INUSE))?"battB":"");
         if(!(battA.status&BATT_INUSE))  sysBattery|=ERR_BATTA;
         if(!(battB.status&BATT_INUSE))  sysBattery|=ERR_BATTB;
         return ERR_BATT_INIT;
     }
 
-    printf("\r\n [INFO] Battery Init Success");
+    PRINTLOG("\r\n [INFO] Battery Init Success");
     return NO_ERR;
 }
 
@@ -239,11 +239,11 @@ uint8_t Battery_Management(void)
         {
             switch(battCycleCnt&BATT_SYS_MASK_CMD)
             {
-                // Printf data
+                // PRINTLOG data
                 case 0x01:
                     if(battX->status&BATT_ONBOARD)
                     {
-                        printf("\r\n [INFO] Batt: 0x%02X,0x%02X%02X,%d,%d,%d,%d,%d,%d,%d", 
+                        PRINTLOG("\r\n [INFO] Batt: 0x%02X,0x%02X%02X,%d,%d,%d,%d,%d,%d,%d", 
                                 battX->id, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
                                 battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
                         battX->lostCnt = 0;
@@ -253,7 +253,7 @@ uint8_t Battery_Management(void)
                         if(battX->status&BATT_INUSE)
                         {
                             battX->lostCnt++;
-                            if(battX->lostCnt<ATTEMPT_TIMES) printf("\r\n [INFO] Batt: 0x%02X Lost#%d!", battX->id, battX->lostCnt);
+                            if(battX->lostCnt<ATTEMPT_TIMES) PRINTLOG("\r\n [INFO] Batt: 0x%02X Lost#%d!", battX->id, battX->lostCnt);
                         }
                     }
 
@@ -276,17 +276,17 @@ uint8_t Battery_Management(void)
                     if(battB.status&BATT_ONBOARD)   battX = &battB;
                 }
                 Battery_MavlinkPack(&mavBattTx,battNum);
-                sendByteCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+                sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
                                                                 mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
                                                                 mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-                Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+                Mavlink_SendMessage(&mavMsgTx, sendCnt);
                 break;
 
             // Battery Link Lost
             case 0x02:
                 if((battA.lostCnt==ATTEMPT_TIMES)||(battB.lostCnt==ATTEMPT_TIMES))
                 {
-                    printf("\r\n [ERR]  Batt: Connect lost");
+                    PRINTLOG("\r\n [ERR]  Batt: Connect lost");
                     if(battA.lostCnt==ATTEMPT_TIMES) sysBattery|=ERR_BATTA;
                     if(battB.lostCnt==ATTEMPT_TIMES) sysBattery|=ERR_BATTB;
                     return ERR_BATT_OFFBOARD;
@@ -317,7 +317,7 @@ uint8_t Battery_Management(void)
                     // All Batteries have powered off
                     if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
                     {
-                        printf("\r\n [INFO] Batt: Auto Power Off Success");
+                        PRINTLOG("\r\n [INFO] Batt: Auto Power Off Success");
                         battAutoOff = 0;
                         battA.status &= ~BATT_INUSE;
                         battB.status &= ~BATT_INUSE;
@@ -325,7 +325,7 @@ uint8_t Battery_Management(void)
                     }
                     else if(++battAutoOff>=8)
                     {
-                        printf("\r\n [ERR]  Batt: Auto Power Off Fail");
+                        PRINTLOG("\r\n [ERR]  Batt: Auto Power Off Fail");
                         //battAutoOff = 0;
                         if(battA.fet&PWR_ON)    sysBattery|=ERR_BATTA;
                         if(battB.fet&PWR_ON)    sysBattery|=ERR_BATTB;
@@ -335,13 +335,13 @@ uint8_t Battery_Management(void)
                     // Attempt every 2s
                     if((battAutoOff+1)%2)
                     {
-                        printf("\r\n [ACT]  Batt: Auto-Off Attempt#%d",(battAutoOff+1)/2);
+                        PRINTLOG("\r\n [ACT]  Batt: Auto-Off Attempt#%d",(battAutoOff+1)/2);
                         if(battA.fet&PWR_ON)    Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
                         if(battB.fet&PWR_ON)    Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
                     
                         Batt_Measure(&battA, BATT_MEAS_FET);
                         Batt_Measure(&battB, BATT_MEAS_FET);
-                        printf(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
+                        PRINTLOG(": A-0x%02X, B-0x%02X",battA.fet,battB.fet);
                     }
                     
                 }

@@ -11,10 +11,10 @@
     - [1]: lgChangeStatusCurr
 
 ### Communication
-- USART1: F3<->FC for communication
+- USART1: F3<->FC for communication (57600bps)
     - PB6(Tx)-P2.3(USART1-Tx)
     - PB7(Rx)-P2.4(USART1-Rx)
-- USART3: F3<->PC for debug
+- USART3: F3<->PC for debug (256000bps)
     - PB10(Tx)-P2.5(USART3-Tx)
     - PB11(Rx)-P2.6(USART3-Tx)
 
@@ -32,4 +32,4 @@
 - TIM7: Read & Send Battery message (40Hz)
 
 ### Mavlink
-Based on mavlink-c_library_v2 from github v20171231
+Based on mavlink-c_library_v2 from Gitlab v20180131 (`84a046bc`)

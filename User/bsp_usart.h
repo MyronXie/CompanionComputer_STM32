@@ -21,15 +21,24 @@
 
 #define BUFFSIZE    300
 
+typedef struct
+{
+	UART_HandleTypeDef* handle;
+    uint8_t buffer[BUFFSIZE];
+    uint16_t length;
+	uint8_t *front;
+	uint8_t *rear;
+	uint8_t flag;
+}
+SerialType;
+
 void USART_Init(void);
 void USART_DeInit(void);
 void USART_ReInit(void);
 
 uint8_t Serial_Rx_Available(void);
 uint8_t Serial_Rx_NextByte(void);
-
-void Serial_Tx_Send(void);
-void Serial_Tx_Package(uint8_t* buf, uint16_t length);
+void Serial_Send(SerialType* serial, uint8_t* buf, uint16_t len);
 
 #endif /* __BSP_USART_H */
 

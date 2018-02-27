@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.02
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -42,11 +42,11 @@ void LandingGear_Init(void)
     
     lgPositionCurr = FLASH_LoadParam(0);
     lgChangeStatusCurr = FLASH_LoadParam(1);
-    printf(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
+    PRINTLOG(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
     /* Landing Gear not reset in last process, Reset Landing Gear */
     if(lgPositionCurr||lgChangeStatusCurr)
     {
-        printf("\r\n [ACT]  Reset Landing Gear");
+        PRINTLOG("\r\n [ACT]  Reset Landing Gear");
         LG_Reset();
         lgPositionCurr = 0, lgChangeStatusCurr = 0;
         flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
@@ -59,21 +59,21 @@ void LandingGear_Control(mavlink_command_long_t* cmd)
     lgPositionRecv = (int)cmd->param2;          // .param2 for landing gear position
     if(lgPositionRecv==0||lgPositionRecv==1)    // Param check
     {
-        printf("\r\n [INFO] Landing Gear: %s", lgPositionRecv?"UP":"DOWN");
+        PRINTLOG("\r\n [INFO] Landing Gear: %s", lgPositionRecv?"UP":"DOWN");
         /* Landing Gear is changing or in delay time, ignore recv command */
         if(lgChangeStatusCurr||lgChangeDelayCnt)
         {
             if(lgPositionRecv!=lgPositionCurr)  // Opposite direction, send reject message to FMU
             {
-                printf(", Reject");
-                sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
+                PRINTLOG(", Reject");
+                sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
             }
             else                                // Same direction, send ignore message to FMU
             {
-                printf(", Igrore");
-                sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
+                PRINTLOG(", Igrore");
+                sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
             }
-            Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+            Mavlink_SendMessage(&mavMsgTx, sendCnt);
         }
         /* Landing Gear is standby, respond recv command */
         else
@@ -81,13 +81,13 @@ void LandingGear_Control(mavlink_command_long_t* cmd)
             lgPositionCurr = lgPositionRecv;
             if(lgPositionPrev != lgPositionCurr)    // Opposite direction, set change status of Landing Gear
             {
-                printf(", Respond");
+                PRINTLOG(", Respond");
                 lgChangeStatusCurr = 1;
                 lgPositionPrev = lgPositionCurr;
             }
             else                                    // Same direction, ignore command
             {
-                printf(", Igrore");
+                PRINTLOG(", Igrore");
             }
         }						
     }
@@ -103,15 +103,15 @@ void LandingGear_Adjustment(void)
         lgChangeStatusPrev = lgChangeStatusCurr;
         if(lgChangeStatusCurr)                      // Changing Process Start
         {
-            printf("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
-            sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
+            PRINTLOG("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
+            sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
         }
         else                                        // Changing Process Finish
         {
-            printf("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
-            sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
+            PRINTLOG("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
+            sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
         }
-        Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+        Mavlink_SendMessage(&mavMsgTx, sendCnt);
         flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
         FLASH_SaveParam(flashParam,2);
     }
@@ -130,7 +130,7 @@ uint8_t LandingGear_Reset(void)
 {
     if(lgPositionCurr)                      // Changing Landing Gear cost 1~2s approx., no need to judge change status
     {
-        printf("\r\n [ACT]  LandingGear: Reset...");
+        PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
         HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
         LG_Reset();
         lgPositionCurr = 0, lgChangeStatusCurr = 0;

@@ -5,15 +5,13 @@
   *
   * Version         : v0.2
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.02.05
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
   */
 
 #include "System.h"
-
-extern UART_HandleTypeDef huart1;
 
 uint8_t sysConnect = 0;         // Flag for system working (Receive first heartbeat from FC)
 uint8_t sysWarning = 0;         // Counter for fatal error
@@ -24,8 +22,8 @@ uint8_t sysBattery = 0;
 
 uint8_t msgLostCnt = 0;         // Mavlink Communication Lost Counter
 
-mavlink_message_t mavMsgTx;
-uint16_t sendByteCnt = 0;
+mavlink_message_t mavMsgTx;     // Send mavlink massage
+uint16_t sendCnt = 0;
 
 char* logList[64]={
     LOG_00,LOG_01,LOG_02,"","","","","","","","","","","","","",
@@ -38,10 +36,9 @@ extern uint8_t LandingGear_Reset(void);
 
 void System_Heartbeat(void)
 {	
-    sendByteCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
-    Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-	printf("\r\n #%d",sysTicks);		// Record running time <Dev> Will interfere mavlink receive process???
-	sysTicks++;
+    PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);      // Record running time
+    sendCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
+    Mavlink_SendMessage(&mavMsgTx, sendCnt);
 }
 
 void System_StatusReporter(void)
@@ -62,8 +59,7 @@ void System_StatusReporter(void)
         {
             Mavlink_SendLog(sysStatus, logList[sysStatus]);
         }
-        Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-        printf("\r\n [INFO] Status Reporter Trigged");
+        PRINTLOG("\r\n [INFO] Status Reporter Trigged");
         sysStatus = 0;
     }
 }
@@ -84,13 +80,13 @@ void System_ErrorHandler(void)
     // Lost connect with from FMU
     if(msgLostCnt>=3)
     {
-        printf("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
+        PRINTLOG("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
         
         if(!(msgLostCnt%3)) sysWarning++;
         
         if(msgLostCnt==3||msgLostCnt==6||msgLostCnt==10) 
         {
-            printf("\r\n [ACT]  USART1: Reset");
+            PRINTLOG("\r\n [ACT]  USART1: Reset");
             Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
             USART_ReInit();                     // Reset USART
         }
@@ -106,22 +102,33 @@ void System_ErrorHandler(void)
     #endif  //ENABLE_LANGINGGEAR
     
     // Reset System
-//  <Dev> Temp disable for improve battery logic
-//  if(sysWarning >= 4)
-//  {
-//      printf("\r\n [ACT]  System: Reset...");
-//      Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
-//      NVIC_SystemReset();
-//  }
+    if(sysWarning >= 4)
+    {
+        PRINTLOG("\r\n [ACT]  System: Reset...");
+        Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
+        NVIC_SystemReset();
+    }
 }
 
 
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length)
 {
-    uint8_t buffer[263];                        // Mavlink max length is 263 (v1)
+    uint8_t buffer[300];                        // Mavlink max length is 263 (v1)
     mavlink_msg_to_send_buffer(buffer, msg);
-    Serial_Tx_Package(buffer, length);
+    Serial_Send(&USART1_Tx, buffer, length);
 }
 
+
+void PRINTLOG(const char *format, ...)
+{
+    char str[300];
+    va_list arg;
+    int ret = 0;
+    va_start(arg, format);
+    ret = vsprintf(str, format, arg);
+    va_end(arg);
+    
+    Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
+}
 
 /*****END OF FILE****/

@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.02.02
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -41,29 +41,27 @@ int main(void)
     SystemClock_Config();
 
     USART_Init();
-    printf("\r\n**************************************************");
-    printf("\r\n*             CompanionComputer_STM32            *");
-    printf("\r\n**************************************************\r\n");
+    PRINTLOG("\r\n************* CompanionComputer_STM32 **************\r\n");
 
-    printf("\r\n [INFO] Init: I2C");
+    PRINTLOG("\r\n [INFO] Init: I2C");
     I2C_Init();
 
-    printf("\r\n [INFO] Init: Battery");
+    PRINTLOG("\r\n [INFO] Init: Battery");
     sysStatusTemp = Batt_Init();
     if(sysStatusTemp) sysStatus = sysStatusTemp;
 
     #ifdef ENABLE_LANGINGGEAR
-    printf("\r\n [INFO] Init: LandingGear");
+    PRINTLOG("\r\n [INFO] Init: LandingGear");
     LandingGear_Init();
     #endif //ENABLE_LANGINGGEAR
 
-    printf("\r\n [INFO] Init: Watchdog");
+    PRINTLOG("\r\n [INFO] Init: Watchdog");
     IWDG_Init();
 
-    printf("\r\n [INFO] Init: Timer");
+    PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
 
-    printf("\r\n [SYS]  Connecting...");
+    PRINTLOG("\r\n [SYS]  Connecting...");
     TIM_Start();
 
     while(1)
@@ -80,7 +78,7 @@ int main(void)
 
                 if(!sysConnect)                         // Receive first mavlink msg, start system
                 {
-                    printf("\r\n [SYS]  Connected with FMU");
+                    PRINTLOG("\r\n [SYS]  Connected with FMU");
                     sysConnect = 1;					
                 }
                 else
@@ -88,7 +86,7 @@ int main(void)
                     // <Dev> Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
-                      printf("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+                      PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
                 msgSeqPrev=mavMsgRx.seq;
@@ -96,9 +94,6 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
-        
-        Serial_Tx_Send();
-
     }//while 
 }//main  
 
@@ -126,8 +121,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if(htim->Instance == TIM7)      // TIM7: Read & Send Battery Message (40Hz)
     {
-        sysStatusTemp = Battery_Management();
-        if(sysStatusTemp) sysStatus = sysStatusTemp;
+       sysStatusTemp = Battery_Management();
+       if(sysStatusTemp) sysStatus = sysStatusTemp;
     }
 }
 
@@ -139,13 +134,13 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* HEARTBEAT (#0) */
         case MAVLINK_MSG_ID_HEARTBEAT:
             mavlink_msg_heartbeat_decode(msg, &mavHrt);
-            printf("\r\n [FMU]  #0  : %d,%d", mavHrt.type, mavHrt.autopilot);
+            PRINTLOG("\r\n [FMU]  #0  : %d,%d", mavHrt.type, mavHrt.autopilot);
             break;
 
         /* COMMAND_LONG (#76) */
         case MAVLINK_MSG_ID_COMMAND_LONG: 
             mavlink_msg_command_long_decode(msg, &mavCmdRx);
-            printf("\r\n [FMU]  #76 : %4d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);    // Only use 2 params at present
+            PRINTLOG("\r\n [FMU]  #76 : %4d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);    // Only use 2 params at present
             switch(mavCmdRx.command)
             {
                 case MAV_CMD_AIRFRAME_CONFIGURATION:    // 2520,0x09D8
@@ -159,20 +154,20 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* COMMAND_ACK (#77) */
         case MAVLINK_MSG_ID_COMMAND_ACK:
             mavlink_msg_command_ack_decode(msg, &mavCmdAck);
-            printf("\r\n [FMU]  #77 : %4d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
+            PRINTLOG("\r\n [FMU]  #77 : %4d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
             break;
 
         /* BATTERY_STATUS (#147)*/
         case MAVLINK_MSG_ID_BATTERY_STATUS:
             mavlink_msg_battery_status_decode(msg, &mavBattRx);
-            printf("\r\n [FMU]  #147: 0x%02X,%dC,%dV,%dA,%d%%", 
+            PRINTLOG("\r\n [FMU]  #147: 0x%02X,%dC,%dV,%dA,%d%%", 
                     mavBattRx.id, mavBattRx.temperature, mavBattRx.voltages[0], mavBattRx.current_battery, mavBattRx.battery_remaining);
             break;
         
         /* STM32_F3_COMMAND (#500)*/
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
-            printf("\r\n [FMU]  #500: 0x%02X,%s", mavF3CmdRx.command, mavF3CmdRx.f3_log);
+            PRINTLOG("\r\n [FMU]  #500: 0x%02X,%s", mavF3CmdRx.command, mavF3CmdRx.f3_log);
             break;
         
         default:break;

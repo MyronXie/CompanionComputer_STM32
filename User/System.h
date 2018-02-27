@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.02.05
+  * Revised Date    : 2018.02.27
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -19,6 +19,7 @@
 #include "mavlink.h"
 #include "mavlink_helpers.h"
 #include "string.h"
+#include "stdarg.h"
 
 // <Dev> Option
 //#define INGORE_LOSTCOMM
@@ -63,8 +64,9 @@
 #define ERR_BATTB               (1<<1)
 
 
+extern SerialType USART1_Tx,USART3_Tx;
 extern mavlink_message_t mavMsgTx;
-extern uint16_t sendByteCnt;
+extern uint16_t sendCnt;
 
 extern uint8_t sysConnect;
 extern uint8_t sysWarning;
@@ -82,6 +84,8 @@ void System_StatusReporter(void);
 void System_ErrorHandler(void);
 void Mavlink_SendLog(uint8_t id, char* msg);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
+
+void PRINTLOG(const char *format, ...);
 
 #endif /* __SYSTEM_H */
 
