@@ -22,6 +22,7 @@
 
 typedef struct
 {
+    char        name[10];
     uint8_t     id;
     uint8_t     status;   // High 4-bit for BattA, Low 4-bit for BattB
     uint8_t     lostCnt;
@@ -35,7 +36,13 @@ typedef struct
     uint16_t    designCapacity;
 }BattMsg;
 
-#define ATTEMPT_TIMES     4
+#define BATT_MODE_NONE      0
+#define BATT_MODE_SINGLE    1
+#define BATT_MODE_DUAL      2
+
+#define ATTEMPT_TIMES       4
+#define VDIFF_TOLERENCE     100
+#define BATT_FUNC_CYCLE     40
 
 //===============Register==============
 #define BATT_BatteryMode        0x03
@@ -73,6 +80,7 @@ typedef struct
 #define FET_EN                  (1<<0)
 
 //============BATT_BattStatus============
+#define BATT_DUMMY              0xC0
 #define BATT_INUSE              (1<<1)
 #define BATT_ONBOARD            (1<<0)
 

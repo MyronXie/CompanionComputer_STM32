@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.02.27
+  * Revised Date    : 2018.02.28
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -55,7 +55,7 @@ int main(void)
     #endif //ENABLE_LANGINGGEAR
 
     PRINTLOG("\r\n [INFO] Init: Watchdog");
-    IWDG_Init();
+    //IWDG_Init();
 
     PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
@@ -108,7 +108,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         System_Heartbeat();
         System_StatusReporter();
         System_ErrorHandler();
-        IWDG_Feed();                // Feed watchdog	
+        //IWDG_Feed();                // Feed watchdog	
     }
 
     #ifdef ENABLE_LANGINGGEAR
@@ -210,6 +210,15 @@ static void SystemClock_Config(void)
     {
         Error_Handler();
     }
+    
+//    /* Configure the Systick interrupt time */
+//    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+//    /* Configure the Systick */
+//    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+//    /* SysTick_IRQn interrupt configuration */
+//    HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
 }
 
 static void Error_Handler(void)

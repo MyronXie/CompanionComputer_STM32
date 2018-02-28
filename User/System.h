@@ -58,7 +58,7 @@
 #define	LOG_14  "FET Enable Fail"
 #define	LOG_15  "Init Fail"
 #define	LOG_16  "Power Off Fail"
-#define LOG_17  "Battery lost in the air"
+#define LOG_17  "Lost power in the air"
 #define LOG_20  ""
 #define LOG_21  "Landing Gear Auto Reset"
 
@@ -76,6 +76,7 @@ extern uint8_t sysStatusTemp;
 extern uint8_t sysStatus;
 extern uint16_t sysTicks;
 extern uint8_t sysBattery;
+extern uint8_t sysFlying;
 
 extern uint8_t msgLostCnt;
 
@@ -88,6 +89,7 @@ void Mavlink_SendLog(uint8_t id, char* msg);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);
+void DELAY_MS(int32_t nms);
 
 #endif /* __SYSTEM_H */
 

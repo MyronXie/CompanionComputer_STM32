@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.02.27
+  * Revised Date    : 2018.02.28
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -13,12 +13,14 @@
 
 #include "System.h"
 
-uint8_t sysConnect = 0;         // Flag for system working (Receive first heartbeat from FC)
-uint8_t sysWarning = 0;         // Counter for fatal error
+uint8_t sysConnect  = 0;        // Flag for system working (Receive first heartbeat from FC)
+uint8_t sysWarning  = 0;        // Counter for fatal error
 uint8_t sysStatusTemp = 0;
-uint8_t sysStatus = 0;          // Flag for battery , 0 for no problem
-uint16_t sysTicks = 0;          // Record system running time
-uint8_t sysBattery = 0;
+uint8_t sysStatusLst = 0;        // Flag for battery , 0 for no problem
+uint8_t sysStatus   = 0;        // Flag for battery , 0 for no problem
+uint16_t sysTicks   = 0;        // Record system running time
+uint8_t sysBattery  = 0;
+uint8_t sysFlying   = 0;        // Flag for record whether drone is in the air
 
 uint8_t msgLostCnt = 0;         // Mavlink Communication Lost Counter
 
@@ -43,24 +45,28 @@ void System_Heartbeat(void)
 
 void System_StatusReporter(void)
 {
-    if(sysConnect&&sysStatus)           // Must report after connected with FMU, otherwise it's dummy
+    if(sysConnect)           // Must report after connected with FMU, otherwise it's dummy
     {
-        if((sysStatus>=0x10)&&(sysStatus<0x20))
+        if(sysStatus&&(sysStatusLst!=sysStatus))    // Prevent report same error message continuously
         {
-            if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(logSend,"All battery ");
-            else if((sysBattery&ERR_BATTA))                         sprintf(logSend,"battery A ");
-            else if((sysBattery&ERR_BATTB))                         sprintf(logSend,"battery B ");
-            else                                                    sprintf(logSend,"");
-            sysBattery = 0;
-            strcat(logSend,logList[sysStatus]);
-            Mavlink_SendLog(sysStatus, logSend);
+            if((sysStatus>=0x10)&&(sysStatus<0x20))
+            {
+                if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(logSend,"All battery ");
+                else if((sysBattery&ERR_BATTA))                         sprintf(logSend,"battery A ");
+                else if((sysBattery&ERR_BATTB))                         sprintf(logSend,"battery B ");
+                else                                                    sprintf(logSend,"");
+                sysBattery = 0;
+                strcat(logSend,logList[sysStatus]);
+                Mavlink_SendLog(sysStatus, logSend);
+                PRINTLOG("\r\n [INFO] Status Reporter_%X: %s", sysStatus, logSend);
+            }
+            else
+            {
+                Mavlink_SendLog(sysStatus, logList[sysStatus]);
+                PRINTLOG("\r\n [INFO] Status Reporter_%X: %s", sysStatus, logList[sysStatus]);
+            }
         }
-        else
-        {
-            Mavlink_SendLog(sysStatus, logList[sysStatus]);
-        }
-        PRINTLOG("\r\n [INFO] Status Reporter Trigged");
-        sysStatus = 0;
+        sysStatusLst = sysStatus;
     }
 }
 
@@ -80,7 +86,7 @@ void System_ErrorHandler(void)
     // Lost connect with from FMU
     if(msgLostCnt>=3)
     {
-        PRINTLOG("\r\n [ERR]  Connect Lost: %d",msgLostCnt);
+        PRINTLOG("\r\n [ERR]  FMU Connect Lost: %d",msgLostCnt);
         
         if(!(msgLostCnt%3)) sysWarning++;
         
@@ -130,5 +136,20 @@ void PRINTLOG(const char *format, ...)
     
     Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
 }
+
+void DELAY_MS(int32_t nms)
+{  
+    int32_t temp;  
+    SysTick->LOAD = 8000*nms;   // HCLK/8 = 64M/8
+    SysTick->VAL  = 0X00;       // Clear counter  
+    SysTick->CTRL = 0X01;       // Enable
+    do  
+    {  
+        temp=SysTick->CTRL;     // Load
+    }
+    while((temp&0x01)&&(!(temp&(1<<16)))); // Waiting 
+    SysTick->CTRL = 0x00;       // Disable 
+    SysTick->VAL  = 0X00;       // Clear counter  
+} 
 
 /*****END OF FILE****/

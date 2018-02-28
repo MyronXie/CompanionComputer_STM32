@@ -6,9 +6,11 @@
 - Battery Management System
 
 ### Changelog
-* v0.2.1 (20180227) : Improve stability of CC_STM32 System
+* v0.2.1 (20180228) : Improve stability of CC_STM32 System
     * Improve F3 board system
         * Fix problem of USART1-Rx (lost package frequently, become dummy occasionally)
+    * Improve Battery Management System
+        * Rewrite `SINGLE_BATTERY` logic
 
 * v0.2 (20180205) : Add Battery Management System
     + Add Battery Management System
