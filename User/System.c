@@ -27,7 +27,7 @@ uint16_t sendCnt = 0;
 
 char* logList[64]={
     LOG_00,LOG_01,LOG_02,"","","","","","","","","","","","","",
-    LOG_10,LOG_11,LOG_12,LOG_13,LOG_14,LOG_15,LOG_16,"","","","","","","","","",
+    LOG_10,LOG_11,LOG_12,LOG_13,LOG_14,LOG_15,LOG_16,LOG_17,"","","","","","","","",
     LOG_20,LOG_21};
 
 char logSend[100]={""};
@@ -45,7 +45,7 @@ void System_StatusReporter(void)
 {
     if(sysConnect&&sysStatus)           // Must report after connected with FMU, otherwise it's dummy
     {
-        if(sysStatus>=0x10&&sysStatus<0x20)
+        if((sysStatus>=0x10)&&(sysStatus<0x20))
         {
             if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(logSend,"All battery ");
             else if((sysBattery&ERR_BATTA))                         sprintf(logSend,"battery A ");

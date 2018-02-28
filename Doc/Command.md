@@ -17,6 +17,7 @@ Code    |Name               |Content
 0x14    |ERR_BATT_ENABLEFET |FET Enable Fail
 0x15    |ERR_BATT_INIT      |Battery Init Fail
 0x16    |ERR_BATT_POWEROFF  |Power Off Fail
+0x17    |ERR_BATT_LOSTAIR   |Battery lost in the air 
 -       |-                  |-
 **0x20**|**MSG_LANDINGGEAR**|**Landing Gear**
 0x21    |ERR_LG_RESET       |Landing Gear Auto Reset

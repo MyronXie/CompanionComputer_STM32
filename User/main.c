@@ -19,7 +19,7 @@ static void Error_Handler(void);
 
 /* Serial & Mavlink */
 uint8_t recvByte = 0;
-uint16_t msgSeqPrev = 0;            // Monitor lost package number of Mavlink
+uint16_t msgSeqPrev = 0;            // Monitor quantity of Mavlink lost package 
 
 mavlink_message_t mavMsgRx;
 mavlink_heartbeat_t mavHrt;
@@ -47,8 +47,7 @@ int main(void)
     I2C_Init();
 
     PRINTLOG("\r\n [INFO] Init: Battery");
-    sysStatusTemp = Batt_Init();
-    if(sysStatusTemp) sysStatus = sysStatusTemp;
+    sysStatus = Batt_Init();
 
     #ifdef ENABLE_LANGINGGEAR
     PRINTLOG("\r\n [INFO] Init: LandingGear");
@@ -61,7 +60,7 @@ int main(void)
     PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
 
-    PRINTLOG("\r\n [SYS]  Connecting...");
+    PRINTLOG("\r\n [INFO] Connecting...");
     TIM_Start();
 
     while(1)
@@ -74,11 +73,11 @@ int main(void)
             if(mavlink_parse_char(MAVLINK_COMM_0, recvByte, &mavMsgRx, &mavSta))
             {
                 msgLostCnt = 0;                         // Clear Communication Lost flag
-                sysWarning = 0;                         // Current for communication error
+                sysWarning = 0;                         // Clear communication error
 
                 if(!sysConnect)                         // Receive first mavlink msg, start system
                 {
-                    PRINTLOG("\r\n [SYS]  Connected with FMU");
+                    PRINTLOG("\r\n [INFO] Connected with FMU");
                     sysConnect = 1;					
                 }
                 else
@@ -86,7 +85,7 @@ int main(void)
                     // <Dev> Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
-                      PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+                        PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
                 msgSeqPrev=mavMsgRx.seq;

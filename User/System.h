@@ -23,7 +23,7 @@
 
 // <Dev> Option
 //#define INGORE_LOSTCOMM
-//#define SINGLE_BATTERY
+#define SINGLE_BATTERY
 //#define INGORE_VDIFF
 
 #define ENABLE_LANGINGGEAR
@@ -44,6 +44,7 @@
 #define ERR_BATT_ENABLEFET      0x14
 #define ERR_BATT_INIT           0x15
 #define ERR_BATT_POWEROFF       0x16
+#define ERR_BATT_LOSTAIR        0x17
 #define ERR_LG_RESET            0x21
 
 // Log list
@@ -57,6 +58,7 @@
 #define	LOG_14  "FET Enable Fail"
 #define	LOG_15  "Init Fail"
 #define	LOG_16  "Power Off Fail"
+#define LOG_17  "Battery lost in the air"
 #define LOG_20  ""
 #define LOG_21  "Landing Gear Auto Reset"
 

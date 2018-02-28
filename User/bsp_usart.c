@@ -27,7 +27,7 @@ void USART_Init(void)
     huart1.Init.HwFlowCtl   = UART_HWCONTROL_NONE;
     huart1.Init.Mode        = UART_MODE_TX_RX;
     HAL_UART_Init(&huart1);
-    HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
+    HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
     // USART3 for debug
@@ -39,23 +39,23 @@ void USART_Init(void)
     huart3.Init.HwFlowCtl   = UART_HWCONTROL_NONE;
     huart3.Init.Mode        = UART_MODE_TX_RX;
     HAL_UART_Init(&huart3);
-    HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
+    HAL_NVIC_SetPriority(USART3_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
 
     USART1_Tx.handle = &huart1;
-    USART1_Tx.length = 300;
+    USART1_Tx.length = BUFFSIZE;
     USART1_Tx.front  = USART1_Tx.buffer;
     USART1_Tx.rear   = USART1_Tx.buffer;
     USART1_Tx.flag   = 0;
     
     USART1_Rx.handle = &huart1;
-    USART1_Rx.length = 300;
+    USART1_Rx.length = BUFFSIZE;
     USART1_Rx.front  = USART1_Rx.buffer;
     USART1_Rx.rear   = USART1_Rx.buffer;
     USART1_Rx.flag   = 0;
     
     USART3_Tx.handle = &huart3;
-    USART3_Tx.length = 300;
+    USART3_Tx.length = BUFFSIZE;
     USART3_Tx.front  = USART3_Tx.buffer;
     USART3_Tx.rear   = USART3_Tx.buffer;
     USART3_Tx.flag   = 0;
@@ -126,7 +126,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance == USART1)
-    { 
+    {
         if(++USART1_Rx.rear >= (USART1_Rx.buffer + USART1_Rx.length))   USART1_Rx.rear = USART1_Rx.buffer;
         HAL_UART_Receive_IT(USART1_Rx.handle, USART1_Rx.rear, 1);     // Restart usart1's IT for next receive process
     }
@@ -142,8 +142,8 @@ uint8_t Serial_Rx_NextByte(void)
 {  
     uint8_t tmp;
     
-    tmp = (uint8_t)(*USART1_Rx.front++);
-    if (USART1_Rx.front >= (USART1_Rx.buffer+USART1_Rx.length)) USART1_Rx.front = USART1_Rx.buffer;  
+    tmp = (uint8_t)(*USART1_Rx.front);
+    if (++USART1_Rx.front >= (USART1_Rx.buffer+USART1_Rx.length)) USART1_Rx.front = USART1_Rx.buffer;  
     
     return tmp; 
 }
@@ -154,8 +154,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     { 
         if(USART1_Tx.front != USART1_Tx.rear)
         {           
-            HAL_UART_Transmit_IT(USART1_Tx.handle, USART1_Tx.front++, 1);
-            if (USART1_Tx.front >= (USART1_Tx.buffer+USART1_Tx.length)) USART1_Tx.front = USART1_Tx.buffer;
+            HAL_UART_Transmit_IT(USART1_Tx.handle, USART1_Tx.front, 1);
+            if (++USART1_Tx.front >= (USART1_Tx.buffer+USART1_Tx.length)) USART1_Tx.front = USART1_Tx.buffer;
         }
         else USART1_Tx.flag = 0;
     }
@@ -164,8 +164,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     { 
         if(USART3_Tx.front != USART3_Tx.rear)
         {           
-            HAL_UART_Transmit_IT(USART3_Tx.handle, USART3_Tx.front++, 1);
-            if (USART3_Tx.front >= (USART3_Tx.buffer + USART3_Tx.length)) USART3_Tx.front = USART3_Tx.buffer;
+            HAL_UART_Transmit_IT(USART3_Tx.handle, USART3_Tx.front, 1);
+            if (++USART3_Tx.front >= (USART3_Tx.buffer + USART3_Tx.length)) USART3_Tx.front = USART3_Tx.buffer;
         }
         else USART3_Tx.flag = 0;
     }
@@ -176,12 +176,12 @@ void Serial_Send(SerialType* serial, uint8_t* buf, uint16_t len)
     uint16_t lentmp;
     
     // Package process
-    if((serial->rear + len) < (serial->buffer + serial->length))
+    if((serial->rear + len) < (serial->buffer + serial->length))    // Judge whether exceed end of buffer
     {
         memcpy(serial->rear, buf, len);
         serial->rear += len;
     }
-    else    // Exceed end of buffer
+    else    // Exceed end of buffer, divide into two parts 
     {
         lentmp = (serial->buffer + serial->length) - serial->rear;
         memcpy(serial->rear, buf, lentmp);
