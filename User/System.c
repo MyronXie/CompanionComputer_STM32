@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.02.28
+  * Revised Date    : 2018.03.01
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -58,12 +58,12 @@ void System_StatusReporter(void)
                 sysBattery = 0;
                 strcat(logSend,logList[sysStatus]);
                 Mavlink_SendLog(sysStatus, logSend);
-                PRINTLOG("\r\n [INFO] Status Reporter_%X: %s", sysStatus, logSend);
+                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, logSend);
             }
             else
             {
                 Mavlink_SendLog(sysStatus, logList[sysStatus]);
-                PRINTLOG("\r\n [INFO] Status Reporter_%X: %s", sysStatus, logList[sysStatus]);
+                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, logList[sysStatus]);
             }
         }
         sysStatusLst = sysStatus;
@@ -92,7 +92,8 @@ void System_ErrorHandler(void)
         
         if(msgLostCnt==3||msgLostCnt==6||msgLostCnt==10) 
         {
-            PRINTLOG("\r\n [ACT]  USART1: Reset");
+            sysConnect = 0;
+            PRINTLOG("\r\n [ACT]  Reset USART1");
             Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
             USART_ReInit();                     // Reset USART
         }
@@ -137,19 +138,19 @@ void PRINTLOG(const char *format, ...)
     Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
 }
 
-void DELAY_MS(int32_t nms)
-{  
-    int32_t temp;  
-    SysTick->LOAD = 8000*nms;   // HCLK/8 = 64M/8
-    SysTick->VAL  = 0X00;       // Clear counter  
-    SysTick->CTRL = 0X01;       // Enable
-    do  
-    {  
-        temp=SysTick->CTRL;     // Load
-    }
-    while((temp&0x01)&&(!(temp&(1<<16)))); // Waiting 
-    SysTick->CTRL = 0x00;       // Disable 
-    SysTick->VAL  = 0X00;       // Clear counter  
-} 
+//void DELAY_MS(int32_t nms)
+//{  
+//    int32_t temp;  
+//    SysTick->LOAD = 8000*nms;   // HCLK/8 = 64M/8
+//    SysTick->VAL  = 0X00;       // Clear counter  
+//    SysTick->CTRL = 0X01;       // Enable
+//    do  
+//    {  
+//        temp=SysTick->CTRL;     // Load
+//    }
+//    while((temp&0x01)&&(!(temp&(1<<16)))); // Waiting 
+//    SysTick->CTRL = 0x00;       // Disable 
+//    SysTick->VAL  = 0X00;       // Clear counter  
+//} 
 
 /*****END OF FILE****/

@@ -22,9 +22,9 @@ Code    |Name               |Content
 **0x20**|**MSG_LANDINGGEAR**|**Landing Gear**
 0x21    |ERR_LG_RESET       |Landing Gear Auto Reset
 
-### Action Code
+### Command Code
 
 Code    |Name               |Content
 -       |-                  |-
-0x80    |ACT_ARM            |-
-0x81    |ACT_DISARM         |-
+0x80    |CMD_FLY_ARM        |-
+0x81    |CMD_FLY_DISARM     |-

@@ -36,11 +36,11 @@ typedef struct
     uint16_t    designCapacity;
 }BattMsg;
 
-#define BATT_MODE_NONE      0
-#define BATT_MODE_SINGLE    1
-#define BATT_MODE_DUAL      2
 
 #define ATTEMPT_TIMES       4
+#define CNCT_DELAY          20
+#define PWRON_DELAY         2000
+#define ENFET_DELAY         2000
 #define VDIFF_TOLERENCE     100
 #define BATT_FUNC_CYCLE     40
 
@@ -90,7 +90,12 @@ typedef struct
 #define BATT_SYS_SEND           (1<<3)
 #define BATT_SYS_MASK_CMD       0x07
 
-//============BATT_Measure============
+//============battMode============
+#define BATT_MODE_NONE      0
+#define BATT_MODE_SINGLE    1
+#define BATT_MODE_DUAL      2
+
+//============Batt_Measure============
 #define BATT_MEAS_FET           0x00
 #define BATT_MEAS_VOLT          0x01
 #define BATT_MEAS_TEMP          0x02
@@ -99,6 +104,20 @@ typedef struct
 #define BATT_MEAS_RCAP          0x05
 #define BATT_MEAS_FCCAP         0x06
 #define BATT_MEAS_DCAP          0x07
+
+//============Batt_Init============
+#define BATT_INIT_BEGIN         0x00
+#define BATT_INIT_CNCT          0x01
+#define BATT_INIT_CNCT_WAIT     0x02
+#define BATT_INIT_MODE          0x03
+#define BATT_INIT_VDIFF         0x04
+#define BATT_INIT_PWRON         0x05
+#define BATT_INIT_PWRON_WAIT    0x06
+#define BATT_INIT_ENFET         0x07
+#define BATT_INIT_ENFET_WAIT    0x08
+#define BATT_INIT_CHECK         0x09
+#define BATT_INIT_END           0x0A
+#define BATT_INIT_WAITING       MSG_BATTERY
 
 uint8_t Batt_Init(void);
 

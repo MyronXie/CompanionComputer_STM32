@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.02.27
+  * Revised Date    : 2018.03.01
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -34,7 +34,7 @@
 #define MSG_BATTERY             0x10
 #define MSG_LANDINGGEAR         0x20
 
-// ErrorCode
+// Error Code
 #define NO_ERR                  0x00
 #define ERR_SYS_GENERAL         0x01
 #define ERR_SYS_SERIAL          0x02
@@ -46,6 +46,10 @@
 #define ERR_BATT_POWEROFF       0x16
 #define ERR_BATT_LOSTAIR        0x17
 #define ERR_LG_RESET            0x21
+
+// Command Code
+#define CMD_FLY_ARM             0x80
+#define CMD_FLY_DISARM          0x81
 
 // Log list
 #define LOG_00  ""

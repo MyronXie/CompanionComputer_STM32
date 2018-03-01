@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.02.28
+  * Revised Date    : 2018.03.01
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -30,6 +30,8 @@ mavlink_battery_status_t mavBattRx;
 mavlink_stm32_f3_command_t mavF3CmdRx;
 void Mavlink_Decode(mavlink_message_t* msg);
 
+extern uint8_t battReinit;
+extern TIM_HandleTypeDef htim7;
 /**
   * @brief  Main program
   * @param  None
@@ -47,7 +49,10 @@ int main(void)
     I2C_Init();
 
     PRINTLOG("\r\n [INFO] Init: Battery");
-    sysStatus = Batt_Init();
+    do
+    {
+        sysStatus = Batt_Init();
+    }while(sysStatus==0x10);
 
     #ifdef ENABLE_LANGINGGEAR
     PRINTLOG("\r\n [INFO] Init: LandingGear");
@@ -55,7 +60,7 @@ int main(void)
     #endif //ENABLE_LANGINGGEAR
 
     PRINTLOG("\r\n [INFO] Init: Watchdog");
-    //IWDG_Init();
+    IWDG_Init();
 
     PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
@@ -82,7 +87,7 @@ int main(void)
                 }
                 else
                 {
-                    // <Dev> Monitor lost package number of Mavlink
+                    // Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
                         PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
@@ -93,6 +98,19 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
+        
+        /***** Battery ReInit Process *****/
+        if(battReinit)
+        {
+            sysStatusTemp = Batt_Init();
+            if(sysStatusTemp != 0x10) 
+            {
+                battReinit = 0;
+                HAL_TIM_Base_Start_IT(&htim7);
+                sysStatus = sysStatusTemp;
+            }
+        
+        }  
     }//while 
 }//main  
 
@@ -108,7 +126,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         System_Heartbeat();
         System_StatusReporter();
         System_ErrorHandler();
-        //IWDG_Feed();                // Feed watchdog	
+        IWDG_Feed();                // Feed watchdog	
     }
 
     #ifdef ENABLE_LANGINGGEAR
@@ -167,6 +185,18 @@ void Mavlink_Decode(mavlink_message_t* msg)
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
             PRINTLOG("\r\n [FMU]  #500: 0x%02X,%s", mavF3CmdRx.command, mavF3CmdRx.f3_log);
+            switch(mavF3CmdRx.command)
+            {
+                case CMD_FLY_ARM:
+                    sysFlying = 1;
+                    PRINTLOG("\r\n [INFO] Drone is flying");
+                    break;
+                case CMD_FLY_DISARM:
+                    sysFlying = 0;
+                    PRINTLOG("\r\n [INFO] Drone is landing");
+                    break;
+                default:break;
+            }
             break;
         
         default:break;
@@ -211,14 +241,14 @@ static void SystemClock_Config(void)
         Error_Handler();
     }
     
-//    /* Configure the Systick interrupt time */
-//    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+    /* Configure the Systick interrupt time */
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
-//    /* Configure the Systick */
-//    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+    /* Configure the Systick */
+    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-//    /* SysTick_IRQn interrupt configuration */
-//    HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
+    /* SysTick_IRQn interrupt configuration */
+    //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
 static void Error_Handler(void)
