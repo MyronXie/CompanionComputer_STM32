@@ -16,7 +16,7 @@
 UART_HandleTypeDef huart1,huart3;
 SerialType USART1_Tx,USART1_Rx,USART3_Tx;
 
-void USART_Init(void)
+void USART_Config_Init(void)
 {
     // USART1 for Pixhawk
     huart1.Instance         = USART1;
@@ -41,7 +41,10 @@ void USART_Init(void)
     HAL_UART_Init(&huart3);
     HAL_NVIC_SetPriority(USART3_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
+}
 
+void USART_Buffer_Init(void)
+{
     USART1_Tx.handle = &huart1;
     USART1_Tx.length = BUFFSIZE;
     USART1_Tx.front  = USART1_Tx.buffer;
@@ -63,16 +66,20 @@ void USART_Init(void)
     HAL_UART_Receive_IT(USART1_Rx.handle,USART1_Rx.rear,1);
 }
 
-void USART_DeInit(void)
+void USART_Init(void)
 {
-    HAL_UART_DeInit(&huart1);
-    HAL_UART_DeInit(&huart3);
+    USART_Config_Init();
+    USART_Buffer_Init();
 }
 
 void USART_ReInit(void)
 {
-    USART_DeInit();
-    USART_Init();
+    HAL_UART_DeInit(&huart1);
+    HAL_UART_DeInit(&huart3);
+    USART_Config_Init();
+    HAL_UART_Receive_IT(USART1_Rx.handle,USART1_Rx.rear,1);
+    if(USART1_Tx.front!=USART1_Tx.rear) HAL_UART_Transmit_IT(USART1_Tx.handle,USART1_Tx.front,1);
+    if(USART3_Tx.front!=USART3_Tx.rear) HAL_UART_Transmit_IT(USART3_Tx.handle,USART3_Tx.front,1);
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)

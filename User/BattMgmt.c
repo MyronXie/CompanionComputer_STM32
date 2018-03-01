@@ -72,6 +72,7 @@ uint8_t Batt_Init(void)
                 PRINTLOG("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?battA.name:"",(!(battB.status&BATT_ONBOARD))?battB.name:"");
                 if(!(battA.status&BATT_ONBOARD))    sysBattery|=ERR_BATTA;
                 if(!(battB.status&BATT_ONBOARD))    sysBattery|=ERR_BATTB;
+                stage = BATT_INIT_BEGIN;
                 return ERR_BATT_OFFBOARD;
             }
             if(HAL_GetTick() - timeTick < CNCT_DELAY)
@@ -110,6 +111,7 @@ uint8_t Batt_Init(void)
                     PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
                     if(battA.voltage>battB.voltage) sysBattery|=ERR_BATTA;
                     else                            sysBattery|=ERR_BATTB;
+                    stage = BATT_INIT_BEGIN;
                     return ERR_BATT_VDIFF;
 
                 }
@@ -234,6 +236,7 @@ uint8_t Batt_Init(void)
                     if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
                     if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
                 }
+                stage = BATT_INIT_BEGIN;
                 return ERR_BATT_ENABLEFET;
             }
             if(HAL_GetTick() - timeTick < ENFET_DELAY)
@@ -255,6 +258,7 @@ uint8_t Batt_Init(void)
                 if(!(battO->status&BATT_INUSE))
                 {
                     PRINTLOG("\r\n [ERR]  %s Battery Init Error",battO->name);
+                    stage = BATT_INIT_BEGIN;
                     return ERR_BATT_INIT;
                 }
             }
@@ -270,6 +274,7 @@ uint8_t Batt_Init(void)
                     PRINTLOG("\r\n [ERR]  %s %s Battery Init Error",(!(battA.status&BATT_INUSE))?"battA":"",(!(battB.status&BATT_INUSE))?"battB":"");
                     if(!(battA.status&BATT_INUSE))  sysBattery|=ERR_BATTA;
                     if(!(battB.status&BATT_INUSE))  sysBattery|=ERR_BATTB;
+                    stage = BATT_INIT_BEGIN;
                     return ERR_BATT_INIT;
                 }
             }
@@ -281,6 +286,7 @@ uint8_t Batt_Init(void)
             return NO_ERR;
 
         default:
+            stage = BATT_INIT_BEGIN;
             return ERR_BATT_INIT;
     }
 }
@@ -401,11 +407,14 @@ uint8_t Battery_Management(void)
         {		
             // Pack & Send battery status message
             case 0x01:
-                Battery_MavlinkPack(&mavBattTx,battMode);
-                sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
-                                                                mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
-                                                                mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-                Mavlink_SendMessage(&mavMsgTx, sendCnt);
+                if(sysConnect)
+                {
+                    Battery_MavlinkPack(&mavBattTx,battMode);
+                    sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
+                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+                    Mavlink_SendMessage(&mavMsgTx, sendCnt);
+                }
                 break;
 
             // Battery Link Lost
@@ -415,6 +424,8 @@ uint8_t Battery_Management(void)
                     if(battO->lostCnt == ATTEMPT_TIMES)
                     {
                         PRINTLOG("\r\n [ERR]  %s Connect lost",battO->name);
+                        if(battO == &battA) sysBattery|=ERR_BATTA;
+                        if(battO == &battB) sysBattery|=ERR_BATTB;
                         battMode = BATT_MODE_NONE;
                         return ERR_BATT_OFFBOARD;
                     }

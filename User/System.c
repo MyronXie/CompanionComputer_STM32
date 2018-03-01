@@ -84,37 +84,34 @@ void System_ErrorHandler(void)
     #endif
 
     // Lost connect with from FMU
-    if(msgLostCnt>=3)
+    if(msgLostCnt==3)
     {
-        PRINTLOG("\r\n [ERR]  FMU Connect Lost: %d",msgLostCnt);
+        sysConnect = 0;
+        PRINTLOG("\r\n [ERR]  FMU Connect Lost");
+        PRINTLOG("\r\n [ACT]  Reset USART1");
+        Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]); 
+        msgLostCnt++;
         
-        if(!(msgLostCnt%3)) sysWarning++;
-        
-        if(msgLostCnt==3||msgLostCnt==6||msgLostCnt==10) 
-        {
-            sysConnect = 0;
-            PRINTLOG("\r\n [ACT]  Reset USART1");
-            Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]);
-            USART_ReInit();                     // Reset USART
-        }
-    }
-    
-    #ifdef  ENABLE_LANGINGGEAR
-    // Reset Landing Gear
-    if(sysWarning == 2)
-    {
+        #ifdef  ENABLE_LANGINGGEAR
+        // Reset Landing Gear
         sysStatusTemp = LandingGear_Reset();
         if(sysStatusTemp) sysStatus = sysStatusTemp;
+        #endif  //ENABLE_LANGINGGEAR
     }
-    #endif  //ENABLE_LANGINGGEAR
-    
-    // Reset System
-    if(sysWarning >= 4)
+    else if(msgLostCnt==4)
     {
-        PRINTLOG("\r\n [ACT]  System: Reset...");
-        Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
-        NVIC_SystemReset();
+        USART_ReInit();                     // Reset USART
+        msgLostCnt = 0;
+        PRINTLOG("\r\n [WARN] sysWarning = %d",++sysWarning);
     }
+
+    // Reset System
+//    if(sysWarning >= 4)
+//    {
+//        PRINTLOG("\r\n [ACT]  System: Reset...");
+//        Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
+//        NVIC_SystemReset();
+//    }
 }
 
 

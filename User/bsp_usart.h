@@ -32,6 +32,8 @@ typedef struct
 }
 SerialType;
 
+void USART_Config_Init(void);
+void USART_Buffer_Init(void);
 void USART_Init(void);
 void USART_DeInit(void);
 void USART_ReInit(void);

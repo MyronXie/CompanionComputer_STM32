@@ -49,10 +49,7 @@ int main(void)
     I2C_Init();
 
     PRINTLOG("\r\n [INFO] Init: Battery");
-    do
-    {
-        sysStatus = Batt_Init();
-    }while(sysStatus==0x10);
+    do{sysStatus = Batt_Init();}  while(sysStatus==0x10);
 
     #ifdef ENABLE_LANGINGGEAR
     PRINTLOG("\r\n [INFO] Init: LandingGear");
@@ -64,8 +61,6 @@ int main(void)
 
     PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
-
-    PRINTLOG("\r\n [INFO] Connecting...");
     TIM_Start();
 
     while(1)

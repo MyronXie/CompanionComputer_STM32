@@ -6,10 +6,11 @@
 - Battery Management System
 
 ### Changelog
-* v0.2.1 (20180228) : Improve stability of CC_STM32 System
+* v0.2.1 (20180301) : Improve stability of CC_STM32 System
     * Improve F3 board system
         * Fix problem of USART1-Rx (lost package frequently, become dummy occasionally)
     * Improve Battery Management System
+        * Rewrite `Batt_Init()` to reuse it for reinit battery
         * Rewrite `SINGLE_BATTERY` logic
 
 * v0.2 (20180205) : Add Battery Management System
@@ -38,6 +39,9 @@
         + Control Landing Gear through PWM
     + Add communication with FMU through Mavlink
         + Receive Mavlink message from FMU
+
+### Notice
+Because using submodule `mavlink-c_library_v2` in this project, must use `git clone` to download all project.
 
 ### Document
 * [Resource](Doc/Resource.md)
