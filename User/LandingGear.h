@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.02
+  * Revised Date    : 2018.03.02
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -35,6 +35,8 @@
 
 #define Relay_ON()      HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
 #define Relay_OFF()     HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)
+
+extern uint8_t lgAutoReset;
 
 uint8_t LG_Control(uint8_t pos, uint8_t* prog);
 

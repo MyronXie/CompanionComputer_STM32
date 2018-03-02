@@ -23,7 +23,7 @@
 
 // <Dev> Option
 //#define INGORE_LOSTCOMM
-#define SINGLE_BATTERY
+//#define SINGLE_BATTERY
 //#define INGORE_VDIFF
 
 #define ENABLE_LANGINGGEAR

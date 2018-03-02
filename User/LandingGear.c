@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.27
+  * Revised Date    : 2018.03.02
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -22,6 +22,7 @@ uint8_t lgChangeDelayCnt = 0;           // Delay for prevent too fast changing
 uint8_t lgChangeStatusCurr = 0;         // Change Status of Landing Gear [Standby: 0, Changing: 1]
 uint8_t lgChangeStatusPrev = 0;
 uint8_t lgChangeProgress = 50;          // Change Progress of Landing Gear [0-100(%)], not used now
+uint8_t lgAutoReset = 0;
 
 uint32_t flashParam[FLASHSIZE];
 
@@ -132,11 +133,7 @@ uint8_t LandingGear_Reset(void)
     {
         PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
         HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
-        LG_Reset();
-        lgPositionCurr = 0, lgChangeStatusCurr = 0;
-        flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
-        FLASH_SaveParam(flashParam,2);
-        HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
+        lgAutoReset = 1;
 
         return ERR_LG_RESET;
     }
@@ -229,22 +226,40 @@ uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 
 void LG_Reset(void)
 {
-    Relay_ON();
+    static uint8_t stage = 0;
+    static uint32_t timeTick = 0;
     
-    lgPulseL=PUL_LEFT_DOWN;
-    lgPulseR=PUL_RIGHT_DOWN;
+    switch(stage)
+    {
+        case 0x00:
+            Relay_ON();
     
-    hocl.Pulse=lgPulseL;
-    HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+            lgPulseL=PUL_LEFT_DOWN;
+            lgPulseR=PUL_RIGHT_DOWN;
     
-    hocr.Pulse=lgPulseR;
-    HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
-    
-    HAL_Delay(1250);
-    
-    Relay_OFF();
+            hocl.Pulse=lgPulseL;
+            HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
+            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+            
+            hocr.Pulse=lgPulseR;
+            HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
+            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
+            
+            timeTick = HAL_GetTick();
+            stage = 0x01;
+        
+        case 0x01:
+            if(HAL_GetTick() - timeTick < 1500)
+            {
+                Relay_OFF();
+                lgPositionCurr = 0, lgChangeStatusCurr = 0;
+                flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
+                FLASH_SaveParam(flashParam,2);
+                HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
+                lgAutoReset = 0;
+                stage = 0x00;
+            }
+    }
 }
 
 void LG_Relay_Init(void)

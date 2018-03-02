@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.03.01
+  * Revised Date    : 2018.03.02
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -93,6 +93,9 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
+        
+        /***** Landing Gear Auto Reset Process  *****/
+        if(lgAutoReset) LG_Reset();      
         
         /***** Battery ReInit Process *****/
         if(battReinit)

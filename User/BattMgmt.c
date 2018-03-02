@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.01
+  * Revised Date    : 2018.03.02
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -212,8 +212,8 @@ uint8_t Batt_Init(void)
                 }
                 else
                 {
-                    if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
-                    if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
+                    if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
+                    if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
                     attemptTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_INIT_ENFET_WAIT;
@@ -520,13 +520,14 @@ uint8_t Battery_Management(void)
                         Mavlink_SendLog(0x10, "Reinit battery");
                     }
                     #else  //DUAL_BATTERY
-                    if(((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))
-                    {
-                        PRINTLOG("\r\n [INFO] All Battery Re-connect");
-                        battReinit = 1;
-                        HAL_TIM_Base_Stop_IT(&htim7);
-                        Mavlink_SendLog(0x10, "Reinit battery");
-                    }
+                    // Need re-consider these logic 
+//                    if(((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))
+//                    {
+//                        PRINTLOG("\r\n [INFO] All Battery Re-connect");
+//                        battReinit = 1;
+//                        HAL_TIM_Base_Stop_IT(&htim7);
+//                        Mavlink_SendLog(0x10, "Reinit battery");
+//                    }
                     #endif
                 }
                 break;
