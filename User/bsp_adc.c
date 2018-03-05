@@ -18,7 +18,6 @@ DMA_HandleTypeDef hdma_adc1;
 
 void ADC_Init(void)
 {
-
     ADC_MultiModeTypeDef multimode;
     ADC_ChannelConfTypeDef sConfig;
 
@@ -41,16 +40,13 @@ void ADC_Init(void)
 
     /* Configure the ADC multi-mode */
     multimode.Mode = ADC_MODE_INDEPENDENT;
-    multimode.Mode = ADC_DUALMODE_REGSIMULT;
-    multimode.DMAAccessMode = ADC_DMAACCESSMODE_12_10_BITS;
-    multimode.TwoSamplingDelay = ADC_TWOSAMPLINGDELAY_5CYCLES;
     HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode);
 
     /* Configure Regular Channel */
     sConfig.Channel = ADC_CHANNEL_1;
     sConfig.Rank = 1;
     sConfig.SingleDiff = ADC_SINGLE_ENDED;
-    sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
+    sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
     sConfig.OffsetNumber = ADC_OFFSET_NONE;
     sConfig.Offset = 0;
     HAL_ADC_ConfigChannel(&hadc1, &sConfig);
@@ -76,26 +72,11 @@ void ADC_Init(void)
     HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 }
 
-void DMA_Init(void) 
-{
-    /* DMA controller clock enable */
-    __HAL_RCC_DMA1_CLK_ENABLE();
-
-    /* DMA interrupt init */
-    /* DMA1_Channel1_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-    /* DMA1_Channel2_IRQn interrupt configuration */
-//	HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
-//	HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-}
-
-
-void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
+void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
     
-    if(hadc->Instance==ADC1)
+    if(adcHandle->Instance==ADC1)
     {
         /* Peripheral clock enable */
         __HAL_RCC_ADC12_CLK_ENABLE();
@@ -116,6 +97,8 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
         GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         /* ADC1 DMA Init */
@@ -126,28 +109,35 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
         hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
         hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
         hdma_adc1.Init.Mode = DMA_CIRCULAR;
-        hdma_adc1.Init.Priority = DMA_PRIORITY_HIGH;
+        hdma_adc1.Init.Priority = DMA_PRIORITY_LOW;
         HAL_DMA_Init(&hdma_adc1);
 
-        __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc1);
-        
-        /* ADC1 interrupt Init */
-        HAL_NVIC_SetPriority(ADC1_2_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
+        __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
     }
 }
 
-void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 {
-    if(hadc->Instance==ADC1)
+    if(adcHandle->Instance==ADC1)
     {
         __HAL_RCC_ADC12_CLK_DISABLE();
 
         HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
         HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_1);
 
-        HAL_DMA_DeInit(hadc->DMA_Handle);
+        HAL_DMA_DeInit(adcHandle->DMA_Handle);
     }
+}
+
+void DMA_Init(void) 
+{
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA1_CLK_ENABLE();
+
+    /* DMA interrupt init */
+    /* DMA1_Channel1_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 2, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
 
 /******************************END OF FILE******************************/

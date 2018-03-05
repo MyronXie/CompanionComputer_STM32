@@ -18,6 +18,7 @@
 #include "bsp_usart.h"
 #include "bsp_tim.h"
 #include "bsp_i2c.h"
+#include "bsp_adc.h"
 #include "bsp_misc.h"
 #include "System.h"
 #include "LandingGear.h"
