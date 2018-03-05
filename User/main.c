@@ -45,7 +45,8 @@ int main(void)
 
     USART_Init();
     PRINTLOG("\r\n************* CompanionComputer_STM32 **************\r\n");
-
+    LED_Init();
+    
     #ifdef ENABLE_BATTERYMGMT
     PRINTLOG("\r\n [INFO] Init Battery Management System");
     I2C_Init();
