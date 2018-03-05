@@ -21,6 +21,9 @@ static void Error_Handler(void);
 uint8_t recvByte = 0;
 uint16_t msgSeqPrev = 0;            // Monitor quantity of Mavlink lost package 
 
+uint32_t ADC_Value[60]={0};
+extern ADC_HandleTypeDef hadc1;
+
 mavlink_message_t mavMsgRx;
 mavlink_heartbeat_t mavHrt;
 mavlink_status_t mavSta;
@@ -59,6 +62,11 @@ int main(void)
     PRINTLOG("\r\n [INFO] Init: Watchdog");
     IWDG_Init();
 
+    PRINTLOG("\r\n [INFO] Init: ADC");
+    DMA_Init();
+    ADC_Init();
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&ADC_Value, 60);    
+    
     PRINTLOG("\r\n [INFO] Init: Timer");
     TIM_Init();
     TIM_Start();
@@ -135,6 +143,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         System_StatusReporter();
         System_ErrorHandler();
         IWDG_Feed();                // Feed watchdog	
+        PRINTLOG("\r\n [INFO] ADC_Value:%d,%d,%d,%d,%d,%d",ADC_Value[0],ADC_Value[1],ADC_Value[2],ADC_Value[3],ADC_Value[4],ADC_Value[5]);
     }
 
     #ifdef ENABLE_LANGINGGEAR
@@ -225,18 +234,16 @@ void Mavlink_Decode(mavlink_message_t* msg)
   */
 static void SystemClock_Config(void)
 {
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
     RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_PeriphCLKInitTypeDef PeriphClkInit;
 
     /* HSI Oscillator already ON after system reset, activate PLL with HSI as source */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_NONE;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
     RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct)!= HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
     /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
     RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
@@ -244,10 +251,11 @@ static void SystemClock_Config(void)
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;  
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2)!= HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
+    
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
+    PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+    HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
     
     /* Configure the Systick interrupt time */
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
@@ -255,8 +263,6 @@ static void SystemClock_Config(void)
     /* Configure the Systick */
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-    /* SysTick_IRQn interrupt configuration */
-    //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
 static void Error_Handler(void)

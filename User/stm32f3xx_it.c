@@ -53,6 +53,7 @@
 /* Private variables ---------------------------------------------------------*/
 extern UART_HandleTypeDef huart1,huart3;
 extern TIM_HandleTypeDef htim2,htim6,htim7;
+extern DMA_HandleTypeDef hdma_adc1;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -194,6 +195,11 @@ void TIM6_DAC1_IRQHandler(void)
 void TIM7_DAC2_IRQHandler(void)
 {
     HAL_TIM_IRQHandler(&htim7);
+}
+
+void DMA1_Channel1_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_adc1);
 }
 
 /*void PPP_IRQHandler(void)
