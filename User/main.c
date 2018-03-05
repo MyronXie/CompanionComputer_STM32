@@ -96,18 +96,28 @@ int main(void)
         
         /***** Landing Gear Auto Reset Process  *****/
         if(lgAutoReset) LG_Reset();      
+
+        /***** Battery Power Off Process *****/
+        if(battPwrOff == 1)
+        {
+            sysStatusTemp = Batt_PowerOff();
+            if(sysStatusTemp != BATT_WAITING) 
+            {
+                battPwrOff = 0;
+                sysStatus = sysStatusTemp;
+            }
+        } 
         
         /***** Battery ReInit Process *****/
         if(battReinit)
         {
             sysStatusTemp = Batt_Init();
-            if(sysStatusTemp != 0x10) 
+            if(sysStatusTemp != BATT_WAITING) 
             {
                 battReinit = 0;
                 HAL_TIM_Base_Start_IT(&htim7);
                 sysStatus = sysStatusTemp;
             }
-        
         }  
     }//while 
 }//main  

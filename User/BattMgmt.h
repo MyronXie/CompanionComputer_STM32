@@ -40,6 +40,7 @@ typedef struct
 #define ATTEMPT_TIMES       4
 #define CNCT_DELAY          20
 #define PWRON_DELAY         2000
+#define PWROFF_DELAY        2000
 #define ENFET_DELAY         2000
 #define VDIFF_TOLERENCE     100
 #define BATT_FUNC_CYCLE     40
@@ -94,6 +95,7 @@ typedef struct
 #define BATT_MODE_NONE      0
 #define BATT_MODE_SINGLE    1
 #define BATT_MODE_DUAL      2
+#define BATT_MODE_DUAL_ONE  3
 
 //============Batt_Measure============
 #define BATT_MEAS_FET           0x00
@@ -117,7 +119,13 @@ typedef struct
 #define BATT_INIT_ENFET_WAIT    0x08
 #define BATT_INIT_CHECK         0x09
 #define BATT_INIT_END           0x0A
-#define BATT_INIT_WAITING       MSG_BATTERY
+#define BATT_WAITING            MSG_BATTERY
+
+//============Batt_PWROFF============
+#define BATT_PWROFF_CHECK       0x00
+#define BATT_PWROFF_WAIT        0x01
+
+extern uint8_t battPwrOff;
 
 uint8_t Batt_Init(void);
 
@@ -127,6 +135,7 @@ uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
 
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
+uint8_t Batt_PowerOff(void);
 
 uint8_t Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t num);
