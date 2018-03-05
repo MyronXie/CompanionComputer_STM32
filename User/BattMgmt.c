@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.02
+  * Revised Date    : 2018.03.05
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -452,20 +452,24 @@ uint8_t Battery_Management(void)
             case 0x03:
                 if((battMode == BATT_MODE_DUAL)&&(!battPwrOff))
                 {
-                    // One battery is powered down
-                    if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
+                    // Prevent the situation that one battery lost connect                    
+                    if((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD))
                     {
-                        if(sysFlying)   // Need a flag to ensure can/can not power off battery
+                        // One battery is powered down
+                        if(((battA.fet&PWR_ON)&&(!(battB.fet&PWR_ON)))||((battB.fet&PWR_ON)&&(!(battA.fet&PWR_ON))))
                         {
-                            PRINTLOG("\r\n [ERR]  %s %s Lost power in the air",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
-                            if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
-                            if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
-                            return ERR_BATT_LOSTAIR;
-                        }
-                        else
-                        {
-                            battPwrOff = 1;
-                            Mavlink_SendLog(MSG_BATTERY, "Start Auto Power Off Process");
+                            if(sysFlying)   // Need a flag to ensure can/can not power off battery
+                            {
+                                PRINTLOG("\r\n [ERR]  %s %s Lost power in the air",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
+                                if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
+                                if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
+                                return ERR_BATT_LOSTAIR;
+                            }
+                            else
+                            {
+                                battPwrOff = 1;
+                                Mavlink_SendLog(MSG_BATTERY, "Start Auto Power Off Process");
+                            }
                         }
                     }
                 }
@@ -601,7 +605,7 @@ void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t num)
         mav->temperature        = battO->temperature;
         mav->voltages[0]        = battO->voltage;
         mav->current_battery    = battO->current;
-        mav->current_consumed   = battO->fullChargeCapacity - battX->remainingCapacity;
+        mav->current_consumed   = battO->fullChargeCapacity - battO->remainingCapacity;
         mav->energy_consumed    = -1;
         mav->battery_remaining  = battO->soc;
     }
