@@ -3,7 +3,7 @@
   * File Name       : BattMgmt.c
   * Description     : Battery Management Drivers (through I2C)
   *
-  * Version         : v0.2
+  * Version         : v0.3
   * Created Date    : 2017.09.25
   * Revised Date    : 2018.03.02
   *

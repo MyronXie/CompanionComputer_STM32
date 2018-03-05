@@ -3,7 +3,7 @@
   * File Name       : bsp_usart.h
   * Description     : Drivers for usart (based on HAL)
   *
-  * Version         : v0.2
+  * Version         : v0.3
   * Created Date    : 2017.10.18
   * Revised Date    : 2018.02.27
   *

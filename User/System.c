@@ -3,7 +3,7 @@
   * File Name       : System.c
   * Description     : System param for CC_STM32
   *
-  * Version         : v0.2
+  * Version         : v0.3
   * Created Date    : 2018.02.02
   * Revised Date    : 2018.03.01
   *

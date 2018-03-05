@@ -3,7 +3,7 @@
   * File Name       : bsp_adc.c
   * Description     : Drivers for ADC (based on HAL)
   *
-  * Version         : v0.2
+  * Version         : v0.3
   * Created Date    : 2018.03.05
   * Revised Date    : 2018.03.05
   *

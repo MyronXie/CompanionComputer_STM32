@@ -4,9 +4,13 @@
 - Communication with FMU through Mavlink (bi-direction)
 - Landing Gear Control System
 - Battery Management System
+- Current Monitor System
 
 ### Changelog
-* v0.2.1 (20180301) : Improve stability of CC_STM32 System
+* v0.3 (20180305) : Improve stability of CC_STM32 System
+    + Add Current Monitor System
+        + Monitoring current of Electronic Speed Control (ESC)
+        + Send `STM32_F3_MOTOR_CURR` to FMU
     * Improve F3 board system
         * Fix problem of USART1-Rx (lost package frequently, become dummy occasionally)
     * Improve Battery Management System

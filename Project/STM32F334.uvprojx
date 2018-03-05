@@ -1601,6 +1601,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\LandingGear.c</FilePath>
             </File>
+            <File>
+              <FileName>CurrMonitor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\CurrMonitor.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
