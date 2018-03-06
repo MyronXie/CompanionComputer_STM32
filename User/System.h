@@ -25,12 +25,12 @@
 #define ENABLE_BATTERYMGMT
 #define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
+//#define SINGLE_BATTERY
 
 // <Dev> Option
 //#define INGORE_LOSTCOMM
-//#define SINGLE_BATTERY
 //#define INGORE_VDIFF
-#define AUTO_POWEROFF
+//#define INGORE_POWEROFF
 
 // MsgCode
 #define MSG_SYSTEM              0x00
@@ -47,7 +47,7 @@
 #define ERR_BATT_ENABLEFET      0x14
 #define ERR_BATT_INIT           0x15
 #define ERR_BATT_POWEROFF       0x16
-#define ERR_BATT_LOSTAIR        0x17
+#define ERR_BATT_LOSTPWR        0x17
 #define ERR_LG_RESET            0x21
 
 // Command Code
@@ -55,23 +55,28 @@
 #define CMD_FLY_DISARM          0x81
 
 // Log list
-#define LOG_00  ""
-#define LOG_01  "System Error"
-#define LOG_02  "Serial Error"
-#define	LOG_10  ""
-#define	LOG_11  "Offboard"
-#define	LOG_12  "Voltage mismatch"
-#define	LOG_13  "Power On Fail"
-#define	LOG_14  "FET Enable Fail"
-#define	LOG_15  "Init Fail"
-#define	LOG_16  "Power Off Fail"
-#define LOG_17  "Lost power in the air"
-#define LOG_20  ""
-#define LOG_21  "Landing Gear Auto Reset"
+#define MSG_00  ""
+#define MSG_01  "System Error"
+#define MSG_02  "Serial Error"
+#define	MSG_10  ""
+#define	MSG_11  "Offboard"
+#define	MSG_12  "Voltage mismatch"
+#define	MSG_13  "Power On Fail"
+#define	MSG_14  "FET Enable Fail"
+#define	MSG_15  "Init Fail"
+#define	MSG_16  "Power Off Fail"
+#define MSG_17  "Lost power in the air"
+#define MSG_20  ""
+#define MSG_21  "Landing Gear Auto Reset"
 
 #define ERR_BATTA               (1<<0)
 #define ERR_BATTB               (1<<1)
 
+typedef struct
+{
+    uint8_t id;
+    char content[100];
+}MsgType;
 
 extern SerialType USART1_Tx,USART3_Tx;
 extern mavlink_message_t mavMsgTx;
@@ -83,16 +88,17 @@ extern uint8_t sysStatusTemp;
 extern uint8_t sysStatus;
 extern uint16_t sysTicks;
 extern uint8_t sysBattery;
-extern uint8_t sysFlying;
+extern uint8_t sysArmed;
 
 extern uint8_t msgLostCnt;
 
-extern char* logList[64];
+extern char* msgList[64];
 
 void System_Heartbeat(void);
 void System_StatusReporter(void);
 void System_ErrorHandler(void);
-void Mavlink_SendLog(uint8_t id, char* msg);
+void Mavlink_SendMsg(MsgType msg);
+void Mavlink_SendLog(uint8_t id, char* content);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);

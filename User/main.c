@@ -31,7 +31,6 @@ mavlink_stm32_f3_command_t mavF3CmdRx;
 mavlink_stm32_f3_motor_curr_t mavF3Curr;
 void Mavlink_Decode(mavlink_message_t* msg);
 
-extern uint8_t battReinit;
 extern TIM_HandleTypeDef htim7;
 /**
   * @brief  Main program
@@ -50,7 +49,7 @@ int main(void)
     #ifdef ENABLE_BATTERYMGMT
     PRINTLOG("\r\n [INFO] Init Battery Management System");
     I2C_Init();
-    do{sysStatus = Batt_Init();}  while(sysStatus==0x10);
+    do{sysStatus = Batt_Init();}  while(sysStatus==MSG_BATT_WAITING);
     #endif //ENABLE_BATTERYMGMT
 
     #ifdef ENABLE_LANGINGGEAR
@@ -86,6 +85,7 @@ int main(void)
                 }
                 else
                 {
+                    //PRINTLOG("\r\n [Info] Mav: %d",mavMsgRx.msgid);
                     // Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
@@ -105,9 +105,8 @@ int main(void)
         if(battPwrOff == 1)
         {
             sysStatusTemp = Batt_PowerOff();
-            if(sysStatusTemp != BATT_WAITING) 
+            if(sysStatusTemp != MSG_BATT_WAITING) 
             {
-                battPwrOff = 0;
                 sysStatus = sysStatusTemp;
             }
         } 
@@ -116,7 +115,7 @@ int main(void)
         if(battReinit)
         {
             sysStatusTemp = Batt_Init();
-            if(sysStatusTemp != BATT_WAITING) 
+            if(sysStatusTemp != MSG_BATT_WAITING) 
             {
                 battReinit = 0;
                 HAL_TIM_Base_Start_IT(&htim7);
@@ -205,12 +204,12 @@ void Mavlink_Decode(mavlink_message_t* msg)
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:
-                    sysFlying = 1;
-                    PRINTLOG("\r\n [INFO] Drone is flying");
+                    sysArmed = 1;
+                    PRINTLOG("\r\n [INFO] Drone Armed");
                     break;
                 case CMD_FLY_DISARM:
-                    sysFlying = 0;
-                    PRINTLOG("\r\n [INFO] Drone is landing");
+                    sysArmed = 0;
+                    PRINTLOG("\r\n [INFO] Drone DisArmed");
                     break;
                 default:break;
             }

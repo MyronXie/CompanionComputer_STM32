@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.01
+  * Revised Date    : 2018.03.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -13,26 +13,25 @@
 
 #include "System.h"
 
-uint8_t sysConnect  = 0;        // Flag for system working (Receive first heartbeat from FC)
-uint8_t sysWarning  = 0;        // Counter for fatal error
-uint8_t sysStatusTemp = 0;
-uint8_t sysStatusLst = 0;        // Flag for battery , 0 for no problem
-uint8_t sysStatus   = 0;        // Flag for battery , 0 for no problem
-uint16_t sysTicks   = 0;        // Record system running time
-uint8_t sysBattery  = 0;
-uint8_t sysFlying   = 0;        // Flag for record whether drone is in the air
-
-uint8_t msgLostCnt = 0;         // Mavlink Communication Lost Counter
+uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
+uint8_t  sysWarning     = 0;    // Counter for fatal error
+uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
+uint8_t  sysStatusLst   = 0;       
+uint8_t  sysStatusTemp  = 0;
+uint16_t sysTicks       = 0;    // Record system running time
+uint8_t  sysBattery     = 0;    // Flag for record which battery has error
+uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
 
 mavlink_message_t mavMsgTx;     // Send mavlink massage
-uint16_t sendCnt = 0;
+uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
+uint16_t sendCnt        = 0;
 
-char* logList[64]={
-    LOG_00,LOG_01,LOG_02,"","","","","","","","","","","","","",
-    LOG_10,LOG_11,LOG_12,LOG_13,LOG_14,LOG_15,LOG_16,LOG_17,"","","","","","","","",
-    LOG_20,LOG_21};
+char* msgList[64]={
+    MSG_00,MSG_01,MSG_02,"","","","","","","","","","","","","",
+    MSG_10,MSG_11,MSG_12,MSG_13,MSG_14,MSG_15,MSG_16,MSG_17,"","","","","","","","",
+    MSG_20,MSG_21};
 
-char logSend[100]={""};
+char msgSend[100]={""};
 
 extern uint8_t LandingGear_Reset(void);
 
@@ -45,42 +44,49 @@ void System_Heartbeat(void)
 
 void System_StatusReporter(void)
 {
-    if(sysConnect)           // Must report after connected with FMU, otherwise it's dummy
+    if(sysConnect)                                  // Must report after connected with FMU, otherwise it's dummy
     {
         if(sysStatus&&(sysStatusLst!=sysStatus))    // Prevent report same error message continuously
         {
-            if((sysStatus>=0x10)&&(sysStatus<0x20))
+            if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
             {
-                if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(logSend,"All battery ");
-                else if((sysBattery&ERR_BATTA))                         sprintf(logSend,"battery A ");
-                else if((sysBattery&ERR_BATTB))                         sprintf(logSend,"battery B ");
-                else                                                    sprintf(logSend,"");
-                sysBattery = 0;
-                strcat(logSend,logList[sysStatus]);
-                Mavlink_SendLog(sysStatus, logSend);
-                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, logSend);
+                if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(msgSend,"All battery ");
+                else if((sysBattery&ERR_BATTA))                         sprintf(msgSend,"battery A ");
+                else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
+                else                                                    sprintf(msgSend,"");
+                sysBattery = NO_ERR;
+                strcat(msgSend, msgList[sysStatus]);
+                Mavlink_SendLog(sysStatus, msgSend);
+                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, msgSend);
             }
             else
             {
-                Mavlink_SendLog(sysStatus, logList[sysStatus]);
-                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, logList[sysStatus]);
+                Mavlink_SendLog(sysStatus, msgList[sysStatus]);
+                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, msgList[sysStatus]);
             }
         }
         sysStatusLst = sysStatus;
     }
 }
 
-void Mavlink_SendLog(uint8_t id, char* msg)
+void Mavlink_SendMsg(MsgType msg)
 {
     uint16_t cnt;
-    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, id, msg);
+    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, msg.id, msg.content);
+    Mavlink_SendMessage(&mavMsgTx, cnt);
+}
+
+void Mavlink_SendLog(uint8_t id, char* content)
+{
+    uint16_t cnt;
+    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, id, content);
     Mavlink_SendMessage(&mavMsgTx, cnt);
 }
 
 void System_ErrorHandler(void)
 {
     #ifndef INGORE_LOSTCOMM
-    if(sysConnect)      msgLostCnt++;           // msgLostCnt will reset if receive mavlink msg
+    if(sysConnect)      msgLostCnt++;               // msgLostCnt will reset if receive mavlink msg
     #endif
 
     // Lost connect with from FMU
@@ -89,7 +95,7 @@ void System_ErrorHandler(void)
         sysConnect = 0;
         PRINTLOG("\r\n [ERR]  FMU Connect Lost");
         PRINTLOG("\r\n [ACT]  Reset USART1");
-        Mavlink_SendLog(ERR_SYS_SERIAL, logList[ERR_SYS_SERIAL]); 
+        Mavlink_SendLog(ERR_SYS_SERIAL, msgList[ERR_SYS_SERIAL]); 
         msgLostCnt++;
         
         #ifdef  ENABLE_LANGINGGEAR
@@ -109,7 +115,7 @@ void System_ErrorHandler(void)
 //    if(sysWarning >= 4)
 //    {
 //        PRINTLOG("\r\n [ACT]  System: Reset...");
-//        Mavlink_SendLog(ERR_SYS_GENERAL, logList[ERR_SYS_GENERAL]);
+//        Mavlink_SendLog(ERR_SYS_GENERAL, msgList[ERR_SYS_GENERAL]);
 //        NVIC_SystemReset();
 //    }
 }
