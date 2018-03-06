@@ -27,9 +27,10 @@ uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
 uint16_t sendCnt        = 0;
 
 char* msgList[64]={
-    MSG_00,MSG_01,MSG_02,"","","","","","","","","","","","","",
-    MSG_10,MSG_11,MSG_12,MSG_13,MSG_14,MSG_15,MSG_16,MSG_17,"","","","","","","","",
-    MSG_20,MSG_21};
+    MSG_00,"","","","","","","","","","","","","","","",
+    MSG_10,MSG_11,"","","","","","","","","","","","","","",
+    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,"","","","","","","","",
+    MSG_30,MSG_31};
 
 char msgSend[100]={""};
 
@@ -54,7 +55,7 @@ void System_StatusReporter(void)
                 else if((sysBattery&ERR_BATTA))                         sprintf(msgSend,"battery A ");
                 else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
                 else                                                    sprintf(msgSend,"");
-                sysBattery = NO_ERR;
+                sysBattery = MSG_BLANK;
                 strcat(msgSend, msgList[sysStatus]);
                 Mavlink_SendLog(sysStatus, msgSend);
                 PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, msgSend);

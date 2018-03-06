@@ -32,42 +32,43 @@
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF
 
-// MsgCode
-#define MSG_SYSTEM              0x00
-#define MSG_BATTERY             0x10
-#define MSG_LANDINGGEAR         0x20
+//========== Message Code ==========
+#define MSG_BLANK               0x00
+#define MSG_SYSTEM              0x10
+#define MSG_BATTERY             0x20
+#define MSG_LANDINGGEAR         0x30
 
-// Error Code
-#define NO_ERR                  0x00
-#define ERR_SYS_GENERAL         0x01
-#define ERR_SYS_SERIAL          0x02
-#define ERR_BATT_OFFBOARD       0x11
-#define ERR_BATT_VDIFF          0x12
-#define ERR_BATT_POWERON        0x13
-#define ERR_BATT_ENABLEFET      0x14
-#define ERR_BATT_INIT           0x15
-#define ERR_BATT_POWEROFF       0x16
-#define ERR_BATT_LOSTPWR        0x17
-#define ERR_LG_RESET            0x21
+//=========== Error Code =========== 
+#define ERR_SYS_GENERAL         0x11
+#define ERR_SYS_SERIAL          0x12
+#define ERR_BATT_OFFBOARD       0x21
+#define ERR_BATT_VDIFF          0x22
+#define ERR_BATT_POWERON        0x23
+#define ERR_BATT_ENABLEFET      0x24
+#define ERR_BATT_INIT           0x25
+#define ERR_BATT_POWEROFF       0x26
+#define ERR_BATT_LOSTPWR        0x27
+#define ERR_LG_RESET            0x31
 
-// Command Code
+//========== Command Code ========== 
 #define CMD_FLY_ARM             0x80
 #define CMD_FLY_DISARM          0x81
 
 // Log list
 #define MSG_00  ""
-#define MSG_01  "System Error"
-#define MSG_02  "Serial Error"
-#define	MSG_10  ""
-#define	MSG_11  "Offboard"
-#define	MSG_12  "Voltage mismatch"
-#define	MSG_13  "Power On Fail"
-#define	MSG_14  "FET Enable Fail"
-#define	MSG_15  "Init Fail"
-#define	MSG_16  "Power Off Fail"
-#define MSG_17  "Lost power in the air"
-#define MSG_20  ""
-#define MSG_21  "Landing Gear Auto Reset"
+#define MSG_10  ""
+#define MSG_11  "System Error"
+#define MSG_12  "Serial Error"
+#define	MSG_20  ""
+#define	MSG_21  "Offboard"
+#define	MSG_22  "Voltage mismatch"
+#define	MSG_23  "Power On Fail"
+#define	MSG_24  "FET Enable Fail"
+#define	MSG_25  "Init Fail"
+#define	MSG_26  "Power Off Fail"
+#define MSG_27  "Lost power in the air"
+#define MSG_30  ""
+#define MSG_31  "Landing Gear Auto Reset"
 
 #define ERR_BATTA               (1<<0)
 #define ERR_BATTB               (1<<1)

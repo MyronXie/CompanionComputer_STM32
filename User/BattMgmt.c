@@ -279,7 +279,7 @@ uint8_t Batt_Init(void)
 
             PRINTLOG("\r\n [INFO] Battery Init Success");
             stage = BATT_INIT_BEGIN;
-            return NO_ERR;
+            return MSG_BLANK;
 
         default:
             stage = BATT_INIT_BEGIN;
@@ -498,7 +498,7 @@ uint8_t Battery_Management(void)
             default:break;
         }
     }		
-    return NO_ERR;
+    return MSG_BLANK;
 }
 
 uint8_t Batt_PowerOff(void)
@@ -521,7 +521,7 @@ uint8_t Batt_PowerOff(void)
                 battMode = BATT_MODE_NONE;
                 battPwrOff = 0;
                 attemptTimes = 0;
-                return NO_ERR;
+                return MSG_BLANK;
             }
             else
             {
