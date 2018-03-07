@@ -27,6 +27,9 @@
 //#define ENABLE_CURRMONITOR
 //#define SINGLE_BATTERY
 
+#define BOARD_REV1
+//#define BOARD_REV2
+
 // <Dev> Option
 //#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF

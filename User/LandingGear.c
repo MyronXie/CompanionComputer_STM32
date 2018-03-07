@@ -137,7 +137,7 @@ uint8_t LandingGear_Reset(void)
 
         return ERR_LG_RESET;
     }
-    return 0x00;
+    return MSG_BLANK;
 }
 
 void LG_TIM_Init(void)
@@ -266,13 +266,21 @@ void LG_Relay_Init(void)
 {
     GPIO_InitTypeDef   GPIO_InitStructure;
 
+    #ifdef BOARD_REV1
     __HAL_RCC_GPIOA_CLK_ENABLE();
-
     GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStructure.Pull = GPIO_NOPULL;
     GPIO_InitStructure.Pin  = GPIO_PIN_11;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    #elif BOARD_REV2
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStructure.Pull = GPIO_NOPULL;
+    GPIO_InitStructure.Pin  = GPIO_PIN_13;
+    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);    
+    #endif
 }
 
 /******************************END OF FILE******************************/

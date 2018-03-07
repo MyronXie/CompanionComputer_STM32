@@ -78,6 +78,8 @@ int main(void)
                 msgLostCnt = 0;                         // Clear Communication Lost flag
                 sysWarning = 0;                         // Clear communication error
 
+//                PRINTLOG("\r\n [Info] Mav: %d",mavMsgRx.msgid);
+                
                 if(!sysConnect)                         // Receive first mavlink msg, start system
                 {
                     PRINTLOG("\r\n [INFO] Connected with FMU");
@@ -85,7 +87,6 @@ int main(void)
                 }
                 else
                 {
-                    //PRINTLOG("\r\n [Info] Mav: %d",mavMsgRx.msgid);
                     // Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
@@ -200,7 +201,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* STM32_F3_COMMAND (#500)*/
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
-            PRINTLOG("\r\n [FMU]  #500: 0x%02X,%s", mavF3CmdRx.command, mavF3CmdRx.f3_log);
+            PRINTLOG("\r\n [FMU]  #500: 0x%02X,%s", (uint8_t)mavF3CmdRx.command, mavF3CmdRx.f3_log);
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:

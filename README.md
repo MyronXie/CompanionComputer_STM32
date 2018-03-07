@@ -1,5 +1,9 @@
 # CompanionComputer_STM32
 
+### Version
+- Software: v0.3 (20180307)
+- Hardware: Rev0.1
+
 ### Function
 - Communication with FMU through Mavlink (bi-direction)
 - Landing Gear Control System
