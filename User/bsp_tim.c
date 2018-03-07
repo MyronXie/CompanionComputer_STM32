@@ -29,7 +29,7 @@ void TIM_Init(void)
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
-    
+
     /* TIM6: Landing Gear PWM Adjustment (100Hz) */
     #ifdef ENABLE_LANGINGGEAR
     htim6.Instance          = TIM6;
@@ -55,7 +55,7 @@ void TIM_Init(void)
     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
     #endif //ENABLE_BATTERYMGMT
-    
+
     /* TIM15: Send ESC Current Message (20Hz) */
     #ifdef ENABLE_CURRMONITOR
     htim15.Instance          = TIM15;
@@ -78,9 +78,9 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
         __HAL_RCC_TIM2_CLK_ENABLE();
         HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
         HAL_NVIC_EnableIRQ(TIM2_IRQn);
-        HAL_TIM_Base_Start_IT(&htim2);    
+        HAL_TIM_Base_Start_IT(&htim2);
     }
-    
+
     if(htim_base->Instance == TIM6)
     {
         __HAL_RCC_TIM6_CLK_ENABLE();
@@ -88,21 +88,21 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
         HAL_NVIC_EnableIRQ(TIM6_DAC1_IRQn);
         HAL_TIM_Base_Start_IT(&htim6);
     }
-    
+
     if(htim_base->Instance == TIM7)
     {
         __HAL_RCC_TIM7_CLK_ENABLE();
         HAL_NVIC_SetPriority(TIM7_IRQn, 1, 1);
         HAL_NVIC_EnableIRQ(TIM7_IRQn);
-        HAL_TIM_Base_Start_IT(&htim7);    
+        HAL_TIM_Base_Start_IT(&htim7);
     }
-    
+
     if(htim_base->Instance == TIM15)
     {
         __HAL_RCC_TIM15_CLK_ENABLE();
         HAL_NVIC_SetPriority(TIM15_IRQn, 1, 1);
         HAL_NVIC_EnableIRQ(TIM15_IRQn);
-        HAL_TIM_Base_Start_IT(&htim15);    
+        HAL_TIM_Base_Start_IT(&htim15);
     }
 }
 

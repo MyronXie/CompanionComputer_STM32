@@ -16,4 +16,4 @@
 * [Command](Doc/Command.md)
 
 ### Notice
-Because using submodule `mavlink-c_library_v2` in this project, must use `git clone` to download all project.
+Because using submodule in this project, must use `git clone` to download all project.

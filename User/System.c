@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.06
+  * Revised Date    : 2018.03.07
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -16,7 +16,7 @@
 uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
 uint8_t  sysWarning     = 0;    // Counter for fatal error
 uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
-uint8_t  sysStatusLst   = 0;       
+uint8_t  sysStatusLst   = 0;
 uint8_t  sysStatusTemp  = 0;
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysBattery     = 0;    // Flag for record which battery has error
@@ -26,6 +26,7 @@ mavlink_message_t mavMsgTx;     // Send mavlink massage
 uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
 uint16_t sendCnt        = 0;
 
+// msgList from system.h
 char* msgList[64]={
     MSG_00,"","","","","","","","","","","","","","","",
     MSG_10,MSG_11,"","","","","","","","","","","","","","",
@@ -37,7 +38,7 @@ char msgSend[100]={""};
 extern uint8_t LandingGear_Reset(void);
 
 void System_Heartbeat(void)
-{	
+{
     PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);      // Record running time
     sendCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
     Mavlink_SendMessage(&mavMsgTx, sendCnt);
@@ -96,9 +97,9 @@ void System_ErrorHandler(void)
         sysConnect = 0;
         PRINTLOG("\r\n [ERR]  FMU Connect Lost");
         PRINTLOG("\r\n [ACT]  Reset USART1");
-        Mavlink_SendLog(ERR_SYS_SERIAL, msgList[ERR_SYS_SERIAL]); 
+        Mavlink_SendLog(ERR_SYS_SERIAL, msgList[ERR_SYS_SERIAL]);
         msgLostCnt++;
-        
+
         #ifdef  ENABLE_LANGINGGEAR
         // Reset Landing Gear
         sysStatusTemp = LandingGear_Reset();
@@ -138,23 +139,23 @@ void PRINTLOG(const char *format, ...)
     va_start(arg, format);
     ret = vsprintf(str, format, arg);
     va_end(arg);
-    
+
     Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
 }
 
 //void DELAY_MS(int32_t nms)
-//{  
-//    int32_t temp;  
+//{
+//    int32_t temp;
 //    SysTick->LOAD = 8000*nms;   // HCLK/8 = 64M/8
-//    SysTick->VAL  = 0X00;       // Clear counter  
+//    SysTick->VAL  = 0X00;       // Clear counter
 //    SysTick->CTRL = 0X01;       // Enable
-//    do  
-//    {  
+//    do
+//    {
 //        temp=SysTick->CTRL;     // Load
 //    }
-//    while((temp&0x01)&&(!(temp&(1<<16)))); // Waiting 
-//    SysTick->CTRL = 0x00;       // Disable 
-//    SysTick->VAL  = 0X00;       // Clear counter  
-//} 
+//    while((temp&0x01)&&(!(temp&(1<<16)))); // Waiting
+//    SysTick->CTRL = 0x00;       // Disable
+//    SysTick->VAL  = 0X00;       // Clear counter
+//}
 
 /*****END OF FILE****/

@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.06
+  * Revised Date    : 2018.03.07
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -29,9 +29,9 @@ extern TIM_HandleTypeDef htim7;
 uint8_t Batt_Init(void)
 {
     static uint32_t timeTick = 0;               // Record delay time
-    static uint8_t stage = BATT_INIT_BEGIN;     // Record running stage 
+    static uint8_t stage = BATT_INIT_BEGIN;     // Record running stage
     static uint8_t attemptTimes = 0;            // Record attempt times
-    
+
     switch(stage)                               // Finite State Machine
     {
         case BATT_INIT_BEGIN:
@@ -42,8 +42,8 @@ uint8_t Batt_Init(void)
             #endif
             attemptTimes = 0;
             stage = BATT_CNCT_CHECK;
-        
-        case BATT_CNCT_CHECK:      
+
+        case BATT_CNCT_CHECK:
             // Connect to battery
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
@@ -65,15 +65,15 @@ uint8_t Batt_Init(void)
                 stage = BATT_VDIFF_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
             }
             #endif
-            else 
+            else
             {
                 attemptTimes++;
                 timeTick = HAL_GetTick();
                 stage = BATT_CNCT_WAIT;
             }
-            
+
         case BATT_CNCT_WAIT:
-            // Waiting for delay            
+            // Waiting for delay
             if(attemptTimes > ATTEMPT_TIMES)
             {
                 PRINTLOG("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?battA.name:"",(!(battB.status&BATT_ONBOARD))?battB.name:"");
@@ -89,13 +89,13 @@ uint8_t Batt_Init(void)
             }
             if(HAL_GetTick() - timeTick < CNCT_DELAY)
             {
-                stage = BATT_CNCT_WAIT;   return MSG_BATT_WAITING;         // Continue waiting
+                stage = BATT_CNCT_WAIT;   return MSG_BATT_WAITING;              // Continue waiting
             }
             else
             {
-                stage = BATT_CNCT_CHECK;   return MSG_BATT_WAITING;              // Stop waiting
+                stage = BATT_CNCT_CHECK;   return MSG_BATT_WAITING;             // Stop waiting
             }
-            
+
         case BATT_VDIFF_CHECK:
             #ifndef INGORE_VDIFF
             if(battMode == BATT_MODE_DUAL)
@@ -103,7 +103,7 @@ uint8_t Batt_Init(void)
                 // Read voltage
                 Batt_Measure(&battA, BATT_MEAS_VOLT);
                 Batt_Measure(&battB, BATT_MEAS_VOLT);
-                
+
                 // Check Voltage difference
                 if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage)) >= VDIFF_TOLERENCE)
                 {
@@ -116,13 +116,13 @@ uint8_t Batt_Init(void)
             }
             #endif  //INGORE_VDIFF
             stage = BATT_PWRON_CHECK;
-                     
+
         case BATT_PWRON_CHECK:
             // Power ON Process
             if(battMode == BATT_MODE_SINGLE)        // Single battery mode
             {
                 Batt_Measure(battO, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Power On   #%d: %s-0x%02X", attemptTimes, battO->name, battO->fet);                
+                PRINTLOG("\r\n [ACT]  Power On   #%d: %s-0x%02X", attemptTimes, battO->name, battO->fet);
                 if(battO->fet&PWR_ON)
                 {
                     stage = BATT_ENFET_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
@@ -139,7 +139,7 @@ uint8_t Batt_Init(void)
             {
                 Batt_Measure(&battA, BATT_MEAS_FET);
                 Batt_Measure(&battB, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Power On   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);	                
+                PRINTLOG("\r\n [ACT]  Power On   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
                 if((battA.fet&PWR_ON)&&(battB.fet&PWR_ON))
                 {
                     stage = BATT_ENFET_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
@@ -155,7 +155,7 @@ uint8_t Batt_Init(void)
             }
 
         case BATT_PWRON_WAIT:
-            // Waiting for delay            
+            // Waiting for delay
             if(attemptTimes > ATTEMPT_TIMES)
             {
                 if(battMode == BATT_MODE_SINGLE)        // Single battery mode
@@ -186,7 +186,7 @@ uint8_t Batt_Init(void)
             if(battMode == BATT_MODE_SINGLE)        // Single battery mode
             {
                 Batt_Measure(battO, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Enable FET #%d: %s-0x%02X",attemptTimes,battO->name,battO->fet);	               
+                PRINTLOG("\r\n [ACT]  Enable FET #%d: %s-0x%02X",attemptTimes,battO->name,battO->fet);
                 if(battO->fet&FET_LOCK)
                 {
                     stage = BATT_INIT_CHECK;    return MSG_BATT_WAITING;
@@ -203,7 +203,7 @@ uint8_t Batt_Init(void)
             {
                 Batt_Measure(&battA, BATT_MEAS_FET);
                 Batt_Measure(&battB, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Enable FET #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);	                
+                PRINTLOG("\r\n [ACT]  Enable FET #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
                 if((battA.fet&FET_LOCK)&&(battB.fet&FET_LOCK))
                 {
                     stage = BATT_INIT_CHECK;    return MSG_BATT_WAITING;
@@ -219,7 +219,7 @@ uint8_t Batt_Init(void)
             }
 
         case BATT_ENFET_WAIT:
-            // Waiting for delay            
+            // Waiting for delay
             if(attemptTimes > ATTEMPT_TIMES)
             {
                 if(battMode == BATT_MODE_SINGLE)        // Single battery mode
@@ -247,12 +247,12 @@ uint8_t Batt_Init(void)
             }
 
         case BATT_INIT_CHECK:
-            // Check battery init status    
+            // Check battery init status
             if(battMode == BATT_MODE_SINGLE)        // Single battery mode
             {
                 Batt_Measure(battO, BATT_MEAS_FET);
                 if((battO->status&BATT_ONBOARD)&&(battO->fet&PWR_ON)&&(battO->fet&FET_LOCK))   battO->status |= BATT_INUSE;
-                
+
                 if(!(battO->status&BATT_INUSE))
                 {
                     PRINTLOG("\r\n [ERR]  %s Battery Init Error",battO->name);
@@ -266,7 +266,7 @@ uint8_t Batt_Init(void)
                 Batt_Measure(&battB, BATT_MEAS_FET);
                 if((battA.status&BATT_ONBOARD)&&(battA.fet&PWR_ON)&&(battA.fet&FET_LOCK))   battA.status |= BATT_INUSE;
                 if((battB.status&BATT_ONBOARD)&&(battB.fet&PWR_ON)&&(battB.fet&FET_LOCK))   battB.status |= BATT_INUSE;
-                
+
                 if(!((battA.status&BATT_INUSE)&&(battB.status&BATT_INUSE)))
                 {
                     PRINTLOG("\r\n [ERR]  %s %s Battery Init Error",(!(battA.status&BATT_INUSE))?"battA":"",(!(battB.status&BATT_INUSE))?"battB":"");
@@ -292,23 +292,23 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 {
     uint8_t regSta = 0;
     uint16_t regVal;
-    
+
     switch(cmd)
     {
-        case BATT_MEAS_FET: 
+        case BATT_MEAS_FET:
             regSta = Batt_ReadWord(batt->id, BATT_FETStatus, &regVal);
-            if(!regSta) batt->fet = regVal; 
+            if(!regSta) batt->fet = regVal;
             else        batt->fet = BATT_DUMMY;          // dummy flag, display in boot up
             break;
-        
+
         case BATT_MEAS_VOLT:
             regSta = Batt_ReadWord(batt->id, BATT_Voltage, &regVal);
             if(!regSta) batt->voltage = regVal; break;
-        
+
         case BATT_MEAS_TEMP:
             regSta = Batt_ReadWord(batt->id, BATT_Temperature, &regVal);
             if(!regSta) batt->temperature = (regVal-2731)*10;	break;  // Kelvin -> Celsius
-        
+
         case BATT_MEAS_CURR:
             regSta = Batt_ReadWord(batt->id, BATT_Current, &regVal);
             if(!regSta) batt->current = regVal; break;
@@ -316,7 +316,7 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
         case BATT_MEAS_SOC:
             regSta += Batt_ReadWord(batt->id, BATT_RelativeSOC, &regVal);
             if(!regSta) batt->soc = regVal; break;
-        
+
         case BATT_MEAS_RCAP:
             regSta += Batt_ReadWord(batt->id, BATT_RemainingCapacity, &regVal);
             if(!regSta) batt->remainingCapacity = regVal*10; break;
@@ -329,9 +329,9 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
             regSta += Batt_ReadWord(batt->id, BATT_DesignCapacity, &regVal);
             if(!regSta) batt->designCapacity = regVal*10; break;
 
-        default: break;		
+        default: break;
     }
-    
+
     if(regSta)  batt->status &= ~BATT_ONBOARD;      // Can't connect to battery
     else        batt->status |=  BATT_ONBOARD;
 }
@@ -348,19 +348,20 @@ uint8_t Battery_Management(void)
 {
     // Increase battCycleCnt
     battCycleCnt = (battCycleCnt+1)%BATT_FUNC_CYCLE;
-    
+
     /********** Measure & Send Process **********/
     if(!(battCycleCnt&BATT_SYS_JUDGE))
     {
         // Select Battery
         if(!(battCycleCnt&BATT_SYS_BATTB))      battX = &battA;
         else                                    battX = &battB;
-        
+
         // Measure Process
         if(!(battCycleCnt&BATT_SYS_SEND))
         {
             if(battX->status&BATT_ONBOARD)  Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
         }
+
         // Send Process
         else
         {
@@ -373,7 +374,7 @@ uint8_t Battery_Management(void)
                     {
                         if(battX->status&BATT_ONBOARD)
                         {
-                            PRINTLOG("\r\n [INFO] %s: 0x%02X%02X,%d,%d,%d,%d,%d,%d,%d", 
+                            PRINTLOG("\r\n [INFO] %s: 0x%02X%02X,%d,%d,%d,%d,%d,%d,%d",
                                     battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
                                     battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
                             battX->lostCnt = 0;
@@ -391,11 +392,12 @@ uint8_t Battery_Management(void)
             }
         }
     }
+
     /********** Judge Process **********/
     else
     {
         switch(battCycleCnt&BATT_SYS_MASK_CMD)
-        {		
+        {
             // Pack & Send battery status message
             case BATT_MGMT_SEND_MSG:
                 if(sysConnect)
@@ -432,13 +434,13 @@ uint8_t Battery_Management(void)
                     }
                 }
                 break;
-            
+
             #ifndef INGORE_POWEROFF
             // Judge Auto power off
             case BATT_MGMT_PWROFF:
                 if((battMode == BATT_MODE_DUAL)&&(!battPwrOff))
                 {
-                    // Prevent the situation that one battery lost connect                    
+                    // Prevent the situation that one battery lost connect
                     if((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD))
                     {
                         // One battery is powered down
@@ -461,8 +463,8 @@ uint8_t Battery_Management(void)
                 }
                 break;
             #endif
-                
-            // Re-connect battery    
+
+            // Re-connect battery
             case BATT_MGMT_RECNCT:
                 if(!battReinit)
                 {
@@ -492,12 +494,12 @@ uint8_t Battery_Management(void)
                             Mavlink_SendLog(0x10, "Reinit battery");
                         }
                     }
-                }      
+                }
                 break;
-                
+
             default:break;
         }
-    }		
+    }
     return MSG_BLANK;
 }
 
@@ -506,13 +508,13 @@ uint8_t Batt_PowerOff(void)
     static uint32_t timeTick = 0;
     static uint8_t stage = BATT_PWROFF_CHECK;
     static uint8_t attemptTimes = 0;
-    
+
     switch(stage)
     {
         case BATT_PWROFF_CHECK:
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);	                
+            PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
             if(!((battA.fet&PWR_ON)||(battB.fet&PWR_ON)))
             {
                 PRINTLOG("\r\n [INFO] Batt: Power Off Success");
@@ -531,7 +533,7 @@ uint8_t Batt_PowerOff(void)
                 timeTick = HAL_GetTick();
                 stage = BATT_PWROFF_WAIT;
             }
-            
+
         case BATT_PWROFF_WAIT:
             if(attemptTimes > ATTEMPT_TIMES)
             {
@@ -550,7 +552,7 @@ uint8_t Batt_PowerOff(void)
             {
                 stage = BATT_PWROFF_CHECK;   return MSG_BATT_WAITING;
             }
-            
+
         default:
             stage = BATT_PWROFF_CHECK;
             return MSG_BATT_WAITING;

@@ -75,7 +75,7 @@ void ADC_Init(void)
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
-    
+
     if(adcHandle->Instance==ADC1)
     {
         /* Peripheral clock enable */
@@ -83,7 +83,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
         __HAL_RCC_GPIOA_CLK_ENABLE();
         __HAL_RCC_GPIOB_CLK_ENABLE();
 
-        /**ADC1 GPIO Configuration    
+        /**ADC1 GPIO Configuration
         PA0     ------> ADC1_IN1
         PA1     ------> ADC1_IN2
         PA2     ------> ADC1_IN3

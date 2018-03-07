@@ -22,9 +22,9 @@
 #define FLASHSIZE 10
 
 #define LED1    GPIOB,GPIO_PIN_12
-#define LED2    GPIOB,GPIO_PIN_12
-#define LED3    GPIOB,GPIO_PIN_12
-#define LED4    GPIOB,GPIO_PIN_12
+#define LED2    GPIOB,GPIO_PIN_13
+#define LED3    GPIOB,GPIO_PIN_14
+#define LED4    GPIOB,GPIO_PIN_15
 
 #define LED_ON(led)     HAL_GPIO_WritePin(led,GPIO_PIN_SET)
 #define LED_OFF(led)    HAL_GPIO_WritePin(led,GPIO_PIN_RESET)
