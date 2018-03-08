@@ -28,7 +28,7 @@ uint16_t sendCnt        = 0;
 
 // msgList from system.h
 char* msgList[64]={
-    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,"","","","","","","","","","","",
+    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,"","","","","","","","","","",
     MSG_10,MSG_11,"","","","","","","","","","","","","","",
     MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,"","","","","","","","",
     MSG_30,MSG_31};
@@ -48,7 +48,7 @@ void System_StatusReporter(void)
 {
     if(sysConnect)                                  // Must report after connected with FMU, otherwise it's dummy
     {
-        if(sysStatus&&(sysStatusLst!=sysStatus))    // Prevent report same error message continuously
+        if(sysStatus)                               // Prevent report same error message continuously
         {
             if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
             {
@@ -57,17 +57,14 @@ void System_StatusReporter(void)
                 else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
                 else                                                    sprintf(msgSend,"");
                 sysBattery = MSG_BLANK;
-                strcat(msgSend, msgList[sysStatus]);
-                Mavlink_SendLog(sysStatus, msgSend);
-                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, msgSend);
             }
-            else
-            {
-                Mavlink_SendLog(sysStatus, msgList[sysStatus]);
-                PRINTLOG("\r\n [INFO] Status Reporter_0x%X: %s", sysStatus, msgList[sysStatus]);
-            }
+            else    sprintf(msgSend,"");
+
+            strcat(msgSend, msgList[sysStatus]);
+            Mavlink_SendLog(sysStatus, msgSend);
+            PRINTLOG("\r\n [INFO] Status Reporter: #0x%02X, \"%s\"", sysStatus, msgSend);
+            sysStatus = 0;
         }
-        sysStatusLst = sysStatus;
     }
 }
 

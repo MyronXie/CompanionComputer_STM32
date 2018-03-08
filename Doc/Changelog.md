@@ -6,7 +6,7 @@
 * Improve Battery Management System
     * Reconsider whole logic of Battery Management System
     * Rewrite `Batt_Init()` & `Batt_PowerOff()` from pending function to Finite state machine
-    * Rewrite `SINGLE_BATTERY` logic
+    * Rewrite `BATT_SINGLE` logic and add `BATT_DUAL_VDIFF` logic
 + Add Current Monitor System
     + Monitoring current of Electronic Speed Control (ESC)
     + Send `STM32_F3_MOTOR_CURR` to FMU

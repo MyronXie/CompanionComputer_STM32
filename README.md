@@ -1,7 +1,7 @@
 # CompanionComputer_STM32
 
 ### Version
-- Software: v0.3 (20180307)
+- Software: v0.3 (20180308)
 - Hardware: Rev0.1
 
 ### Function

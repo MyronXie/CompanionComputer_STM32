@@ -26,7 +26,7 @@ typedef struct
     uint8_t     id;
     uint8_t     status;
     uint8_t     lostCnt;            // times
-    uint8_t     fet;                // Read from SMBUS
+    uint8_t     fet;
     uint16_t    temperature;        // Celsius
     uint16_t    voltage;            // mV
     int16_t     current;            // mA
@@ -95,10 +95,11 @@ typedef struct
 #define BATT_SYS_MASK_CMD       0x07
 
 //============ BattMode ============
-#define BATT_MODE_NONE          0x00
-#define BATT_MODE_SINGLE        0x01
-#define BATT_MODE_DUAL          0x02
-#define BATT_MODE_DUAL_ONE      0x03
+#define BATT_NONE               0x00
+#define BATT_SINGLE             0x10
+#define BATT_DUAL               0x20
+#define BATT_DUAL_ONLYONE       0x21    // Only one battery is onboard
+#define BATT_DUAL_VDIFF         0x22    // Only one battery can be power on
 
 //============Batt_Measure============
 #define BATT_MEAS_FET           0x00
@@ -138,7 +139,7 @@ uint8_t Batt_Init(void);
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 uint8_t Batt_PowerOff(void);
 uint8_t Battery_Management(void);
-void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t num);
+void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
 
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);

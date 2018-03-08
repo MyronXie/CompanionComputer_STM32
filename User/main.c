@@ -129,6 +129,8 @@ int main(void)
                 sysStatus = sysStatusTemp;
             }
         }
+
+        System_StatusReporter();
     }//while
 }//main
 
@@ -142,7 +144,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {
         System_Heartbeat();
-        System_StatusReporter();
         System_ErrorHandler();
         IWDG_Feed();                // Feed watchdog
     }
@@ -204,7 +205,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* BATTERY_STATUS (#147)*/
         case MAVLINK_MSG_ID_BATTERY_STATUS:
             mavlink_msg_battery_status_decode(msg, &mavBattRx);
-            PRINTLOG("\r\n [FMU]  #147: 0x%02X,%dC,%dV,%dA,%d%%",
+            PRINTLOG("\r\n [FMU]  #147: 0x%02X,%dC,%dmV,%d0mA,%d%%",
                     mavBattRx.id, mavBattRx.temperature, mavBattRx.voltages[0], mavBattRx.current_battery, mavBattRx.battery_remaining);
             break;
 
