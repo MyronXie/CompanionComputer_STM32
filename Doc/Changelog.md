@@ -1,10 +1,11 @@
 ## Changelog
 
-### v0.3 (20180307) : Improve stability of CC_STM32 System
+### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system
-    * Fix problem of USART1-Rx (lost package frequently, become dummy occasionally)
+    * Fix problem of USART1-Rx (lost package frequently and become dummy occasionally)
 * Improve Battery Management System
-    * Rewrite `Batt_Init()` to reuse it for reinit battery
+    * Reconsider whole logic of Battery Management System
+    * Rewrite `Batt_Init()` & `Batt_PowerOff()` from pending function to Finite state machine
     * Rewrite `SINGLE_BATTERY` logic
 + Add Current Monitor System
     + Monitoring current of Electronic Speed Control (ESC)

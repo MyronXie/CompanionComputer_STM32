@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.05
+  * Revised Date    : 2018.03.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -37,12 +37,17 @@ typedef struct
 }BattMsg;
 
 //========== Battery Management Config ==========
-#define ATTEMPT_TIMES       4       // times
+
+#define CNCT_ATTEMPT        3       // times
+#define PWRON_ATTEMPT       4       // times
+#define ENFET_ATTEMPT       4       // times
+#define PWROFF_ATTEMPT      4       // times
 #define CNCT_DELAY          20      // ms
 #define PWRON_DELAY         2000    // ms
 #define PWROFF_DELAY        2000    // ms
 #define ENFET_DELAY         2000    // ms
-#define VDIFF_TOLERENCE     100     // mv
+#define VDIFF_INIT_TOL      90      // mv
+#define VDIFF_RUNNING_TOL   1000    // mv
 
 #define BATT_FUNC_CYCLE     40
 
@@ -69,7 +74,7 @@ typedef struct
     #define BATT_POWERON        0xAA55
     #define BATT_POWEROFF       0x55AA
     #define BATT_ENABLEFET      0x54AA
-    
+
 #define BATT_FETStatus          0x72
     #define BATT_DUMMY          0xC0
     #define PWR_ON              (1<<5)
@@ -117,13 +122,13 @@ typedef struct
 #define BATT_INIT_CHECK         0x08
 #define BATT_PWROFF_CHECK       0x09
 #define BATT_PWROFF_WAIT        0x0A
-#define MSG_BATT_WAITING        MSG_BATTERY
 
 //========== Batt_Mgmt ==========
 #define BATT_MGMT_SEND_MSG      0x01
 #define BATT_MGMT_CNCT_LOST     0x02
-#define BATT_MGMT_PWROFF        0x03
-#define BATT_MGMT_RECNCT        0x04
+#define BATT_MGMT_VDIFF_CHECK   0x03
+#define BATT_MGMT_PWROFF        0x04
+#define BATT_MGMT_RECNCT        0x05
 
 
 extern uint8_t battPwrOff;

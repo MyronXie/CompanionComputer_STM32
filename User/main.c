@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.03.07
+  * Revised Date    : 2018.03.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -211,16 +211,22 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* STM32_F3_COMMAND (#500)*/
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
-            PRINTLOG("\r\n [FMU]  #500: 0x%02X,%s", (uint8_t)mavF3CmdRx.command, mavF3CmdRx.f3_log);
+            PRINTLOG("\r\n [FMU]  #500: 0x%02X,\"%s\"", (uint8_t)mavF3CmdRx.command, mavF3CmdRx.f3_log);
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:
-                    sysArmed = 1;
-                    PRINTLOG("\r\n [INFO] Drone Armed");
+                    if(!sysArmed)
+                    {
+                        sysArmed = 1;
+                        PRINTLOG("\r\n [INFO] Drone Armed");
+                    }
                     break;
                 case CMD_FLY_DISARM:
-                    sysArmed = 0;
-                    PRINTLOG("\r\n [INFO] Drone DisArmed");
+                    if(sysArmed)
+                    {
+                        sysArmed = 0;
+                        PRINTLOG("\r\n [INFO] Drone Disarmed");
+                    }
                     break;
                 default:break;
             }

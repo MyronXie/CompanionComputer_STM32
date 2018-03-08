@@ -7,6 +7,12 @@ Used for `mavlink_msg_stm32_f3_command.h`
 |Code    |Name                  |Content                    |
 |:-:     |-                     |-                          |
 |**0x00**|**MSG_BLANK**         |**Blank Message**          |
+|0x01    |MSG_BATT_INIT         |Battery Init success       |
+|0x02    |MSG_BATT_ONBOARD      |Battery onboard            |
+|0x03    |MSG_BATT_PWROFF_START |Start Power Off process    |
+|0x04    |MSG_BATT_REINIT       |Battery Reinit process     |
+|0x05    |MSG_BATT_PWROFF_END   |Power Off success          |
+|0x0F    |MSG_BATT_WAITING      |Delay in battery process   |
 |-       |-                     |-                          |
 |**0x10**|**MSG_SYSTEM**        |**System**                 |
 |0x11    |ERR_SYS_GENERAL       |System Error               |

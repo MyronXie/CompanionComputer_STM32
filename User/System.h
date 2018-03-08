@@ -5,7 +5,7 @@
   *
   * Version         : v0.3
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.05
+  * Revised Date    : 2018.03.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -23,7 +23,7 @@
 
 // Function Select
 #define ENABLE_BATTERYMGMT
-#define ENABLE_LANGINGGEAR
+//#define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
 //#define SINGLE_BATTERY
 
@@ -37,11 +37,18 @@
 
 //========== Message Code ==========
 #define MSG_BLANK               0x00
+#define MSG_BATT_INIT           0x01
+#define MSG_BATT_ONBOARD        0x02
+#define MSG_BATT_PWROFF_START   0x03
+#define MSG_BATT_REINIT         0x04
+#define MSG_BATT_PWROFF_END     0x05
+#define MSG_BATT_WAITING        0x0F
+
 #define MSG_SYSTEM              0x10
 #define MSG_BATTERY             0x20
 #define MSG_LANDINGGEAR         0x30
 
-//=========== Error Code =========== 
+//=========== Error Code ===========
 #define ERR_SYS_GENERAL         0x11
 #define ERR_SYS_SERIAL          0x12
 #define ERR_BATT_OFFBOARD       0x21
@@ -53,12 +60,17 @@
 #define ERR_BATT_LOSTPWR        0x27
 #define ERR_LG_RESET            0x31
 
-//========== Command Code ========== 
+//========== Command Code ==========
 #define CMD_FLY_ARM             0x80
 #define CMD_FLY_DISARM          0x81
 
 // Log list
 #define MSG_00  ""
+#define MSG_01  "Battery Init success"
+#define MSG_02  "Battery onboard"
+#define MSG_03  "Start Power Off Process"
+#define MSG_04  "Battery Reinit"
+#define MSG_05  "Power Off Success"
 #define MSG_10  ""
 #define MSG_11  "System Error"
 #define MSG_12  "Serial Error"
