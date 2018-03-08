@@ -5,7 +5,7 @@
   *
   * Version         : v0.2
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.02.02
+  * Revised Date    : 2018.03.07
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -22,6 +22,7 @@ uint8_t lgChangeDelayCnt = 0;           // Delay for prevent too fast changing
 uint8_t lgChangeStatusCurr = 0;         // Change Status of Landing Gear [Standby: 0, Changing: 1]
 uint8_t lgChangeStatusPrev = 0;
 uint8_t lgChangeProgress = 50;          // Change Progress of Landing Gear [0-100(%)], not used now
+uint8_t lgAutoReset = 0;
 
 uint32_t flashParam[FLASHSIZE];
 
@@ -38,18 +39,18 @@ void LandingGear_Init(void)
 {
     LG_Relay_Init();                    // Low-layer init
     LG_TIM_Init();
-    Relay_OFF();											
-    
+    Relay_OFF();
+
     lgPositionCurr = FLASH_LoadParam(0);
     lgChangeStatusCurr = FLASH_LoadParam(1);
-    printf(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
+    PRINTLOG(": %s,%s",lgPositionCurr?"UP":"DOWN",lgChangeStatusCurr?"Changing":"Standby");
     /* Landing Gear not reset in last process, Reset Landing Gear */
     if(lgPositionCurr||lgChangeStatusCurr)
     {
-        printf("\r\n [ACT]  Reset Landing Gear");
+        PRINTLOG("\r\n [ACT]  Reset Landing Gear");
         LG_Reset();
         lgPositionCurr = 0, lgChangeStatusCurr = 0;
-        flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
+        flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
         FLASH_SaveParam(flashParam,2);
     }
 }
@@ -59,21 +60,21 @@ void LandingGear_Control(mavlink_command_long_t* cmd)
     lgPositionRecv = (int)cmd->param2;          // .param2 for landing gear position
     if(lgPositionRecv==0||lgPositionRecv==1)    // Param check
     {
-        printf("\r\n [INFO] Landing Gear: %s", lgPositionRecv?"UP":"DOWN");
+        PRINTLOG("\r\n [INFO] Landing Gear: %s", lgPositionRecv?"UP":"DOWN");
         /* Landing Gear is changing or in delay time, ignore recv command */
         if(lgChangeStatusCurr||lgChangeDelayCnt)
         {
             if(lgPositionRecv!=lgPositionCurr)  // Opposite direction, send reject message to FMU
             {
-                printf(", Reject");
-                sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
+                PRINTLOG(", Reject");
+                sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_TEMPORARILY_REJECTED, 0, 0, 1, 1);
             }
             else                                // Same direction, send ignore message to FMU
             {
-                printf(", Igrore");
-                sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
+                PRINTLOG(", Igrore");
+                sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
             }
-            Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
+            Mavlink_SendMessage(&mavMsgTx, sendCnt);
         }
         /* Landing Gear is standby, respond recv command */
         else
@@ -81,38 +82,38 @@ void LandingGear_Control(mavlink_command_long_t* cmd)
             lgPositionCurr = lgPositionRecv;
             if(lgPositionPrev != lgPositionCurr)    // Opposite direction, set change status of Landing Gear
             {
-                printf(", Respond");
+                PRINTLOG(", Respond");
                 lgChangeStatusCurr = 1;
                 lgPositionPrev = lgPositionCurr;
             }
             else                                    // Same direction, ignore command
             {
-                printf(", Igrore");
+                PRINTLOG(", Igrore");
             }
-        }						
+        }
     }
 }
 
 void LandingGear_Adjustment(void)
 {
     // Decrease lgChangeDelayCnt
-    if(lgChangeDelayCnt)	lgChangeDelayCnt--;
+    if(lgChangeDelayCnt)    lgChangeDelayCnt--;
 
     if(lgChangeStatusPrev != lgChangeStatusCurr)    // Change status message
     {
         lgChangeStatusPrev = lgChangeStatusCurr;
         if(lgChangeStatusCurr)                      // Changing Process Start
         {
-            printf("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
-            sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
+            PRINTLOG("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
+            sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
         }
         else                                        // Changing Process Finish
         {
-            printf("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
-            sendByteCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
+            PRINTLOG("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
+            sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
         }
-        Mavlink_SendMessage(&mavMsgTx, sendByteCnt);
-        flashParam[0] = lgPositionCurr;		flashParam[1] = lgChangeStatusCurr;
+        Mavlink_SendMessage(&mavMsgTx, sendCnt);
+        flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
         FLASH_SaveParam(flashParam,2);
     }
     /* Landing Gear changing process */
@@ -130,17 +131,13 @@ uint8_t LandingGear_Reset(void)
 {
     if(lgPositionCurr)                      // Changing Landing Gear cost 1~2s approx., no need to judge change status
     {
-        printf("\r\n [ACT]  LandingGear: Reset...");
+        PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
         HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
-        LG_Reset();
-        lgPositionCurr = 0, lgChangeStatusCurr = 0;
-        flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
-        FLASH_SaveParam(flashParam,2);
-        HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
+        lgAutoReset = 1;
 
         return ERR_LG_RESET;
     }
-    return 0x00;
+    return MSG_BLANK;
 }
 
 void LG_TIM_Init(void)
@@ -152,13 +149,13 @@ void LG_TIM_Init(void)
     htim3.Init.Period       = 10000-1;
     htim3.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;
     HAL_TIM_PWM_Init(&htim3);
-    
+
     hocl.OCMode         = TIM_OCMODE_PWM1;
     hocl.OCPolarity     = TIM_OCPOLARITY_HIGH;
     hocl.Pulse          = PUL_LEFT_DOWN;
     HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-    
+
     hocr.OCMode         = TIM_OCMODE_PWM1;
     hocr.OCPolarity     = TIM_OCPOLARITY_HIGH;
     hocr.Pulse          = PUL_RIGHT_DOWN;
@@ -169,10 +166,10 @@ void LG_TIM_Init(void)
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
-    
+
     __HAL_RCC_TIM3_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    
+
     GPIO_InitStruct.Pin     = GPIO_PIN_4|GPIO_PIN_5;
     GPIO_InitStruct.Mode    = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull    = GPIO_NOPULL;
@@ -189,8 +186,8 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
   */
 uint8_t LG_Control(uint8_t pos, uint8_t* prog)
 {
-    uint8_t changeStatus=1;
-    
+    uint8_t changeStatus = 1;
+
     if(pos==1)          // Landing Gear Up(1)
     {
         lgPulseL+=PUL_LEFT_Range*PUL_SCALE_UP;
@@ -216,48 +213,74 @@ uint8_t LG_Control(uint8_t pos, uint8_t* prog)
         *prog=(uint8_t)((PUL_LEFT_UP-lgPulseL)*100.0/PUL_LEFT_Range);
     }
 
-    hocl.Pulse=lgPulseL;	
+    hocl.Pulse=lgPulseL;
     HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-        
-    hocr.Pulse=lgPulseR;	
+
+    hocr.Pulse=lgPulseR;
     HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
-    
+
     return changeStatus;
 }
 
 void LG_Reset(void)
 {
-    Relay_ON();
-    
-    lgPulseL=PUL_LEFT_DOWN;
-    lgPulseR=PUL_RIGHT_DOWN;
-    
-    hocl.Pulse=lgPulseL;
-    HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-    
-    hocr.Pulse=lgPulseR;
-    HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
-    
-    HAL_Delay(1250);
-    
-    Relay_OFF();
+    static uint8_t stage = 0;
+    static uint32_t timeTick = 0;
+
+    switch(stage)
+    {
+        case 0x00:
+            Relay_ON();
+
+            lgPulseL=PUL_LEFT_DOWN;
+            lgPulseR=PUL_RIGHT_DOWN;
+
+            hocl.Pulse=lgPulseL;
+            HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
+            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+
+            hocr.Pulse=lgPulseR;
+            HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
+            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
+
+            timeTick = HAL_GetTick();
+            stage = 0x01;
+
+        case 0x01:
+            if(HAL_GetTick() - timeTick < 1500)
+            {
+                Relay_OFF();
+                lgPositionCurr = 0, lgChangeStatusCurr = 0;
+                flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
+                FLASH_SaveParam(flashParam,2);
+                HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
+                lgAutoReset = 0;
+                stage = 0x00;
+            }
+    }
 }
 
 void LG_Relay_Init(void)
 {
     GPIO_InitTypeDef   GPIO_InitStructure;
 
+    #ifdef BOARD_REV1
     __HAL_RCC_GPIOA_CLK_ENABLE();
-
     GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStructure.Pull = GPIO_NOPULL;
     GPIO_InitStructure.Pin  = GPIO_PIN_11;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    #elif BOARD_REV2
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStructure.Pull = GPIO_NOPULL;
+    GPIO_InitStructure.Pin  = GPIO_PIN_13;
+    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+    #endif
 }
 
 /******************************END OF FILE******************************/

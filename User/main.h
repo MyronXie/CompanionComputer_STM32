@@ -3,9 +3,9 @@
   * File Name       : main.h
   * Description     : CompanionComputer_STM32 main program
   *
-  * Version         : v0.2
+  * Version         : v0.3
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.02.02
+  * Revised Date    : 2018.03.05
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -18,10 +18,12 @@
 #include "bsp_usart.h"
 #include "bsp_tim.h"
 #include "bsp_i2c.h"
+#include "bsp_adc.h"
 #include "bsp_misc.h"
 #include "System.h"
 #include "LandingGear.h"
 #include "BattMgmt.h"
+#include "CurrMonitor.h"
 
 #endif /* __MAIN_H */
 

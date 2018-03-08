@@ -34,12 +34,9 @@ void I2C_Init(void)
     I2cHandle.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
     I2cHandle.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
     I2cHandle.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
-    I2cHandle.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;  
-    
-    if(HAL_I2C_Init(&I2cHandle) != HAL_OK)
-    {
-        while(1);    
-    }
+    I2cHandle.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
+
+    HAL_I2C_Init(&I2cHandle);
 }
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
@@ -57,7 +54,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_I2C1_CLK_ENABLE();
 
-    /*##-3- Configure peripheral GPIO ##########################################*/  
+    /*##-3- Configure peripheral GPIO ##########################################*/
     /* I2C TX GPIO pin configuration  */
     GPIO_InitStruct.Pin         = GPIO_PIN_8;
     GPIO_InitStruct.Mode        = GPIO_MODE_AF_OD;
@@ -76,47 +73,47 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
 uint8_t I2C_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {
     uint8_t msg[2],status=0;
-    
+
     status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 1);
     status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 2, 1);
-    
+
     *_data=(uint16_t)((msg[1]<<8)+msg[0]);
-    
+
     return status;
 }
 
 uint8_t I2C_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data)
 {
     uint8_t msg[3],status=0;
-    
+
     msg[0]=_reg;
     msg[1]=(uint8_t)(_data&0xFF);
     msg[2]=(uint8_t)(_data>>8);
     status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 3, 1);
-        
+
     return status;
 }
 
 uint8_t I2C_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data)
 {
     uint8_t msg[2],status=0;
-    
+
     msg[0]=_reg;
     msg[1]=_data;
     status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, 2, 1);
-        
+
     return status;
 }
 
 uint8_t I2C_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data)
 {
     uint8_t msg[1],status=0;
-    
+
     status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 1);
     status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, 1, 1);
-    
+
     *_data=msg[0];
-    
+
     return status;
 }
 /******************************END OF FILE******************************/
