@@ -3,9 +3,9 @@
   * File Name       : BattMgmt.h
   * Description     : Battery Management Drivers (through I2C)
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.08
+  * Revised Date    : 2018.03.13
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -34,6 +34,9 @@ typedef struct
     uint16_t    remainingCapacity;  // mAh
     uint16_t    fullChargeCapacity; // mAh
     uint16_t    designCapacity;     // mAh
+    uint32_t    safetyStatus;
+    uint32_t    pfStatus;
+    uint32_t    operationStatus;
 }BattMsg;
 
 //========== Battery Management Config ==========
@@ -66,6 +69,14 @@ typedef struct
 #define BATT_DesignCapacity     0x18
 #define BATT_SpecificationInfo  0x1A
 #define BATT_SerialNumber       0x1C
+#define BATT_DeviceChemistry    0x22
+#define BATT_SafetyAlert        0x50
+#define BATT_SafetyStatus       0x51
+#define BATT_PFAlert            0x52
+#define BATT_PFStatus           0x53
+#define BATT_OperationStatus    0x54
+#define BATT_ChargingStatus     0x55
+#define BATT_GaugingStatus      0x56
 
 #define	SerialNumber            0x0001
 #define	SpecificationInfo       0x0031
@@ -91,8 +102,7 @@ typedef struct
 //============battCycleCnt============
 #define BATT_SYS_JUDGE          (1<<5)
 #define BATT_SYS_BATTB          (1<<4)
-#define BATT_SYS_SEND           (1<<3)
-#define BATT_SYS_MASK_CMD       0x07
+#define BATT_SYS_MASK_CMD       0x0F
 
 //============ BattMode ============
 #define BATT_NONE               0x00
@@ -110,6 +120,9 @@ typedef struct
 #define BATT_MEAS_RCAP          0x05
 #define BATT_MEAS_FCCAP         0x06
 #define BATT_MEAS_DCAP          0x07
+#define BATT_MEAS_SAFESTA       0x08
+#define BATT_MEAS_PFSTA         0x09
+#define BATT_MEAS_OPSSTA        0x0A
 
 //============Batt_Init============
 #define BATT_INIT_BEGIN         0x00
@@ -130,6 +143,8 @@ typedef struct
 #define BATT_MGMT_VDIFF_CHECK   0x03
 #define BATT_MGMT_PWROFF        0x04
 #define BATT_MGMT_RECNCT        0x05
+#define BATT_MGMT_SEND_LOG      0x0E
+#define BATT_MGMT_CNCT_COUNT    0x0F
 
 
 extern uint8_t battPwrOff;
@@ -141,10 +156,13 @@ uint8_t Batt_PowerOff(void);
 uint8_t Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
 
-uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
-uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
+
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
+uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);
+
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data);
+uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data);
+uint8_t Batt_ReadBlock(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num);
 
 #endif /* __BATTMGMT_H */
 

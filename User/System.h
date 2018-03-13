@@ -3,9 +3,9 @@
   * File Name       : System.h
   * Description     : System param for CC_STM32
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.08
+  * Revised Date    : 2018.03.13
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -25,7 +25,7 @@
 #define ENABLE_BATTERYMGMT
 //#define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
-//#define SINGLE_BATTERY
+#define SINGLE_BATTERY
 
 #define BOARD_REV1
 //#define BOARD_REV2
@@ -34,6 +34,7 @@
 //#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF
+//#define ENABLE_BATT_REINIT
 
 //========== Message Code ==========
 #define MSG_BLANK               0x00

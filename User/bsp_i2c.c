@@ -3,9 +3,9 @@
   * File Name       : bsp_i2c.c
   * Description     : Drivers for I2C (based on HAL)
   *
-  * Version         : v0.2
+  * Version         : v0.3.1
   * Created Date    : 2018.01.22
-  * Revised Date    : 2018.01.25
+  * Revised Date    : 2018.03.13
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -116,4 +116,28 @@ uint8_t I2C_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data)
 
     return status;
 }
+
+uint8_t I2C_WriteBlock(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num)
+{
+    uint8_t msg[256],status=0;
+
+    msg[0]=_reg;
+    memcpy(msg+1, _data, _num);
+    status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, msg, _num+1, 1);
+
+    return status;
+}
+
+uint8_t I2C_ReadBlock(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num)
+{
+    uint8_t msg[256],status=0;
+    
+    status += HAL_I2C_Master_Transmit(&I2cHandle, _addr, &_reg, 1, 1);
+    status += HAL_I2C_Master_Receive(&I2cHandle, _addr+1, msg, _num, 1);
+
+    memcpy(_data, msg, _num);
+
+    return status;
+}
+
 /******************************END OF FILE******************************/

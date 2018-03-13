@@ -1,5 +1,9 @@
 ## Changelog
 
+### v0.3.1 (20180313) : Improve stability of Battery Management System
+* Improve Battery Management System
+    * Add reading misc status of battery
+
 ### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system
     * Fix problem of USART1-Rx (lost package frequently and become dummy occasionally)

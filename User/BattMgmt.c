@@ -3,9 +3,9 @@
   * File Name       : BattMgmt.c
   * Description     : Battery Management Drivers (through I2C)
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.08
+  * Revised Date    : 2018.03.13
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -295,6 +295,7 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 {
     uint8_t regSta = 0;
     uint16_t regVal;
+    uint8_t regTemp[4];
 
     switch(cmd)
     {
@@ -331,6 +332,18 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
         case BATT_MEAS_DCAP:
             regSta += Batt_ReadWord(batt->id, BATT_DesignCapacity, &regVal);
             if(!regSta) batt->designCapacity = regVal*10; break;
+        
+        case BATT_MEAS_SAFESTA:
+            regSta += Batt_ReadBlock(batt->id, 0x50, regTemp, 4);
+            if(!regSta) batt->safetyStatus      = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
+        
+        case BATT_MEAS_PFSTA:
+            regSta += Batt_ReadBlock(batt->id, 0x52, regTemp, 4);
+            if(!regSta) batt->pfStatus          = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
+            
+        case BATT_MEAS_OPSSTA:
+            regSta += Batt_ReadBlock(batt->id, 0x54, regTemp, 4);//BATT_OperationStatus
+            if(!regSta) batt->operationStatus   = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;  
 
         default: break;
     }
@@ -341,10 +354,9 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 
 
 // battCycleCnt(0x00~0x27)
-// Measure : 000X 0NNN
-// Send    : 000X 1NNN
+// Measure : 000X NNNN
 //           X=0 battA, X=1 battB
-//           N=0~7 type
+//           N=0~15 type
 // Judge   : 0010 0NNN
 //           N=0~7 judge type
 uint8_t Battery_Management(void)
@@ -360,48 +372,44 @@ uint8_t Battery_Management(void)
         else                                    battX = &battB;
 
         // Measure Process
-        if(!(battCycleCnt&BATT_SYS_SEND))
-        {
-            if(battX->status&BATT_ONBOARD)  Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
-        }
+        if(battX->status&BATT_ONBOARD)  Batt_Measure(battX, battCycleCnt&BATT_SYS_MASK_CMD);
 
         // Send Process
-        else
+        switch(battCycleCnt&BATT_SYS_MASK_CMD)
         {
-            switch(battCycleCnt&BATT_SYS_MASK_CMD)
-            {
-                // print data
-                case BATT_MGMT_SEND_MSG:
+            // print data
+            case BATT_MGMT_SEND_LOG:
+                if(battX->status&BATT_ONBOARD)
+                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d,0x%08X,0x%08X,0x%08X",
+                            battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
+                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
+                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
+                break;
+
+             case BATT_MGMT_CNCT_COUNT:
+                Batt_Measure(battX, BATT_MEAS_FET);
+                if(battX->status&BATT_INUSE)
+                {
                     if(battX->status&BATT_ONBOARD)
-                        PRINTLOG("\r\n [INFO] %s: 0x%02X%02X,%d,%d,%d,%d,%d,%d,%d",
-                                battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
-                                battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
-                    break;
-
-                 case BATT_MGMT_CNCT_LOST:
-                    Batt_Measure(battX, BATT_MEAS_FET);
-                    if(battX->status&BATT_INUSE)
                     {
-                        if(battX->status&BATT_ONBOARD)
+                        if(battX->lostCnt == CNCT_ATTEMPT)
                         {
-                            if(battX->lostCnt == CNCT_ATTEMPT)
-                            {
-                                battX->lostCnt = 0;
-                                return MSG_BATT_ONBOARD;
-                            }
                             battX->lostCnt = 0;
+                            return MSG_BATT_ONBOARD;
                         }
-                        else
-                        {
-                            battX->lostCnt++;
-                            if(battX->lostCnt < CNCT_ATTEMPT)   PRINTLOG("\r\n [INFO] %s Lost #%d!", battX->name, battX->lostCnt);
-                        }
+                        battX->lostCnt = 0;
                     }
-                    break;
+                    else
+                    {
+                        battX->lostCnt++;
+                        if(battX->lostCnt < CNCT_ATTEMPT)   PRINTLOG("\r\n [INFO] %s Lost #%d!", battX->name, battX->lostCnt);
+                    }
+                }
+                break;
 
-                default: break;
-            }
+            default: break;
         }
+   
     }
 
     /********** Judge Process **********/
@@ -512,6 +520,7 @@ uint8_t Battery_Management(void)
 
             // Re-connect battery
             case BATT_MGMT_RECNCT:
+                #ifdef ENABLE_BATT_REINIT
                 if(!battReinit)
                 {
                     Batt_Measure(&battA, BATT_MEAS_FET);
@@ -541,6 +550,7 @@ uint8_t Battery_Management(void)
                         }
                     }
                 }
+                #endif //ENABLE_BATT_REINIT
                 break;
 
             default:break;
@@ -665,7 +675,6 @@ void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode)
     }
 }
 
-
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {
     return I2C_ReadWord(_addr, _reg, _data);
@@ -684,6 +693,11 @@ uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data)
 uint8_t Batt_ReadByte(uint8_t _addr, uint8_t _reg, uint8_t* _data)
 {
     return I2C_ReadByte(_addr, _reg, _data);
+}
+
+uint8_t Batt_ReadBlock(uint8_t _addr, uint8_t _reg, uint8_t* _data, uint8_t _num)
+{
+    return I2C_ReadBlock(_addr, _reg, _data, _num);
 }
 
 /******************************END OF FILE******************************/
