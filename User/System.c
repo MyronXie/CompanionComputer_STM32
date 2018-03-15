@@ -3,9 +3,9 @@
   * File Name       : System.c
   * Description     : System param for CC_STM32
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.08
+  * Revised Date    : 2018.03.15
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -30,7 +30,7 @@ uint16_t sendCnt        = 0;
 char* msgList[64]={
     MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,"","","","","","","","","","",
     MSG_10,MSG_11,"","","","","","","","","","","","","","",
-    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,"","","","","","","","",
+    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,"","","","","","","",
     MSG_30,MSG_31};
 
 char msgSend[100]={""};

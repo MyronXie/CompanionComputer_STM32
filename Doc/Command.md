@@ -26,6 +26,7 @@ Used for `mavlink_msg_stm32_f3_command.h`
 |0x25    |ERR_BATT_INIT         |Battery Init Fail          |
 |0x26    |ERR_BATT_POWEROFF     |Power Off Fail             |
 |0x27    |ERR_BATT_LOSTPWR      |Lost power in the air      |
+|0x28    |ERR_BATT_STILLPWR     |Still power on after pwroff|
 |-       |-                     |-                          |
 |**0x30**|**MSG_LANDINGGEAR**   |**Landing Gear**           |
 |0x31    |ERR_LG_RESET          |Landing Gear Auto Reset    |

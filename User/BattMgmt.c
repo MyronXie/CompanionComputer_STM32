@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.13
+  * Revised Date    : 2018.03.15
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -295,7 +295,7 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 {
     uint8_t regSta = 0;
     uint16_t regVal;
-    uint8_t regTemp[4];
+//    uint8_t regTemp[4];
 
     switch(cmd)
     {
@@ -332,18 +332,18 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
         case BATT_MEAS_DCAP:
             regSta += Batt_ReadWord(batt->id, BATT_DesignCapacity, &regVal);
             if(!regSta) batt->designCapacity = regVal*10; break;
-        
-        case BATT_MEAS_SAFESTA:
-            regSta += Batt_ReadBlock(batt->id, 0x50, regTemp, 4);
-            if(!regSta) batt->safetyStatus      = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
-        
-        case BATT_MEAS_PFSTA:
-            regSta += Batt_ReadBlock(batt->id, 0x52, regTemp, 4);
-            if(!regSta) batt->pfStatus          = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
-            
-        case BATT_MEAS_OPSSTA:
-            regSta += Batt_ReadBlock(batt->id, 0x54, regTemp, 4);//BATT_OperationStatus
-            if(!regSta) batt->operationStatus   = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;  
+
+//        case BATT_MEAS_SAFESTA:
+//            regSta += Batt_ReadBlock(batt->id, 0x50, regTemp, 4);
+//            if(!regSta) batt->safetyStatus      = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
+//
+//        case BATT_MEAS_PFSTA:
+//            regSta += Batt_ReadBlock(batt->id, 0x52, regTemp, 4);
+//            if(!regSta) batt->pfStatus          = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
+//
+//        case BATT_MEAS_OPSSTA:
+//            regSta += Batt_ReadBlock(batt->id, 0x54, regTemp, 4);//BATT_OperationStatus
+//            if(!regSta) batt->operationStatus   = (uint32_t)(((regTemp[0])<<24)+((regTemp[1])<<16)+((regTemp[2])<<8)+(regTemp[3])); break;
 
         default: break;
     }
@@ -380,10 +380,13 @@ uint8_t Battery_Management(void)
             // print data
             case BATT_MGMT_SEND_LOG:
                 if(battX->status&BATT_ONBOARD)
-                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d,0x%08X,0x%08X,0x%08X",
+                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d",
                             battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
-                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
-                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
+                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
+//                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d,0x%08X,0x%08X,0x%08X",
+//                            battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
+//                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
+//                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
                 break;
 
              case BATT_MGMT_CNCT_COUNT:
@@ -409,7 +412,7 @@ uint8_t Battery_Management(void)
 
             default: break;
         }
-   
+
     }
 
     /********** Judge Process **********/
@@ -553,6 +556,16 @@ uint8_t Battery_Management(void)
                 #endif //ENABLE_BATT_REINIT
                 break;
 
+            // Check power after pwer off process
+            case BATT_MGMT_PWRCHECK:
+//                if(battMode == BATT_NONE)
+//                {
+//                    // If these code can be reached, means power is still on
+//                    if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
+//                        return ERR_BATT_STILLPWR;
+//                }
+                break;
+
             default:break;
         }
     }
@@ -603,7 +616,7 @@ uint8_t Batt_PowerOff(void)
                     battMode = BATT_NONE;
                     battPwrOff = 0;
                     attemptTimes = 0;
-                    return MSG_BATT_PWROFF_END;
+                    return MSG_BATT_PWROFF_END;     // Actually this message won't send because power down
                 }
                 else
                 {

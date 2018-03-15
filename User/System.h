@@ -25,7 +25,7 @@
 #define ENABLE_BATTERYMGMT
 //#define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
-#define SINGLE_BATTERY
+//#define SINGLE_BATTERY
 
 #define BOARD_REV1
 //#define BOARD_REV2
@@ -59,6 +59,7 @@
 #define ERR_BATT_INIT           0x25
 #define ERR_BATT_POWEROFF       0x26
 #define ERR_BATT_LOSTPWR        0x27
+#define ERR_BATT_STILLPWR       0x28
 #define ERR_LG_RESET            0x31
 
 //========== Command Code ==========
@@ -83,6 +84,7 @@
 #define	MSG_25  "Init Fail"
 #define	MSG_26  "Power Off Fail"
 #define MSG_27  "Lost power in the air"
+#define MSG_28  "Still power on after pwroff"
 #define MSG_30  ""
 #define MSG_31  "Landing Gear Auto Reset"
 

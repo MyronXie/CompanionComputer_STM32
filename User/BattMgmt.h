@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.13
+  * Revised Date    : 2018.03.15
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -143,6 +143,8 @@ typedef struct
 #define BATT_MGMT_VDIFF_CHECK   0x03
 #define BATT_MGMT_PWROFF        0x04
 #define BATT_MGMT_RECNCT        0x05
+#define BATT_MGMT_PWRCHECK      0x06
+
 #define BATT_MGMT_SEND_LOG      0x0E
 #define BATT_MGMT_CNCT_COUNT    0x0F
 
