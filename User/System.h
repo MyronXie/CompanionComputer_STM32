@@ -31,6 +31,7 @@
 //#define BOARD_REV2
 
 // <Dev> Option
+#define WITHOUT_BATTERY
 //#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF

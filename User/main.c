@@ -69,6 +69,9 @@ int main(void)
     IWDG_Init();
     TIM_Init();
 
+    sysConnect = 1;
+    sysStatus = 0x01;
+    
     while(1)
     {
         /************************* Mavlink Decode Process *************************/

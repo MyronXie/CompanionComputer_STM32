@@ -21,6 +21,7 @@ uint8_t  sysStatusTemp  = 0;
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysBattery     = 0;    // Flag for record which battery has error
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
+uint8_t  sysReport      = 0;    // Record report times
 
 mavlink_message_t mavMsgTx;     // Send mavlink massage
 uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
@@ -50,6 +51,7 @@ void System_StatusReporter(void)
     {
         if(sysStatus)                               // Prevent report same error message continuously
         {
+            if(!sysReport)  sysReport = 3;              // Report same error message for 3 times 
             if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
             {
                 if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(msgSend,"All battery ");
@@ -62,8 +64,13 @@ void System_StatusReporter(void)
 
             strcat(msgSend, msgList[sysStatus]);
             Mavlink_SendLog(sysStatus, msgSend);
-            PRINTLOG("\r\n [INFO] Status Reporter: #0x%02X, \"%s\"", sysStatus, msgSend);
-            sysStatus = 0;
+            if(sysReport > 0)       sysReport--;
+            if(sysReport == 0)
+            {   
+                PRINTLOG("\r\n [INFO] Status Reporter: #0x%02X, \"%s\"", sysStatus, msgSend);
+                sysStatus = 0;          // Clear current error message
+                sysReport = 0;
+            }
         }
     }
 }

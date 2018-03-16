@@ -13,8 +13,8 @@
 
 #include "BattMgmt.h"
 
-BattMsg battA={"battA",0x16};
-BattMsg battB={"battB",0x26};
+BattMsg battA={"battA",0x16,0x03,0,0x14,2340,24828,-30,94,13140,13980,16000};
+BattMsg battB={"battB",0x26,0x03,0,0x14,2350,24893,-31,95,13680,14520,16000};
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
 uint8_t battMode = BATT_NONE;                   // Battery Mode (SINGLE/DUAL)
@@ -32,6 +32,7 @@ uint8_t Batt_Init(void)
     static uint8_t stage = BATT_INIT_BEGIN;     // Record running stage
     static uint8_t attemptTimes = 0;            // Record attempt times
 
+    #ifndef WITHOUT_BATTERY
     switch(stage)                               // Finite State Machine
     {
         case BATT_INIT_BEGIN:
@@ -288,6 +289,11 @@ uint8_t Batt_Init(void)
             stage = BATT_INIT_BEGIN;
             return ERR_BATT_INIT;
     }
+    #else
+    battA.status |= BATT_INUSE;
+    battB.status |= BATT_INUSE;
+    #endif
+    
 }
 
 
@@ -297,6 +303,7 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
     uint16_t regVal;
 //    uint8_t regTemp[4];
 
+    #ifndef WITHOUT_BATTERY
     switch(cmd)
     {
         case BATT_MEAS_FET:
@@ -350,6 +357,8 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 
     if(regSta)  batt->status &= ~BATT_ONBOARD;      // Can't connect to battery
     else        batt->status |=  BATT_ONBOARD;
+    
+    #endif
 }
 
 
@@ -380,6 +389,7 @@ uint8_t Battery_Management(void)
             // print data
             case BATT_MGMT_SEND_LOG:
                 if(battX->status&BATT_ONBOARD)
+                {
                     PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d",
                             battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
                             battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
@@ -387,6 +397,12 @@ uint8_t Battery_Management(void)
 //                            battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
 //                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
 //                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
+                    Battery_MavlinkPack(&mavBattTx,battX);
+                    sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
+                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+                    Mavlink_SendMessage(&mavMsgTx, sendCnt);
+                }
                 break;
 
              case BATT_MGMT_CNCT_COUNT:
@@ -421,16 +437,16 @@ uint8_t Battery_Management(void)
         switch(battCycleCnt&BATT_SYS_MASK_CMD)
         {
             // Pack & Send battery status message
-            case BATT_MGMT_SEND_MSG:
-                if(sysConnect)
-                {
-                    Battery_MavlinkPack(&mavBattTx,battMode);
-                    sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
-                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
-                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-                    Mavlink_SendMessage(&mavMsgTx, sendCnt);
-                }
-                break;
+//            case BATT_MGMT_SEND_MSG:
+//                if(sysConnect)
+//                {
+//                    Battery_MavlinkPack(&mavBattTx,battMode);
+//                    sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+//                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
+//                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+//                    Mavlink_SendMessage(&mavMsgTx, sendCnt);
+//                }
+//                break;
 
             // Battery Link Lost
             case BATT_MGMT_CNCT_LOST:
@@ -659,34 +675,46 @@ uint8_t Batt_PowerOff(void)
     }
 }
 
-
-void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode)
+void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
 {
-    if(mode == BATT_DUAL)
-    {
-        mav->id                 = 0x36;
-        mav->battery_function   = sysBattery;                                   // Redefine this param
-        mav->type               = MAV_BATTERY_TYPE_LIPO;
-        mav->temperature        = (battA.temperature + battB.temperature)/2;    // in centi-degrees celsius
-        mav->voltages[0]        = (battA.voltage + battB.voltage)/2;            // in mV
-        mav->current_battery    = battA.current + battB.current;                // in 10mA
-        mav->current_consumed   = (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
-        mav->energy_consumed    = -1;                                           // -1: does not provide
-        mav->battery_remaining  = (battA.soc + battB.soc)/2;                    // 0%: 0, 100%: 100
-    }
-    else if(mode == BATT_SINGLE || mode == BATT_DUAL_ONLYONE || mode == BATT_DUAL_VDIFF)
-    {
-        mav->id                 = battO->id;
-        mav->battery_function   = sysBattery;
-        mav->type               = MAV_BATTERY_TYPE_LIPO;
-        mav->temperature        = battO->temperature;
-        mav->voltages[0]        = battO->voltage;
-        mav->current_battery    = battO->current;
-        mav->current_consumed   = battO->fullChargeCapacity - battO->remainingCapacity;
-        mav->energy_consumed    = -1;
-        mav->battery_remaining  = battO->soc;
-    }
+    mav->id                 = batt->id;
+    mav->battery_function   = MAV_BATTERY_FUNCTION_ALL;
+    mav->type               = MAV_BATTERY_TYPE_LIPO;
+    mav->temperature        = batt->temperature;
+    mav->voltages[0]        = batt->voltage;
+    mav->current_battery    = batt->current;
+    mav->current_consumed   = batt->fullChargeCapacity - batt->remainingCapacity;
+    mav->energy_consumed    = -1;
+    mav->battery_remaining  = batt->soc;
 }
+
+//void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode)
+//{
+//    if(mode == BATT_DUAL)
+//    {
+//        mav->id                 = 0x36;
+//        mav->battery_function   = sysBattery;                                   // Redefine this param
+//        mav->type               = MAV_BATTERY_TYPE_LIPO;
+//        mav->temperature        = (battA.temperature + battB.temperature)/2;    // in centi-degrees celsius
+//        mav->voltages[0]        = (battA.voltage + battB.voltage)/2;            // in mV
+//        mav->current_battery    = battA.current + battB.current;                // in 10mA
+//        mav->current_consumed   = (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
+//        mav->energy_consumed    = -1;                                           // -1: does not provide
+//        mav->battery_remaining  = (battA.soc + battB.soc)/2;                    // 0%: 0, 100%: 100
+//    }
+//    else if(mode == BATT_SINGLE || mode == BATT_DUAL_ONLYONE || mode == BATT_DUAL_VDIFF)
+//    {
+//        mav->id                 = battO->id;
+//        mav->battery_function   = sysBattery;
+//        mav->type               = MAV_BATTERY_TYPE_LIPO;
+//        mav->temperature        = battO->temperature;
+//        mav->voltages[0]        = battO->voltage;
+//        mav->current_battery    = battO->current;
+//        mav->current_consumed   = battO->fullChargeCapacity - battO->remainingCapacity;
+//        mav->energy_consumed    = -1;
+//        mav->battery_remaining  = battO->soc;
+//    }
+//}
 
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {

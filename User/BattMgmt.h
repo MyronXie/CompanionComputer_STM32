@@ -156,7 +156,8 @@ uint8_t Batt_Init(void);
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 uint8_t Batt_PowerOff(void);
 uint8_t Battery_Management(void);
-void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
+void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
+//void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
 
 
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
