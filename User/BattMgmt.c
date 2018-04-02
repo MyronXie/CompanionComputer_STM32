@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.15
+  * Revised Date    : 2018.04.02
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -292,8 +292,8 @@ uint8_t Batt_Init(void)
     #else
     battA.status |= BATT_INUSE;
     battB.status |= BATT_INUSE;
+    return MSG_BATT_INIT;
     #endif
-    
 }
 
 
@@ -398,9 +398,14 @@ uint8_t Battery_Management(void)
 //                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
 //                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
                     Battery_MavlinkPack(&mavBattTx,battX);
+//                    if(battX == &battA)  // (Mav#147)
                     sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
                                                                     mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
                                                                     mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+//                    else // battX == &battB (Mav#601)
+//                    sendCnt = mavlink_msg_battery_status_2_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+//                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
+//                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
                     Mavlink_SendMessage(&mavMsgTx, sendCnt);
                 }
                 break;
