@@ -24,9 +24,9 @@ typedef struct
 {
     char        name[10];
     uint8_t     id;
-    uint8_t     status;
+    uint8_t     status;             // 0x02:BATT_INUSE, 0x01:BATT_ONBOARD
     uint8_t     lostCnt;            // times
-    uint8_t     fet;
+    uint8_t     fet;                // 0x20:PWR_ON, 0x10:FET_LOCK
     uint16_t    temperature;        // Celsius
     uint16_t    voltage;            // mV
     int16_t     current;            // mA
@@ -52,7 +52,7 @@ typedef struct
 #define VDIFF_INIT_TOL      90      // mv
 #define VDIFF_RUNNING_TOL   1000    // mv
 
-#define BATT_FUNC_CYCLE     40
+#define BATT_FUNC_CYCLE     40      // Hz
 
 //========== Register of Smart Battery ==========
 #define BATT_BatteryMode        0x03

@@ -20,6 +20,7 @@
 #include "mavlink_helpers.h"
 #include "string.h"
 #include "stdarg.h"
+#include "stdlib.h"
 
 // Function Select
 #define ENABLE_BATTERYMGMT
@@ -32,7 +33,7 @@
 
 // <Dev> Option
 #define WITHOUT_BATTERY
-//#define INGORE_LOSTCOMM
+#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF
 //#define ENABLE_BATT_REINIT
@@ -68,6 +69,7 @@
 #define CMD_FLY_DISARM          0x81
 
 // Log list
+#define MSG_XX  ""
 #define MSG_00  ""
 #define MSG_01  "Battery Init success"
 #define MSG_02  "Battery onboard"
@@ -102,13 +104,12 @@ extern SerialType USART1_Tx,USART3_Tx;
 extern mavlink_message_t mavMsgTx;
 extern uint16_t sendCnt;
 
-extern uint8_t sysConnect;
-extern uint8_t sysWarning;
-extern uint8_t sysStatusTemp;
-extern uint8_t sysStatus;
+extern uint8_t  sysConnect;
+extern uint8_t  sysWarning;
+extern uint8_t  sysStatus,sysStatusTemp;
 extern uint16_t sysTicks;
-extern uint8_t sysBattery;
-extern uint8_t sysArmed;
+extern uint8_t  sysBattery;
+extern uint8_t  sysArmed;
 
 extern uint8_t msgLostCnt;
 

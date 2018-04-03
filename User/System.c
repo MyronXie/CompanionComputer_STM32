@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.15
+  * Revised Date    : 2018.04.03
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -16,12 +16,10 @@
 uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
 uint8_t  sysWarning     = 0;    // Counter for fatal error
 uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
-uint8_t  sysStatusLst   = 0;
 uint8_t  sysStatusTemp  = 0;
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysBattery     = 0;    // Flag for record which battery has error
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
-uint8_t  sysReport      = 0;    // Record report times
 
 mavlink_message_t mavMsgTx;     // Send mavlink massage
 uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
@@ -29,9 +27,9 @@ uint16_t sendCnt        = 0;
 
 // msgList from system.h
 char* msgList[64]={
-    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,"","","","","","","","","","",
-    MSG_10,MSG_11,"","","","","","","","","","","","","","",
-    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,"","","","","","","",
+    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
+    MSG_10,MSG_11,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
+    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
     MSG_30,MSG_31};
 
 char msgSend[100]={""};
@@ -40,36 +38,41 @@ extern uint8_t LandingGear_Reset(void);
 
 void System_Heartbeat(void)
 {
-    PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);      // Record running time
+    PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);     // Record running time
     sendCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
     Mavlink_SendMessage(&mavMsgTx, sendCnt);
+    srand(sysTicks);
 }
 
 void System_StatusReporter(void)
 {
-    if(sysConnect)                                  // Must report after connected with FMU, otherwise it's dummy
+    static uint8_t reportTimes = 0;                 // Record report times
+    
+    if(sysConnect)                                  // Must report after connected with FMU, otherwise it's useless
     {
         if(sysStatus)                               // Prevent report same error message continuously
         {
-            if(!sysReport)  sysReport = 3;              // Report same error message for 3 times 
-            if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
+            if(!reportTimes)  
             {
-                if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(msgSend,"All battery ");
-                else if((sysBattery&ERR_BATTA))                         sprintf(msgSend,"battery A ");
-                else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
-                else                                                    sprintf(msgSend,"");
-                sysBattery = MSG_BLANK;
+                reportTimes = 3;                    // Report same error message for 3 times 
+                if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
+                {
+                    if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(msgSend,"All battery ");
+                    else if((sysBattery&ERR_BATTA))                         sprintf(msgSend,"battery A ");
+                    else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
+                    else                                                    sprintf(msgSend,"");
+                    sysBattery = MSG_BLANK;
+                }
+                else    sprintf(msgSend,"");
+                strcat(msgSend, msgList[sysStatus]);
             }
-            else    sprintf(msgSend,"");
-
-            strcat(msgSend, msgList[sysStatus]);
+            
             Mavlink_SendLog(sysStatus, msgSend);
-            if(sysReport > 0)       sysReport--;
-            if(sysReport == 0)
+            if(reportTimes > 0)     reportTimes--;
+            if(reportTimes == 0)
             {   
                 PRINTLOG("\r\n [INFO] Status Reporter: #0x%02X, \"%s\"", sysStatus, msgSend);
                 sysStatus = 0;          // Clear current error message
-                sysReport = 0;
             }
         }
     }

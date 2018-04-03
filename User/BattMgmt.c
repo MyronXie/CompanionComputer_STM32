@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.02
+  * Revised Date    : 2018.04.03
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -13,8 +13,8 @@
 
 #include "BattMgmt.h"
 
-BattMsg battA={"battA",0x16,0x03,0,0x14,2340,24828,-30,94,13140,13980,16000};
-BattMsg battB={"battB",0x26,0x03,0,0x14,2350,24893,-31,95,13680,14520,16000};
+BattMsg battA={"battA",0x16,0x03,0,0x14,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
+BattMsg battB={"battB",0x26,0x03,0,0x14,2350,24893,-31,95,13680,14520,16000};   // in release version
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
 uint8_t battMode = BATT_NONE;                   // Battery Mode (SINGLE/DUAL)
@@ -290,8 +290,10 @@ uint8_t Batt_Init(void)
             return ERR_BATT_INIT;
     }
     #else
+    PRINTLOG(" <WITHOUT_BATTERY>");
     battA.status |= BATT_INUSE;
     battB.status |= BATT_INUSE;
+    battMode = BATT_DUAL;
     return MSG_BATT_INIT;
     #endif
 }
@@ -358,6 +360,9 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
     if(regSta)  batt->status &= ~BATT_ONBOARD;      // Can't connect to battery
     else        batt->status |=  BATT_ONBOARD;
     
+    #else
+    battA.remainingCapacity -= rand()%2;
+    battB.remainingCapacity -= rand()%2;
     #endif
 }
 
@@ -398,14 +403,14 @@ uint8_t Battery_Management(void)
 //                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
 //                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
                     Battery_MavlinkPack(&mavBattTx,battX);
-//                    if(battX == &battA)  // (Mav#147)
+                    if(battX == &battA)  // (Mav#147)
                     sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
                                                                     mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
                                                                     mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-//                    else // battX == &battB (Mav#601)
-//                    sendCnt = mavlink_msg_battery_status_2_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
-//                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
-//                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
+                    else // battX == &battB (Mav#601)
+                    sendCnt = mavlink_msg_battery_status_2_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
+                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
+                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
                     Mavlink_SendMessage(&mavMsgTx, sendCnt);
                 }
                 break;
@@ -455,6 +460,10 @@ uint8_t Battery_Management(void)
 
             // Battery Link Lost
             case BATT_MGMT_CNCT_LOST:
+                // =============== DEBUG =============== 
+                if(sysTicks == 15) battA.status&=~BATT_ONBOARD;
+                if(sysTicks == 30) battB.status&=~BATT_ONBOARD;
+                // =============== DEBUG =============== 
                 if(battMode == BATT_SINGLE)        // Single battery mode
                 {
                     if(battO->lostCnt == CNCT_ATTEMPT)
@@ -470,9 +479,9 @@ uint8_t Battery_Management(void)
                 {
                     if((battA.lostCnt == CNCT_ATTEMPT)||(battB.lostCnt == CNCT_ATTEMPT))
                     {
-                        PRINTLOG("\r\n [ERR]  %s %s Connect lost",(battA.lostCnt==CNCT_ATTEMPT)?battA.name:"",(battB.lostCnt==CNCT_ATTEMPT)?battB.name:"");
-                        if(battA.lostCnt == CNCT_ATTEMPT) sysBattery|=ERR_BATTA;
-                        if(battB.lostCnt == CNCT_ATTEMPT) sysBattery|=ERR_BATTB;
+                        PRINTLOG("\r\n [ERR]  %s %s Connect lost",(battA.lostCnt>=CNCT_ATTEMPT)?battA.name:"",(battB.lostCnt>=CNCT_ATTEMPT)?battB.name:"");
+                        if(battA.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTA;
+                        if(battB.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTB;
                         return ERR_BATT_OFFBOARD;
                     }
                 }
@@ -680,6 +689,7 @@ uint8_t Batt_PowerOff(void)
     }
 }
 
+// Send battery message individually
 void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
 {
     mav->id                 = batt->id;

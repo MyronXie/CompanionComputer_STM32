@@ -3,9 +3,9 @@
   * File Name       : main.c
   * Description     : CompanionComputer_STM32 main program
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.03.08
+  * Revised Date    : 2018.04.03
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -22,7 +22,7 @@ extern TIM_HandleTypeDef htim7;
 
 /* Serial */
 uint8_t recvByte = 0;
-uint16_t msgSeqPrev = 0;            // Monitor quantity of Mavlink lost package
+uint16_t msgSeqPrev = 0;            // Monitor numbers of Mavlink lost package
 
 /* Mavlink */
 mavlink_message_t mavMsgRx;
@@ -69,9 +69,10 @@ int main(void)
     IWDG_Init();
     TIM_Init();
 
+    #ifdef INGORE_LOSTCOMM
     sysConnect = 1;
-    sysStatus = 0x01;
-    
+    #endif
+
     while(1)
     {
         /************************* Mavlink Decode Process *************************/
@@ -90,7 +91,7 @@ int main(void)
 
                 if(!sysConnect)
                 {
-                    // Receive first mavlink msg in this process
+                    // Receive first mavlink msg in current process
                     PRINTLOG("\r\n [INFO] Connected with FMU");
                     sysConnect = 1;
                 }
@@ -102,14 +103,17 @@ int main(void)
                         PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
+                
+                // Record seqid of mavlink msg
                 msgSeqPrev=mavMsgRx.seq;
 
+                // Decode specific mavlink msg
                 Mavlink_Decode(&mavMsgRx);
             }
         }
 
         /********** LandingGear: Auto Reset Process  **********/
-        if(lgAutoReset) LG_Reset();
+        if(lgAutoReset)     LG_Reset();
 
         /********** BattMgmt: Power Off Process **********/
         if(battPwrOff == 1)
@@ -148,7 +152,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         System_Heartbeat();
         System_ErrorHandler();
-        IWDG_Feed();                // Feed watchdog
+        IWDG_Feed();                    // Feed watchdog
     }
 
     if(htim->Instance == TIM6)      // TIM6: Landing Gear PWM Adjustment (100Hz)
