@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.03.15
+  * Revised Date    : 2018.04.04
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -150,12 +150,12 @@ typedef struct
 
 
 extern uint8_t battPwrOff;
-extern uint8_t battReinit;
+extern uint8_t battInit;
 
-uint8_t Batt_Init(void);
+void Battery_Init(void);
 void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
-uint8_t Batt_PowerOff(void);
-uint8_t Battery_Management(void);
+void Batt_PowerOff(void);
+void Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
 //void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
 

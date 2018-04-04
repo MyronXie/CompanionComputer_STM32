@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.03.13
+  * Revised Date    : 2018.04.04
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -36,7 +36,7 @@
 #define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF
-//#define ENABLE_BATT_REINIT
+#define ENABLE_BATT_REINIT
 
 //========== Message Code ==========
 #define MSG_BLANK               0x00
@@ -122,7 +122,6 @@ extern uint8_t  sysConnect;
 extern uint8_t  sysWarning;
 extern uint8_t  sysStatus,sysStatusTemp;
 extern uint16_t sysTicks;
-extern uint8_t  sysBattery;
 extern uint8_t  sysArmed;
 
 extern uint8_t msgLostCnt;
@@ -139,7 +138,7 @@ void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 void PRINTLOG(const char *format, ...);
 void DELAY_MS(int32_t nms);
 
-void ReportMessage(uint8_t cmd, uint8_t param);
+void ReportMessage(MsgType msg);
 #endif /* __SYSTEM_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

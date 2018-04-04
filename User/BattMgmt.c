@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.03
+  * Revised Date    : 2018.04.04
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -13,26 +13,26 @@
 
 #include "BattMgmt.h"
 
-BattMsg battA={"battA",0x16,0x03,0,0x14,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
-BattMsg battB={"battB",0x26,0x03,0,0x14,2350,24893,-31,95,13680,14520,16000};   // in release version
+BattMsg battA={"battA",0x16,0x03,0,0x34,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
+BattMsg battB={"battB",0x26,0x03,0,0x34,2350,24893,-31,95,13680,14520,16000};   // in release version
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
 uint8_t battMode = BATT_NONE;                   // Battery Mode (SINGLE/DUAL)
-uint8_t battCycleCnt = BATT_FUNC_CYCLE-1;       // Counter for dispatch command for battmgmt system
 uint8_t battPwrOff = 0;                         // Flag for Power Off Function
-uint8_t battReinit = 0;                         // Flag for Re-Init Function
+uint8_t battInit = 1;                           // Flag for Batt Init Function
 
 mavlink_battery_status_t mavBattTx;
 
 extern TIM_HandleTypeDef htim7;
 
-uint8_t Batt_Init(void)
+void Battery_Init(void)
 {
     static uint32_t timeTick = 0;               // Record delay time
     static uint8_t stage = BATT_INIT_BEGIN;     // Record running stage
-    static uint8_t attemptTimes = 0;            // Record attempt times
+    static uint8_t atmpTimes = 0;               // Record attempt times
+    
+    MsgType battMsg = {0,0};
 
-    #ifndef WITHOUT_BATTERY
     switch(stage)                               // Finite State Machine
     {
         case BATT_INIT_BEGIN:
@@ -41,61 +41,58 @@ uint8_t Batt_Init(void)
             #else  //DUAL_BATTERY
             PRINTLOG(" <DUAL_BATTERY>");
             #endif
-            attemptTimes = 0;
-            stage = BATT_CNCT_CHECK;
+            stage = BATT_CNCT_CHECK, atmpTimes = 0;
+            break;
 
         case BATT_CNCT_CHECK:
             // Connect to battery
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Connecting #%d: A-0x%02X, B-0x%02X", attemptTimes, battA.fet, battB.fet);
+            PRINTLOG("\r\n [ACT]  Connecting #%d: A-0x%02X, B-0x%02X", atmpTimes, battA.fet, battB.fet);
 
             // Check onboard status
             #ifdef SINGLE_BATTERY
             if((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD))        // At least one battery is onboard
             {
                 battMode = BATT_SINGLE;
-                if(battA.status&BATT_ONBOARD)   battO = &battA;                 // Select specific battery
-                if(battB.status&BATT_ONBOARD)   battO = &battB;
-                stage = BATT_PWRON_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
+                battO = (battA.status&BATT_ONBOARD)?&battA:&battB;              // Select specific battery
+                stage = BATT_PWRON_CHECK, atmpTimes = 0;
             }
             #else  //DUAL_BATTERY
             if((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD))        // Both batteries should onboard
             {
                 battMode = BATT_DUAL;
-                stage = BATT_VDIFF_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
+                stage = BATT_VDIFF_CHECK;
             }
             #endif
             else
             {
-                attemptTimes++;
+                atmpTimes++;
                 timeTick = HAL_GetTick();
                 stage = BATT_CNCT_WAIT;
             }
+            break;
 
         case BATT_CNCT_WAIT:
             // Waiting for delay
-            if(attemptTimes >= CNCT_ATTEMPT)
+            if(HAL_GetTick() - timeTick >= CNCT_DELAY)   stage = BATT_CNCT_CHECK; // Continue waiting
+            
+            if(atmpTimes >= CNCT_ATTEMPT)
             {
                 PRINTLOG("\r\n [ERR]  %s %s Offboard",(!(battA.status&BATT_ONBOARD))?battA.name:"",(!(battB.status&BATT_ONBOARD))?battB.name:"");
-                if(!(battA.status&BATT_ONBOARD))    sysBattery|=ERR_BATTA;
-                if(!(battB.status&BATT_ONBOARD))    sysBattery|=ERR_BATTB;
+
                 if((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD))    // If one battery is onboard
                 {
                     battMode = BATT_DUAL_ONLYONE;
-                    if(battA.status&BATT_ONBOARD)   battO = &battA;             // Select specific battery
-                    if(battB.status&BATT_ONBOARD)   battO = &battB;
+                    battO = (battA.status&BATT_ONBOARD)?&battA:&battB;          // Select specific battery
                 }
-                stage = BATT_INIT_BEGIN;    attemptTimes = 0;   return ERR_BATT_OFFBOARD;
+                
+                stage = BATT_INIT_BEGIN;
+                
+                battMsg.cmd     = ERR_BATT_OFFBOARD;
+                battMsg.param   = (!(battA.status&BATT_ONBOARD))&ERR_BATTA + (!(battB.status&BATT_ONBOARD))&ERR_BATTB;
             }
-            if(HAL_GetTick() - timeTick < CNCT_DELAY)
-            {
-                stage = BATT_CNCT_WAIT;   return MSG_BATT_WAITING;              // Continue waiting
-            }
-            else
-            {
-                stage = BATT_CNCT_CHECK;   return MSG_BATT_WAITING;             // Stop waiting
-            }
+            break;
 
         case BATT_VDIFF_CHECK:
             #ifndef INGORE_VDIFF
@@ -109,32 +106,34 @@ uint8_t Batt_Init(void)
                 if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage)) >= VDIFF_INIT_TOL)
                 {
                     PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
-                    if(battA.voltage<battB.voltage) sysBattery|=ERR_BATTA;
-                    else                            sysBattery|=ERR_BATTB;
                     battMode = BATT_DUAL_VDIFF;
-                    if(battA.fet&PWR_ON)    battO = &battA;                   // Select specific battery
-                    if(battB.fet&PWR_ON)    battO = &battB;
+                    battO = (battA.fet&PWR_ON)?&battA:&battB;                   // Select specific battery
+
                     stage = BATT_INIT_BEGIN;
-                    return ERR_BATT_VDIFF;
+                    
+                    battMsg.cmd     = ERR_BATT_VDIFF;
+                    battMsg.param   = (battA.voltage<battB.voltage)?ERR_BATTA:ERR_BATTB;
+                    break;
                 }
             }
             #endif  //INGORE_VDIFF
-            stage = BATT_PWRON_CHECK;
+            stage = BATT_PWRON_CHECK, atmpTimes = 0;
+            break;
 
         case BATT_PWRON_CHECK:
             // Power ON Process
             if(battMode == BATT_SINGLE)            // Single battery mode
             {
                 Batt_Measure(battO, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Power On   #%d: %s-0x%02X", attemptTimes, battO->name, battO->fet);
+                PRINTLOG("\r\n [ACT]  Power On   #%d: %s-0x%02X", atmpTimes, battO->name, battO->fet);
                 if(battO->fet&PWR_ON)
                 {
-                    stage = BATT_ENFET_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
+                    stage = BATT_ENFET_CHECK, atmpTimes = 0;
                 }
                 else
                 {
-                    Batt_WriteWord(battO->id, BATT_PowerControl, BATT_POWERON);
-                    attemptTimes++;
+                    Batt_WriteWord(battO->id, BATT_PowerControl, BATT_POWERON);     // Attempt power on
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_PWRON_WAIT;
                 }
@@ -143,62 +142,54 @@ uint8_t Batt_Init(void)
             {
                 Batt_Measure(&battA, BATT_MEAS_FET);
                 Batt_Measure(&battB, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Power On   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
+                PRINTLOG("\r\n [ACT]  Power On   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
                 if((battA.fet&PWR_ON)&&(battB.fet&PWR_ON))
                 {
-                    stage = BATT_ENFET_CHECK;   attemptTimes = 0;   return MSG_BATT_WAITING;
+                    stage = BATT_ENFET_CHECK, atmpTimes = 0;
                 }
                 else
                 {
                     if(!(battA.fet&PWR_ON)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWERON);
                     if(!(battB.fet&PWR_ON)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWERON);
-                    attemptTimes++;
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_PWRON_WAIT;
                 }
             }
+            break;
 
         case BATT_PWRON_WAIT:
             // Waiting for delay
-            if(attemptTimes > PWRON_ATTEMPT)
+            if(HAL_GetTick() - timeTick >= PWRON_DELAY)  stage = BATT_PWRON_CHECK;
+
+            if(atmpTimes > PWRON_ATTEMPT)
             {
                 if(battMode == BATT_SINGLE)            // Single battery mode
                 {
                     PRINTLOG("\r\n [ERR]  %s Power On Fail",battO->name);
-                    if(battO == &battA) sysBattery|=ERR_BATTA;
-                    if(battO == &battB) sysBattery|=ERR_BATTB;
+                    battMsg.param = (battO == &battA)?ERR_BATTA:ERR_BATTB;
                 }
                 else if(battMode == BATT_DUAL)         // Dual battery mode
                 {
                     PRINTLOG("\r\n [ERR]  %s %s Power On Fail",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
-                    if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
-                    if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
+                    battMsg.param   = (!(battA.fet&PWR_ON))&ERR_BATTA + (!(battB.fet&PWR_ON))&ERR_BATTB;
                 }
-                return ERR_BATT_POWERON;
+                battMsg.cmd = ERR_BATT_POWERON;
+                stage = BATT_INIT_BEGIN;
             }
-            if(HAL_GetTick() - timeTick < PWRON_DELAY)
-            {
-                stage = BATT_PWRON_WAIT;   return MSG_BATT_WAITING;
-            }
-            else
-            {
-                stage = BATT_PWRON_CHECK;   return MSG_BATT_WAITING;
-            }
+            break;
 
         case BATT_ENFET_CHECK:
             // Enable FET process
             if(battMode == BATT_SINGLE)                // Single battery mode
             {
                 Batt_Measure(battO, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Enable FET #%d: %s-0x%02X",attemptTimes,battO->name,battO->fet);
-                if(battO->fet&FET_LOCK)
-                {
-                    stage = BATT_INIT_CHECK;    return MSG_BATT_WAITING;
-                }
+                PRINTLOG("\r\n [ACT]  Enable FET #%d: %s-0x%02X",atmpTimes,battO->name,battO->fet);
+                if(battO->fet&FET_LOCK)                         stage = BATT_INIT_CHECK;
                 else
                 {
                     Batt_WriteWord(battO->id, BATT_PowerControl, BATT_ENABLEFET);
-                    attemptTimes++;
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_ENFET_WAIT;
                 }
@@ -207,48 +198,40 @@ uint8_t Batt_Init(void)
             {
                 Batt_Measure(&battA, BATT_MEAS_FET);
                 Batt_Measure(&battB, BATT_MEAS_FET);
-                PRINTLOG("\r\n [ACT]  Enable FET #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
-                if((battA.fet&FET_LOCK)&&(battB.fet&FET_LOCK))
-                {
-                    stage = BATT_INIT_CHECK;    return MSG_BATT_WAITING;
-                }
+                PRINTLOG("\r\n [ACT]  Enable FET #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
+                if((battA.fet&FET_LOCK)&&(battB.fet&FET_LOCK))  stage = BATT_INIT_CHECK;
                 else
                 {
                     if(!(battA.fet&FET_LOCK)) Batt_WriteWord(battA.id, BATT_PowerControl, BATT_ENABLEFET);
                     if(!(battB.fet&FET_LOCK)) Batt_WriteWord(battB.id, BATT_PowerControl, BATT_ENABLEFET);
-                    attemptTimes++;
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_ENFET_WAIT;
                 }
             }
+            break;
 
         case BATT_ENFET_WAIT:
             // Waiting for delay
-            if(attemptTimes > ENFET_ATTEMPT)
+            if(HAL_GetTick() - timeTick >= ENFET_DELAY)  stage = BATT_ENFET_CHECK;
+        
+            if(atmpTimes > ENFET_ATTEMPT)
             {
+                stage = BATT_INIT_BEGIN;
+                
+                battMsg.cmd = ERR_BATT_ENABLEFET;
                 if(battMode == BATT_SINGLE)            // Single battery mode
                 {
                     PRINTLOG("\r\n [ERR]  %s Enable FET Fail",battO->name);
-                    if(battO == &battA) sysBattery|=ERR_BATTA;
-                    if(battO == &battB) sysBattery|=ERR_BATTB;
+                    battMsg.param   = (battO == &battA)?ERR_BATTA:ERR_BATTB;
                 }
                 else if(battMode == BATT_DUAL)         // Dual battery mode
                 {
                     PRINTLOG("\r\n [ERR]  %s %s Enable FET Fail",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
-                    if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
-                    if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
+                    battMsg.param   = (!(battA.fet&FET_EN))&ERR_BATTA + (!(battB.fet&FET_EN))&ERR_BATTB;
                 }
-                stage = BATT_INIT_BEGIN;
-                return ERR_BATT_ENABLEFET;
             }
-            if(HAL_GetTick() - timeTick < ENFET_DELAY)
-            {
-                stage = BATT_ENFET_WAIT;   return MSG_BATT_WAITING;
-            }
-            else
-            {
-                stage = BATT_ENFET_CHECK;   return MSG_BATT_WAITING;
-            }
+            break;
 
         case BATT_INIT_CHECK:
             // Check battery init status
@@ -261,7 +244,8 @@ uint8_t Batt_Init(void)
                 {
                     PRINTLOG("\r\n [ERR]  %s Battery Init Error",battO->name);
                     stage = BATT_INIT_BEGIN;
-                    return ERR_BATT_INIT;
+                    battMsg.cmd = ERR_BATT_INIT;
+                    break;
                 }
             }
             else if(battMode == BATT_DUAL)             // Dual battery mode
@@ -274,28 +258,28 @@ uint8_t Batt_Init(void)
                 if(!((battA.status&BATT_INUSE)&&(battB.status&BATT_INUSE)))
                 {
                     PRINTLOG("\r\n [ERR]  %s %s Battery Init Error",(!(battA.status&BATT_INUSE))?"battA":"",(!(battB.status&BATT_INUSE))?"battB":"");
-                    if(!(battA.status&BATT_INUSE))  sysBattery|=ERR_BATTA;
-                    if(!(battB.status&BATT_INUSE))  sysBattery|=ERR_BATTB;
                     stage = BATT_INIT_BEGIN;
-                    return ERR_BATT_INIT;
+                    battMsg.cmd     = ERR_BATT_INIT;
+                    battMsg.param   = (!(battA.status&BATT_INUSE))&ERR_BATTA + (!(battB.status&BATT_INUSE))&ERR_BATTB;
+                    break;
                 }
             }
 
             PRINTLOG("\r\n [INFO] Battery Init Success");
             stage = BATT_INIT_BEGIN;
-            return MSG_BATT_INIT;
+            battMsg.cmd = MSG_BATT_INIT;
+            break;
 
         default:
             stage = BATT_INIT_BEGIN;
-            return ERR_BATT_INIT;
+            break;
     }
-    #else
-    PRINTLOG(" <WITHOUT_BATTERY>");
-    battA.status |= BATT_INUSE;
-    battB.status |= BATT_INUSE;
-    battMode = BATT_DUAL;
-    return MSG_BATT_INIT;
-    #endif
+    
+    if(battMsg.cmd)
+    {
+        ReportMessage(battMsg);
+        battInit = 0;
+    }
 }
 
 
@@ -361,8 +345,8 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
     else        batt->status |=  BATT_ONBOARD;
     
     #else
-    battA.remainingCapacity -= rand()%2;
-    battB.remainingCapacity -= rand()%2;
+    //batt->status |=  BATT_ONBOARD;
+    batt->remainingCapacity -= rand()%2;
     #endif
 }
 
@@ -373,8 +357,11 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 //           N=0~15 type
 // Judge   : 0010 0NNN
 //           N=0~7 judge type
-uint8_t Battery_Management(void)
+void Battery_Management(void)
 {
+    static uint8_t battCycleCnt = BATT_FUNC_CYCLE-1;       // Counter for dispatch command for battmgmt system
+    MsgType battMsg = {0,0};
+    
     // Increase battCycleCnt
     battCycleCnt = (battCycleCnt+1)%BATT_FUNC_CYCLE;
 
@@ -421,17 +408,12 @@ uint8_t Battery_Management(void)
                 {
                     if(battX->status&BATT_ONBOARD)
                     {
-                        if(battX->lostCnt == CNCT_ATTEMPT)
-                        {
-                            battX->lostCnt = 0;
-                            return MSG_BATT_ONBOARD;
-                        }
+                        if(battX->lostCnt == CNCT_ATTEMPT)  battMsg.cmd = MSG_BATT_ONBOARD;
                         battX->lostCnt = 0;
                     }
                     else
                     {
-                        battX->lostCnt++;
-                        if(battX->lostCnt < CNCT_ATTEMPT)   PRINTLOG("\r\n [INFO] %s Lost #%d!", battX->name, battX->lostCnt);
+                        if(++battX->lostCnt < CNCT_ATTEMPT)   PRINTLOG("\r\n [INFO] %s Lost #%d!", battX->name, battX->lostCnt);
                     }
                 }
                 break;
@@ -469,10 +451,10 @@ uint8_t Battery_Management(void)
                     if(battO->lostCnt == CNCT_ATTEMPT)
                     {
                         PRINTLOG("\r\n [ERR]  %s Connect lost",battO->name);
-                        if(battO == &battA) sysBattery|=ERR_BATTA;
-                        if(battO == &battB) sysBattery|=ERR_BATTB;
                         battMode = BATT_NONE;
-                        return ERR_BATT_OFFBOARD;
+                        battMsg.cmd = ERR_BATT_OFFBOARD;
+                        if(battO == &battA) battMsg.param|=ERR_BATTA;
+                        if(battO == &battB) battMsg.param|=ERR_BATTB;
                     }
                 }
                 else if(battMode == BATT_DUAL)     // Dual battery mode
@@ -480,10 +462,9 @@ uint8_t Battery_Management(void)
                     if((battA.lostCnt == CNCT_ATTEMPT)||(battB.lostCnt == CNCT_ATTEMPT))
                     {
                         PRINTLOG("\r\n [ERR]  %s %s Connect lost",(battA.lostCnt>=CNCT_ATTEMPT)?battA.name:"",(battB.lostCnt>=CNCT_ATTEMPT)?battB.name:"");
-                        if(battA.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTA;
-                        if(battB.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTB;
-                        ReportMessage(ERR_BATT_OFFBOARD, sysBattery);
-                        return ERR_BATT_OFFBOARD;
+                        battMsg.cmd = ERR_BATT_OFFBOARD;
+                        if(battA.lostCnt >= CNCT_ATTEMPT) battMsg.param|=ERR_BATTA;
+                        if(battB.lostCnt >= CNCT_ATTEMPT) battMsg.param|=ERR_BATTB;
                     }
                 }
                 break;
@@ -495,21 +476,21 @@ uint8_t Battery_Management(void)
                     if(((battA.voltage>battB.voltage)?(battA.voltage-battB.voltage):(battB.voltage-battA.voltage)) >= VDIFF_RUNNING_TOL)
                     {
                         PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
+                        battMode = BATT_DUAL_VDIFF;
+                        battPwrOff = 1;
+                        battMsg.cmd = ERR_BATT_OFFBOARD;
                         if(battA.voltage < battB.voltage)             // Select specific battery
                         {
-                            sysBattery|=ERR_BATTA;
+                            battMsg.param|=ERR_BATTA;
                             battO = &battA;
                             battQ = &battB;
                         }
                         else
                         {
-                            sysBattery|=ERR_BATTB;
+                            battMsg.param|=ERR_BATTB;
                             battO = &battB;
                             battQ = &battA;
                         }
-                        battMode = BATT_DUAL_VDIFF;
-                        battPwrOff = 1;
-                        return ERR_BATT_VDIFF;
                     }
                 }
                 else if(battMode == BATT_DUAL_VDIFF)
@@ -519,7 +500,6 @@ uint8_t Battery_Management(void)
                         battO = battQ;
                         battQ = NULL;
                     }
-                    return MSG_BLANK;
                 }
                 break;
 
@@ -537,14 +517,14 @@ uint8_t Battery_Management(void)
                             if(sysArmed)   // Ensure can/can not power off battery
                             {
                                 PRINTLOG("\r\n [ERR]  %s %s Lost power in the air",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
-                                if(!(battA.fet&PWR_ON)) sysBattery|=ERR_BATTA;
-                                if(!(battB.fet&PWR_ON)) sysBattery|=ERR_BATTB;
-                                return ERR_BATT_LOSTPWR;
+                                battMsg.cmd = ERR_BATT_LOSTPWR;
+                                if(!(battA.fet&PWR_ON)) battMsg.param|=ERR_BATTA;
+                                if(!(battB.fet&PWR_ON)) battMsg.param|=ERR_BATTB;
                             }
                             else
                             {
                                 battPwrOff = 1;
-                                return MSG_BATT_PWROFF_START;
+                                battMsg.cmd = MSG_BATT_PWROFF_START;
                             }
                         }
                     }
@@ -555,7 +535,7 @@ uint8_t Battery_Management(void)
             // Re-connect battery
             case BATT_MGMT_RECNCT:
                 #ifdef ENABLE_BATT_REINIT
-                if(!battReinit)
+                if(!battInit)
                 {
                     Batt_Measure(&battA, BATT_MEAS_FET);
                     Batt_Measure(&battB, BATT_MEAS_FET);
@@ -567,9 +547,8 @@ uint8_t Battery_Management(void)
                             if(battA.status&BATT_ONBOARD)   battO = &battA;
                             if(battB.status&BATT_ONBOARD)   battO = &battB;
                             PRINTLOG("\r\n [INFO] %s Re-connect",battO->name);
-                            battReinit = 1;
-                            HAL_TIM_Base_Stop_IT(&htim7);
-                            return MSG_BATT_REINIT;
+                            battInit = 1;
+                            battMsg.cmd = MSG_BATT_REINIT;
                         }
                         #endif
                     }
@@ -578,9 +557,8 @@ uint8_t Battery_Management(void)
                         if(((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)))
                         {
                             PRINTLOG("\r\n [INFO] All Battery Re-connect");
-                            battReinit = 1;
-                            HAL_TIM_Base_Stop_IT(&htim7);
-                            return MSG_BATT_REINIT;
+                            battInit = 1;
+                            battMsg.cmd = MSG_BATT_REINIT;
                         }
                     }
                 }
@@ -589,32 +567,35 @@ uint8_t Battery_Management(void)
 
             // Check power after pwer off process
             case BATT_MGMT_PWRCHECK:
-//                if(battMode == BATT_NONE)
-//                {
-//                    // If these code can be reached, means power is still on
-//                    if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
-//                        return ERR_BATT_STILLPWR;
-//                }
+                if(battMode == BATT_NONE)
+                {
+                    // If these code can be reached, means power is still on
+                    if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
+                        battMsg.cmd = ERR_BATT_STILLPWR;
+                }
                 break;
 
-            default:break;
+            default:    break;
         }
     }
-    return MSG_BLANK;
+
+    if(battMsg.cmd)     ReportMessage(battMsg);
 }
 
-uint8_t Batt_PowerOff(void)
+void Batt_PowerOff(void)
 {
     static uint32_t timeTick = 0;
     static uint8_t stage = BATT_PWROFF_CHECK;
-    static uint8_t attemptTimes = 0;
+    static uint8_t atmpTimes = 0;
 
+    MsgType battMsg = {0,0};
+    
     switch(stage)
     {
         case BATT_PWROFF_CHECK:
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",attemptTimes,battA.fet,battB.fet);
+            PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
 
             // Close single battery
             if(battMode == BATT_SINGLE||battMode == BATT_DUAL_ONLYONE||battMode == BATT_DUAL_VDIFF)
@@ -625,13 +606,13 @@ uint8_t Batt_PowerOff(void)
                     battO->status &= ~BATT_INUSE;
                     battMode = BATT_NONE;
                     battPwrOff = 0;
-                    attemptTimes = 0;
-                    return MSG_BATT_PWROFF_END;
+                    atmpTimes = 0;
+                    battMsg.cmd = MSG_BATT_PWROFF_END;
                 }
                 else
                 {
                     Batt_WriteWord(battO->id, BATT_PowerControl, BATT_POWEROFF);
-                    attemptTimes++;
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_PWROFF_WAIT;
                 }
@@ -646,14 +627,14 @@ uint8_t Batt_PowerOff(void)
                     battB.status &= ~BATT_INUSE;
                     battMode = BATT_NONE;
                     battPwrOff = 0;
-                    attemptTimes = 0;
-                    return MSG_BATT_PWROFF_END;     // Actually this message won't send because power down
+                    atmpTimes = 0;
+                    battMsg.cmd = MSG_BATT_PWROFF_END;  // Actually this message won't send because power down
                 }
                 else
                 {
                     if(battA.fet&PWR_ON)    Batt_WriteWord(battA.id, BATT_PowerControl, BATT_POWEROFF);
                     if(battB.fet&PWR_ON)    Batt_WriteWord(battB.id, BATT_PowerControl, BATT_POWEROFF);
-                    attemptTimes++;
+                    atmpTimes++;
                     timeTick = HAL_GetTick();
                     stage = BATT_PWROFF_WAIT;
                 }
@@ -661,33 +642,32 @@ uint8_t Batt_PowerOff(void)
             else if(battMode == BATT_NONE)        // Single battery mode
             {
                 battPwrOff = 0;
-                attemptTimes = 0;
-                return ERR_BATT_POWEROFF;
+                atmpTimes = 0;
+                battMsg.cmd = ERR_BATT_POWEROFF;
             }
+            break;
 
         case BATT_PWROFF_WAIT:
-            if(attemptTimes > PWROFF_ATTEMPT)
+            if(atmpTimes > PWROFF_ATTEMPT)
             {
                 PRINTLOG("\r\n [ERR]  Batt: Power Off Fail");
-                if(battA.fet&PWR_ON)    sysBattery|=ERR_BATTA;
-                if(battB.fet&PWR_ON)    sysBattery|=ERR_BATTB;
-                attemptTimes = 0;
+                atmpTimes = 0;
                 battPwrOff = 2;
-                return ERR_BATT_POWEROFF;
+                battMsg.cmd = ERR_BATT_POWEROFF;
+                if(battA.fet&PWR_ON)    battMsg.param|=ERR_BATTA;
+                if(battB.fet&PWR_ON)    battMsg.param|=ERR_BATTB;
+                break;
             }
-            if(HAL_GetTick() - timeTick < PWROFF_DELAY)
-            {
-                stage = BATT_PWROFF_WAIT;   return MSG_BATT_WAITING;
-            }
-            else
-            {
-                stage = BATT_PWROFF_CHECK;   return MSG_BATT_WAITING;
-            }
+            if(HAL_GetTick() - timeTick < PWROFF_DELAY)     stage = BATT_PWROFF_WAIT;
+            else                                            stage = BATT_PWROFF_CHECK;
+            break;
 
         default:
             stage = BATT_PWROFF_CHECK;
-            return MSG_BATT_WAITING;
+            break;
     }
+    
+    if(battMsg.cmd)     ReportMessage(battMsg);
 }
 
 // Send battery message individually

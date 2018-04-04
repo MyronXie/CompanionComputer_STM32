@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.03
+  * Revised Date    : 2018.04.04
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -18,7 +18,6 @@ uint8_t  sysWarning     = 0;    // Counter for fatal error
 uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
 uint8_t  sysStatusTemp  = 0;
 uint16_t sysTicks       = 0;    // Record system running time
-uint8_t  sysBattery     = 0;    // Flag for record which battery has error
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
 
 mavlink_message_t mavMsgTx;     // Send mavlink massage
@@ -159,10 +158,10 @@ void PRINTLOG(const char *format, ...)
     Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
 }
 
-void ReportMessage(uint8_t cmd, uint8_t param)
+void ReportMessage(MsgType msg)
 {
-    msgQ.cmd[msgQ.rear] = cmd;
-    msgQ.param[msgQ.rear] = param;
+    msgQ.cmd[msgQ.rear] = msg.cmd;
+    msgQ.param[msgQ.rear] = msg.param;
     msgQ.rear = (++msgQ.rear) % 10;
 }
 
