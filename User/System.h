@@ -91,14 +91,28 @@
 #define MSG_30  ""
 #define MSG_31  "Landing Gear Auto Reset"
 
+#define PARAM_BATT_0    ""
+#define PARAM_BATT_1    "Battery A "
+#define PARAM_BATT_2    "Battery B "
+#define PARAM_BATT_3    "All Battery "
+
 #define ERR_BATTA               (1<<0)
 #define ERR_BATTB               (1<<1)
 
 typedef struct
 {
-    uint8_t id;
-    char content[100];
+    uint8_t cmd;
+    uint8_t param;
 }MsgType;
+
+typedef struct
+{
+    uint8_t cmd[10];
+    uint8_t param[10];
+    uint8_t length;
+	uint8_t front;
+	uint8_t rear;
+}QueueType;
 
 extern SerialType USART1_Tx,USART3_Tx;
 extern mavlink_message_t mavMsgTx;
@@ -118,13 +132,14 @@ extern char* msgList[64];
 void System_Heartbeat(void);
 void System_StatusReporter(void);
 void System_ErrorHandler(void);
-void Mavlink_SendMsg(MsgType msg);
-void Mavlink_SendLog(uint8_t id, char* content);
+void Mavlink_SendLog(uint8_t cmd, char* content);
+//void Mavlink_SendLog(uint8_t cmd, uint8_t param, char* content)
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);
 void DELAY_MS(int32_t nms);
 
+void ReportMessage(uint8_t cmd, uint8_t param);
 #endif /* __SYSTEM_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

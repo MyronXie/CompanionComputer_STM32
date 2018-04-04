@@ -461,8 +461,8 @@ uint8_t Battery_Management(void)
             // Battery Link Lost
             case BATT_MGMT_CNCT_LOST:
                 // =============== DEBUG =============== 
-                if(sysTicks == 15) battA.status&=~BATT_ONBOARD;
-                if(sysTicks == 30) battB.status&=~BATT_ONBOARD;
+                if(sysTicks == 8) battA.status&=~BATT_ONBOARD;
+                if(sysTicks == 12) battB.status&=~BATT_ONBOARD;
                 // =============== DEBUG =============== 
                 if(battMode == BATT_SINGLE)        // Single battery mode
                 {
@@ -482,6 +482,7 @@ uint8_t Battery_Management(void)
                         PRINTLOG("\r\n [ERR]  %s %s Connect lost",(battA.lostCnt>=CNCT_ATTEMPT)?battA.name:"",(battB.lostCnt>=CNCT_ATTEMPT)?battB.name:"");
                         if(battA.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTA;
                         if(battB.lostCnt >= CNCT_ATTEMPT) sysBattery|=ERR_BATTB;
+                        ReportMessage(ERR_BATT_OFFBOARD, sysBattery);
                         return ERR_BATT_OFFBOARD;
                     }
                 }

@@ -25,6 +25,8 @@ mavlink_message_t mavMsgTx;     // Send mavlink massage
 uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
 uint16_t sendCnt        = 0;
 
+QueueType msgQ;
+
 // msgList from system.h
 char* msgList[64]={
     MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
@@ -32,7 +34,9 @@ char* msgList[64]={
     MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
     MSG_30,MSG_31};
 
-char msgSend[100]={""};
+char* paramList[4]={PARAM_BATT_0,PARAM_BATT_1,PARAM_BATT_2,PARAM_BATT_3};
+
+char msgSend[64]={""};
 
 extern uint8_t LandingGear_Reset(void);
 
@@ -47,48 +51,53 @@ void System_Heartbeat(void)
 void System_StatusReporter(void)
 {
     static uint8_t reportTimes = 0;                 // Record report times
+    static uint8_t Qcmd = 0;
+    static uint8_t Qparam = 0;
     
     if(sysConnect)                                  // Must report after connected with FMU, otherwise it's useless
     {
-        if(sysStatus)                               // Prevent report same error message continuously
+        if(msgQ.front!=msgQ.rear)                   // MsgQueue have message(s)
         {
             if(!reportTimes)  
             {
-                reportTimes = 3;                    // Report same error message for 3 times 
-                if((sysStatus>=MSG_BATTERY)&&(sysStatus<MSG_LANDINGGEAR))
+                Qcmd    = msgQ.cmd[msgQ.front];
+                Qparam  = msgQ.param[msgQ.front];
+                reportTimes = 3;                    // Report same error message for 3 times
+
+                switch(Qcmd>>4)
                 {
-                    if((sysBattery&ERR_BATTA)&&((sysBattery&ERR_BATTB)))    sprintf(msgSend,"All battery ");
-                    else if((sysBattery&ERR_BATTA))                         sprintf(msgSend,"battery A ");
-                    else if((sysBattery&ERR_BATTB))                         sprintf(msgSend,"battery B ");
-                    else                                                    sprintf(msgSend,"");
-                    sysBattery = MSG_BLANK;
+                    case 0x02:
+                        strcpy(msgSend,paramList[Qparam]);
+                        break;
+                    
+                    default:
+                        strcpy(msgSend,"");
+                        break;
                 }
-                else    sprintf(msgSend,"");
-                strcat(msgSend, msgList[sysStatus]);
+
+                strcat(msgSend, msgList[Qcmd]);
+                PRINTLOG("\r\n [INFO] Reporter: 0x%02X,0x%02X,\"%s\"", Qcmd, Qparam, msgSend);
             }
-            
-            Mavlink_SendLog(sysStatus, msgSend);
-            if(reportTimes > 0)     reportTimes--;
+
+            if(reportTimes > 0)
+            {
+                Mavlink_SendLog(Qcmd, msgSend);
+                reportTimes--;
+            }
             if(reportTimes == 0)
             {   
-                PRINTLOG("\r\n [INFO] Status Reporter: #0x%02X, \"%s\"", sysStatus, msgSend);
-                sysStatus = 0;          // Clear current error message
+                msgQ.front = (++msgQ.front) % 10;
             }
         }
     }
 }
 
-void Mavlink_SendMsg(MsgType msg)
+void Mavlink_SendLog(uint8_t cmd, char* content)
+//void Mavlink_SendLog(uint8_t cmd, uint8_t param, char* content)
 {
     uint16_t cnt;
-    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, msg.id, msg.content);
-    Mavlink_SendMessage(&mavMsgTx, cnt);
-}
-
-void Mavlink_SendLog(uint8_t id, char* content)
-{
-    uint16_t cnt;
-    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, id, content);
+    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, cmd, content);
+    //cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, cmd, param, content);
     Mavlink_SendMessage(&mavMsgTx, cnt);
 }
 
@@ -148,6 +157,13 @@ void PRINTLOG(const char *format, ...)
     va_end(arg);
 
     Serial_Send(&USART3_Tx, (uint8_t*)str, ret);
+}
+
+void ReportMessage(uint8_t cmd, uint8_t param)
+{
+    msgQ.cmd[msgQ.rear] = cmd;
+    msgQ.param[msgQ.rear] = param;
+    msgQ.rear = (++msgQ.rear) % 10;
 }
 
 //void DELAY_MS(int32_t nms)
