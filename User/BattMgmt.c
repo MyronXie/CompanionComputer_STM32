@@ -428,18 +428,6 @@ void Battery_Management(void)
     {
         switch(battCycleCnt&BATT_SYS_MASK_CMD)
         {
-            // Pack & Send battery status message
-//            case BATT_MGMT_SEND_MSG:
-//                if(sysConnect)
-//                {
-//                    Battery_MavlinkPack(&mavBattTx,battMode);
-//                    sendCnt = mavlink_msg_battery_status_pack(1, 1, &mavMsgTx, mavBattTx.id, mavBattTx.battery_function, mavBattTx.type,
-//                                                                    mavBattTx.temperature, mavBattTx.voltages, mavBattTx.current_battery,
-//                                                                    mavBattTx.current_consumed, mavBattTx.energy_consumed, mavBattTx.battery_remaining);
-//                    Mavlink_SendMessage(&mavMsgTx, sendCnt);
-//                }
-//                break;
-
             // Battery Link Lost
             case BATT_MGMT_CNCT_LOST:
                 // =============== DEBUG =============== 
@@ -452,9 +440,8 @@ void Battery_Management(void)
                     {
                         PRINTLOG("\r\n [ERR]  %s Connect lost",battO->name);
                         battMode = BATT_NONE;
-                        battMsg.cmd = ERR_BATT_OFFBOARD;
-                        if(battO == &battA) battMsg.param|=ERR_BATTA;
-                        if(battO == &battB) battMsg.param|=ERR_BATTB;
+                        battMsg.cmd     = ERR_BATT_OFFBOARD;
+                        battMsg.param   = (battO == &battA)?ERR_BATTA:ERR_BATTB;
                     }
                 }
                 else if(battMode == BATT_DUAL)     // Dual battery mode
@@ -462,9 +449,8 @@ void Battery_Management(void)
                     if((battA.lostCnt == CNCT_ATTEMPT)||(battB.lostCnt == CNCT_ATTEMPT))
                     {
                         PRINTLOG("\r\n [ERR]  %s %s Connect lost",(battA.lostCnt>=CNCT_ATTEMPT)?battA.name:"",(battB.lostCnt>=CNCT_ATTEMPT)?battB.name:"");
-                        battMsg.cmd = ERR_BATT_OFFBOARD;
-                        if(battA.lostCnt >= CNCT_ATTEMPT) battMsg.param|=ERR_BATTA;
-                        if(battB.lostCnt >= CNCT_ATTEMPT) battMsg.param|=ERR_BATTB;
+                        battMsg.cmd     = ERR_BATT_OFFBOARD;
+                        battMsg.param   = (battA.lostCnt >= CNCT_ATTEMPT)&ERR_BATTA + (battB.lostCnt >= CNCT_ATTEMPT)&ERR_BATTB;
                     }
                 }
                 break;
@@ -517,9 +503,8 @@ void Battery_Management(void)
                             if(sysArmed)   // Ensure can/can not power off battery
                             {
                                 PRINTLOG("\r\n [ERR]  %s %s Lost power in the air",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
-                                battMsg.cmd = ERR_BATT_LOSTPWR;
-                                if(!(battA.fet&PWR_ON)) battMsg.param|=ERR_BATTA;
-                                if(!(battB.fet&PWR_ON)) battMsg.param|=ERR_BATTB;
+                                battMsg.cmd     = ERR_BATT_LOSTPWR;
+                                battMsg.param   = (!(battA.fet&PWR_ON))&ERR_BATTA + (!(battB.fet&PWR_ON))&ERR_BATTB;
                             }
                             else
                             {
@@ -571,7 +556,9 @@ void Battery_Management(void)
                 {
                     // If these code can be reached, means power is still on
                     if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
-                        battMsg.cmd = ERR_BATT_STILLPWR;
+                        battMsg.cmd     = ERR_BATT_STILLPWR;
+                        battMsg.param   = (!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&ERR_BATTA 
+                                        + (!((battB.fet&PWR_ON)||(battA.fet&FET_EN)))&ERR_BATTB;
                 }
                 break;
 
@@ -606,7 +593,7 @@ void Batt_PowerOff(void)
                     battO->status &= ~BATT_INUSE;
                     battMode = BATT_NONE;
                     battPwrOff = 0;
-                    atmpTimes = 0;
+                    stage = BATT_PWROFF_CHECK, atmpTimes = 0;
                     battMsg.cmd = MSG_BATT_PWROFF_END;
                 }
                 else
@@ -627,7 +614,7 @@ void Batt_PowerOff(void)
                     battB.status &= ~BATT_INUSE;
                     battMode = BATT_NONE;
                     battPwrOff = 0;
-                    atmpTimes = 0;
+                    stage = BATT_PWROFF_CHECK, atmpTimes = 0;
                     battMsg.cmd = MSG_BATT_PWROFF_END;  // Actually this message won't send because power down
                 }
                 else
@@ -642,24 +629,22 @@ void Batt_PowerOff(void)
             else if(battMode == BATT_NONE)        // Single battery mode
             {
                 battPwrOff = 0;
-                atmpTimes = 0;
+                stage = BATT_PWROFF_CHECK, atmpTimes = 0;
                 battMsg.cmd = ERR_BATT_POWEROFF;
             }
             break;
 
         case BATT_PWROFF_WAIT:
+            if(HAL_GetTick() - timeTick >= PWROFF_DELAY)     stage = BATT_PWROFF_CHECK;
+
             if(atmpTimes > PWROFF_ATTEMPT)
             {
                 PRINTLOG("\r\n [ERR]  Batt: Power Off Fail");
-                atmpTimes = 0;
+                stage = BATT_PWROFF_CHECK, atmpTimes = 0;
                 battPwrOff = 2;
-                battMsg.cmd = ERR_BATT_POWEROFF;
-                if(battA.fet&PWR_ON)    battMsg.param|=ERR_BATTA;
-                if(battB.fet&PWR_ON)    battMsg.param|=ERR_BATTB;
-                break;
+                battMsg.cmd     = ERR_BATT_POWEROFF;
+                battMsg.param   = (battA.fet&PWR_ON)&ERR_BATTA + (battB.fet&PWR_ON)&ERR_BATTB;
             }
-            if(HAL_GetTick() - timeTick < PWROFF_DELAY)     stage = BATT_PWROFF_WAIT;
-            else                                            stage = BATT_PWROFF_CHECK;
             break;
 
         default:
@@ -683,34 +668,6 @@ void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt)
     mav->energy_consumed    = -1;
     mav->battery_remaining  = batt->soc;
 }
-
-//void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode)
-//{
-//    if(mode == BATT_DUAL)
-//    {
-//        mav->id                 = 0x36;
-//        mav->battery_function   = sysBattery;                                   // Redefine this param
-//        mav->type               = MAV_BATTERY_TYPE_LIPO;
-//        mav->temperature        = (battA.temperature + battB.temperature)/2;    // in centi-degrees celsius
-//        mav->voltages[0]        = (battA.voltage + battB.voltage)/2;            // in mV
-//        mav->current_battery    = battA.current + battB.current;                // in 10mA
-//        mav->current_consumed   = (battA.fullChargeCapacity - battA.remainingCapacity)+(battB.fullChargeCapacity - battB.remainingCapacity);	// in mAh
-//        mav->energy_consumed    = -1;                                           // -1: does not provide
-//        mav->battery_remaining  = (battA.soc + battB.soc)/2;                    // 0%: 0, 100%: 100
-//    }
-//    else if(mode == BATT_SINGLE || mode == BATT_DUAL_ONLYONE || mode == BATT_DUAL_VDIFF)
-//    {
-//        mav->id                 = battO->id;
-//        mav->battery_function   = sysBattery;
-//        mav->type               = MAV_BATTERY_TYPE_LIPO;
-//        mav->temperature        = battO->temperature;
-//        mav->voltages[0]        = battO->voltage;
-//        mav->current_battery    = battO->current;
-//        mav->current_consumed   = battO->fullChargeCapacity - battO->remainingCapacity;
-//        mav->energy_consumed    = -1;
-//        mav->battery_remaining  = battO->soc;
-//    }
-//}
 
 uint8_t Batt_ReadWord(uint8_t _addr, uint8_t _reg, uint16_t* _data)
 {

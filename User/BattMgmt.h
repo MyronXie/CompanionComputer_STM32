@@ -138,12 +138,11 @@ typedef struct
 #define BATT_PWROFF_WAIT        0x0A
 
 //========== Batt_Mgmt ==========
-#define BATT_MGMT_SEND_MSG      0x01
-#define BATT_MGMT_CNCT_LOST     0x02
-#define BATT_MGMT_VDIFF_CHECK   0x03
-#define BATT_MGMT_PWROFF        0x04
-#define BATT_MGMT_RECNCT        0x05
-#define BATT_MGMT_PWRCHECK      0x06
+#define BATT_MGMT_CNCT_LOST     0x01
+#define BATT_MGMT_VDIFF_CHECK   0x02
+#define BATT_MGMT_PWROFF        0x03
+#define BATT_MGMT_RECNCT        0x04
+#define BATT_MGMT_PWRCHECK      0x05
 
 #define BATT_MGMT_SEND_LOG      0x0E
 #define BATT_MGMT_CNCT_COUNT    0x0F

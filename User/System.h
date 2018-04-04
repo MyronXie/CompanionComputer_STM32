@@ -109,9 +109,8 @@ typedef struct
 {
     uint8_t cmd[10];
     uint8_t param[10];
-    uint8_t length;
-	uint8_t front;
-	uint8_t rear;
+    uint8_t front;
+    uint8_t rear;
 }QueueType;
 
 extern SerialType USART1_Tx,USART3_Tx;
@@ -128,6 +127,8 @@ extern uint8_t msgLostCnt;
 
 extern char* msgList[64];
 
+void System_Init(void);
+
 void System_Heartbeat(void);
 void System_StatusReporter(void);
 void System_ErrorHandler(void);
@@ -136,9 +137,10 @@ void Mavlink_SendLog(uint8_t cmd, char* content);
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);
+void ReportMessage(MsgType msg);
+
 void DELAY_MS(int32_t nms);
 
-void ReportMessage(MsgType msg);
 #endif /* __SYSTEM_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

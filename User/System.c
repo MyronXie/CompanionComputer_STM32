@@ -39,6 +39,12 @@ char msgSend[64]={""};
 
 extern uint8_t LandingGear_Reset(void);
 
+void System_Init()
+{
+
+
+}
+
 void System_Heartbeat(void)
 {
     PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);     // Record running time

@@ -47,6 +47,7 @@ int main(void)
 
     USART_Init();
     PRINTLOG("\r\n************* CompanionComputer_STM32 **************\r\n");
+    System_Init();
     LED_Init();
 
     #ifdef ENABLE_BATTERYMGMT
@@ -121,8 +122,6 @@ int main(void)
         // BattMgmt: ReInit Process
         if(battInit)            Battery_Init();
 
-        System_StatusReporter();
-
     }//while
 }//main
 
@@ -133,6 +132,8 @@ int main(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+    System_StatusReporter();
+    
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {
         System_Heartbeat();
