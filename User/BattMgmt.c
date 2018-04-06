@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.04
+  * Revised Date    : 2018.04.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -464,7 +464,7 @@ void Battery_Management(void)
                         PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
                         battMode = BATT_DUAL_VDIFF;
                         battPwrOff = 1;
-                        battMsg.cmd = ERR_BATT_OFFBOARD;
+                        battMsg.cmd = ERR_BATT_VDIFF;
                         if(battA.voltage < battB.voltage)             // Select specific battery
                         {
                             battMsg.param|=ERR_BATTA;
@@ -502,6 +502,7 @@ void Battery_Management(void)
                         {
                             if(sysArmed)   // Ensure can/can not power off battery
                             {
+                                // These code can be reached when battery lost power in armed status, should not power off the other battery
                                 PRINTLOG("\r\n [ERR]  %s %s Lost power in the air",(!(battA.fet&PWR_ON))?"battA":"",(!(battB.fet&PWR_ON))?"battB":"");
                                 battMsg.cmd     = ERR_BATT_LOSTPWR;
                                 battMsg.param   = (!(battA.fet&PWR_ON))&ERR_BATTA + (!(battB.fet&PWR_ON))&ERR_BATTB;
@@ -550,15 +551,31 @@ void Battery_Management(void)
                 #endif //ENABLE_BATT_REINIT
                 break;
 
-            // Check power after pwer off process
+
             case BATT_MGMT_PWRCHECK:
+                // Check power after pwer off process
                 if(battMode == BATT_NONE)
                 {
-                    // If these code can be reached, means power is still on
+                    // If these code can be reached, means battery power is still on
                     if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
-                        battMsg.cmd     = ERR_BATT_STILLPWR;
+                        battMsg.cmd     = ERR_BATT_STILLPWR;    //ERR_BATT_POWEROFF
                         battMsg.param   = (!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&ERR_BATTA 
                                         + (!((battB.fet&PWR_ON)||(battA.fet&FET_EN)))&ERR_BATTB;
+                }
+                else if(battMode == BATT_DUAL)
+                {
+                    // Need a method to avoid frequent report (in 0.1V or 1%)
+                    if((battA.voltage<=LOW_VOLT_TOL)||(battB.voltage<=LOW_VOLT_TOL))
+                    {
+                        battMsg.cmd     = ERR_BATT_LOWPOWER;
+                        battMsg.param   = (!(battA.voltage<=LOW_VOLT_TOL))&ERR_BATTA + (!(battB.voltage<=LOW_VOLT_TOL))&ERR_BATTB;
+                    }
+
+                    if((battA.soc<=LOW_SOC_TOL)||(battB.soc<=LOW_SOC_TOL))
+                    {
+                        battMsg.cmd     = ERR_BATT_LOWPOWER;
+                        battMsg.param   = (!(battA.soc<=LOW_SOC_TOL))&ERR_BATTA + (!(battB.soc<=LOW_SOC_TOL))&ERR_BATTB;
+                    }
                 }
                 break;
 

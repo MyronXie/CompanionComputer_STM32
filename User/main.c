@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.04.04
+  * Revised Date    : 2018.04.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -132,7 +132,7 @@ int main(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    System_StatusReporter();
+    System_MsgReporter();        // Put here to avoid timing sync bug in the init part
     
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {

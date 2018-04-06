@@ -127,17 +127,18 @@ void LandingGear_Adjustment(void)
     else Relay_OFF();                               // Turn off relay to power off steers
 }
 
-uint8_t LandingGear_Reset(void)
+void LandingGear_Reset(void)
 {
+    MsgType lgMsg = {0,0};
+    
     if(lgPositionCurr)                      // Changing Landing Gear cost 1~2s approx., no need to judge change status
     {
         PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
         HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
         lgAutoReset = 1;
-
-        return ERR_LG_RESET;
+        lgMsg.cmd = ERR_LG_RESET;
+        ReportMessage(lgMsg);
     }
-    return MSG_BLANK;
 }
 
 void LG_TIM_Init(void)

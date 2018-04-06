@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.04
+  * Revised Date    : 2018.04.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -51,6 +51,8 @@ typedef struct
 #define ENFET_DELAY         2000    // ms
 #define VDIFF_INIT_TOL      90      // mv
 #define VDIFF_RUNNING_TOL   1000    // mv
+#define LOW_VOLT_TOL        22000   // mv
+#define LOW_SOC_TOL         10      // %
 
 #define BATT_FUNC_CYCLE     40      // Hz
 
@@ -156,8 +158,6 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 void Batt_PowerOff(void);
 void Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
-//void Battery_MavlinkPack(mavlink_battery_status_t* mav,uint8_t mode);
-
 
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);

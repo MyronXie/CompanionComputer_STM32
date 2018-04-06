@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.04
+  * Revised Date    : 2018.04.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -45,24 +45,23 @@
 #define MSG_BATT_PWROFF_START   0x03
 #define MSG_BATT_REINIT         0x04
 #define MSG_BATT_PWROFF_END     0x05
-#define MSG_BATT_WAITING        0x0F
-
-#define MSG_SYSTEM              0x10
-#define MSG_BATTERY             0x20
-#define MSG_LANDINGGEAR         0x30
 
 //=========== Error Code ===========
 #define ERR_SYS_GENERAL         0x11
 #define ERR_SYS_SERIAL          0x12
+
+#define ERR_LG_RESET            0x18
+
+#define ERR_BATT_INIT           0x20
 #define ERR_BATT_OFFBOARD       0x21
 #define ERR_BATT_VDIFF          0x22
 #define ERR_BATT_POWERON        0x23
 #define ERR_BATT_ENABLEFET      0x24
-#define ERR_BATT_INIT           0x25
-#define ERR_BATT_POWEROFF       0x26
-#define ERR_BATT_LOSTPWR        0x27
-#define ERR_BATT_STILLPWR       0x28
-#define ERR_LG_RESET            0x31
+#define ERR_BATT_POWEROFF       0x25
+#define ERR_BATT_LOSTPWR        0x26
+#define ERR_BATT_STILLPWR       0x27
+#define ERR_BATT_LOWPOWER       0x28
+
 
 //========== Command Code ==========
 #define CMD_FLY_ARM             0x80
@@ -76,20 +75,21 @@
 #define MSG_03  "Start Power Off Process"
 #define MSG_04  "Battery Reinit"
 #define MSG_05  "Power Off Success"
-#define MSG_10  ""
-#define MSG_11  "System Error"
-#define MSG_12  "Serial Error"
-#define	MSG_20  ""
+
+#define MSG_10  "System Error"
+#define MSG_11  "Serial Error"
+
+#define MSG_18  "Landing Gear Auto Reset"
+
+#define	MSG_20  "Init Fail"
 #define	MSG_21  "Offboard"
 #define	MSG_22  "Voltage mismatch"
 #define	MSG_23  "Power On Fail"
 #define	MSG_24  "FET Enable Fail"
-#define	MSG_25  "Init Fail"
-#define	MSG_26  "Power Off Fail"
-#define MSG_27  "Lost power in the air"
-#define MSG_28  "Still power on after pwroff"
-#define MSG_30  ""
-#define MSG_31  "Landing Gear Auto Reset"
+#define	MSG_25  "Power Off Fail"
+#define MSG_26  "Lost power in the air"
+#define MSG_27  "Still power on after pwroff"
+#define MSG_28  "Low Power"
 
 #define PARAM_BATT_0    ""
 #define PARAM_BATT_1    "Battery A "
@@ -119,21 +119,21 @@ extern uint16_t sendCnt;
 
 extern uint8_t  sysConnect;
 extern uint8_t  sysWarning;
-extern uint8_t  sysStatus,sysStatusTemp;
+extern uint8_t  sysStatus;
 extern uint16_t sysTicks;
 extern uint8_t  sysArmed;
 
 extern uint8_t msgLostCnt;
 
-extern char* msgList[64];
+extern char* msgList[48];
 
 void System_Init(void);
 
 void System_Heartbeat(void);
-void System_StatusReporter(void);
+void System_MsgReporter(void);
 void System_ErrorHandler(void);
-void Mavlink_SendLog(uint8_t cmd, char* content);
-//void Mavlink_SendLog(uint8_t cmd, uint8_t param, char* content)
+void Mavlink_Reporter(uint8_t cmd, char* content);
+//void Mavlink_Reporter(uint8_t cmd, uint8_t param, char* content)
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);

@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.04
+  * Revised Date    : 2018.04.06
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -16,7 +16,6 @@
 uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
 uint8_t  sysWarning     = 0;    // Counter for fatal error
 uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
-uint8_t  sysStatusTemp  = 0;
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
 
@@ -27,11 +26,10 @@ uint16_t sendCnt        = 0;
 QueueType msgQ;
 
 // msgList from system.h
-char* msgList[64]={
+char* msgList[48]={
     MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
-    MSG_10,MSG_11,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
-    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
-    MSG_30,MSG_31};
+    MSG_10,MSG_11,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_18,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
+    MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX};
 
 char* paramList[4]={PARAM_BATT_0,PARAM_BATT_1,PARAM_BATT_2,PARAM_BATT_3};
 
@@ -53,7 +51,7 @@ void System_Heartbeat(void)
     srand(sysTicks);
 }
 
-void System_StatusReporter(void)
+void System_MsgReporter(void)
 {
     static uint8_t reportTimes = 0;                 // Record report times
     static uint8_t Qcmd = 0;
@@ -86,7 +84,7 @@ void System_StatusReporter(void)
 
             if(reportTimes > 0)
             {
-                Mavlink_SendLog(Qcmd, msgSend);
+                Mavlink_Reporter(Qcmd, msgSend);
                 reportTimes--;
             }
             if(reportTimes == 0)
@@ -97,8 +95,8 @@ void System_StatusReporter(void)
     }
 }
 
-void Mavlink_SendLog(uint8_t cmd, char* content)
-//void Mavlink_SendLog(uint8_t cmd, uint8_t param, char* content)
+void Mavlink_Reporter(uint8_t cmd, char* content)
+//void Mavlink_Reporter(uint8_t cmd, uint8_t param, char* content)
 {
     uint16_t cnt;
     cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, cmd, content);
@@ -108,6 +106,8 @@ void Mavlink_SendLog(uint8_t cmd, char* content)
 
 void System_ErrorHandler(void)
 {
+    MsgType syMsg = {0,0};
+    
     #ifndef INGORE_LOSTCOMM
     if(sysConnect)      msgLostCnt++;               // msgLostCnt will reset if receive mavlink msg
     #endif
@@ -118,14 +118,13 @@ void System_ErrorHandler(void)
         sysConnect = 0;
         PRINTLOG("\r\n [ERR]  FMU Connect Lost");
         PRINTLOG("\r\n [ACT]  Reset USART1");
-        Mavlink_SendLog(ERR_SYS_SERIAL, msgList[ERR_SYS_SERIAL]);
+        syMsg.cmd = ERR_SYS_SERIAL;
+        ReportMessage(syMsg);
         msgLostCnt++;
 
         #ifdef  ENABLE_LANGINGGEAR
-        // Reset Landing Gear
-        sysStatusTemp = LandingGear_Reset();
-        if(sysStatusTemp) sysStatus = sysStatusTemp;
-        #endif  //ENABLE_LANGINGGEAR
+        LandingGear_Reset();
+        #endif
     }
     else if(msgLostCnt==4)
     {
@@ -138,7 +137,8 @@ void System_ErrorHandler(void)
 //    if(sysWarning >= 4)
 //    {
 //        PRINTLOG("\r\n [ACT]  System: Reset...");
-//        Mavlink_SendLog(ERR_SYS_GENERAL, msgList[ERR_SYS_GENERAL]);
+//        syMsg.cmd = ERR_SYS_GENERAL;
+//        ReportMessage(syMsg);
 //        NVIC_SystemReset();
 //    }
 }
