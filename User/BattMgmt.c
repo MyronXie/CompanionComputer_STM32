@@ -13,8 +13,8 @@
 
 #include "BattMgmt.h"
 
-BattMsg battA={"battA",0x16,0x03,0,0x34,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
-BattMsg battB={"battB",0x26,0x03,0,0x34,2350,24893,-31,95,13680,14520,16000};   // in release version
+BattMsg battA={"battA",0x16,0x00,0,0x00,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
+BattMsg battB={"battB",0x26,0x00,0,0x00,2350,24893,-31,95,13680,14520,16000};   // in release version
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
 uint8_t battMode = BATT_NONE;                   // Battery Mode (SINGLE/DUAL)
@@ -92,6 +92,12 @@ void Battery_Init(void)
                 battMsg.cmd     = ERR_BATT_OFFBOARD;
                 battMsg.param   = Batt_Judge(BATT_JUDGE_ONBOARD);
             }
+            
+            #ifdef WITHOUT_BATTERY
+            if(atmpTimes == 1)  battA.status |=  BATT_ONBOARD;
+            if(atmpTimes == 2)  battB.status |=  BATT_ONBOARD;
+            #endif
+            
             break;
 
         case BATT_VDIFF_CHECK:
@@ -177,6 +183,11 @@ void Battery_Init(void)
                 battMsg.cmd = ERR_BATT_POWERON;
                 stage = BATT_INIT_BEGIN;
             }
+            
+            #ifdef WITHOUT_BATTERY
+            if(atmpTimes == 1)  battA.fet=0x25;
+            if(atmpTimes == 2)  battB.fet=0x25;
+            #endif
             break;
 
         case BATT_ENFET_CHECK:
@@ -231,6 +242,12 @@ void Battery_Init(void)
                     battMsg.param   = Batt_Judge(BATT_JUDGE_FETEN);
                 }
             }
+            
+            #ifdef WITHOUT_BATTERY
+            if(atmpTimes == 1)  battA.fet=0x34;
+            if(atmpTimes == 2)  battB.fet=0x34;
+            #endif
+            
             break;
 
         case BATT_INIT_CHECK:

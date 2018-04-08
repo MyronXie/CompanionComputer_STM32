@@ -152,19 +152,20 @@ typedef struct
 #define BATT_MGMT_SEND_LOG      0x0E
 #define BATT_MGMT_CNCT_COUNT    0x0F
 
-//=========== Batt_Judge =========
-#define BATT_JUDGE_ONBOARD      0x00
-#define BATT_JUDGE_PWRON        0x01
-#define BATT_JUDGE_FETEN        0x02
-#define BATT_JUDGE_INUSE        0x03
-#define BATT_JUDGE_VDIFF        0x04
-#define BATT_JUDGE_OFFBOARD     0x05
-#define BATT_JUDGE_LOWVOLT      0x06
-#define BATT_JUDGE_LOWSOC       0x07
-#define BATT_JUDGE_PWROFF       0x08
-#define BATT_JUDGE_PWRCHECK     0x09
-#define BATT_JUDGE_SINGLEBATT   0x0A
-
+typedef enum
+{
+    BATT_JUDGE_ONBOARD,
+    BATT_JUDGE_PWRON,
+    BATT_JUDGE_FETEN,
+    BATT_JUDGE_INUSE,
+    BATT_JUDGE_VDIFF,
+    BATT_JUDGE_OFFBOARD,
+    BATT_JUDGE_LOWVOLT,
+    BATT_JUDGE_LOWSOC,
+    BATT_JUDGE_PWROFF,
+    BATT_JUDGE_PWRCHECK,
+    BATT_JUDGE_SINGLEBATT,
+}BattJudgeType;
 
 extern uint8_t battPwrOff;
 extern uint8_t battInit;
@@ -175,7 +176,7 @@ void Batt_PowerOff(void);
 void Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
 
-uint8_t Batt_Judge(uint8_t type);
+uint8_t Batt_Judge(BattJudgeType type);
 
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);

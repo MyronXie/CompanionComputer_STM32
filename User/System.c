@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.06
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -33,8 +33,6 @@ char* msgList[48]={
 
 char* paramList[4]={PARAM_BATT_0,PARAM_BATT_1,PARAM_BATT_2,PARAM_BATT_3};
 
-char msgSend[64]={""};
-
 extern uint8_t LandingGear_Reset(void);
 
 void System_Init()
@@ -56,27 +54,27 @@ void System_MsgReporter(void)
     static uint8_t reportTimes = 0;                 // Record report times
     static uint8_t Qcmd = 0;
     static uint8_t Qparam = 0;
+    static char msgSend[100]={""};
     
     if(sysConnect)                                  // Must report after connected with FMU, otherwise it's useless
     {
         if(msgQ.front!=msgQ.rear)                   // MsgQueue have message(s)
         {
-            if(!reportTimes)  
+            if(!reportTimes)                        // First report, copy message into buffer
             {
                 Qcmd    = msgQ.cmd[msgQ.front];
                 Qparam  = msgQ.param[msgQ.front];
                 reportTimes = 3;                    // Report same error message for 3 times
 
+                memset(msgSend,0,sizeof(msgSend));  // Clear message buffer
+                
                 switch(Qcmd>>4)
                 {
                     case 0x02:                      // Battery Message
                         if(Qparam<4)    strcpy(msgSend,paramList[Qparam]);
-                        else            strcpy(msgSend,"");
                         break;
                     
-                    default:
-                        strcpy(msgSend,"");
-                        break;
+                    default:    break;
                 }
 
                 strcat(msgSend, msgList[Qcmd]);
@@ -85,8 +83,8 @@ void System_MsgReporter(void)
 
             if(reportTimes > 0)
             {
-                Mavlink_Reporter(Qcmd, msgSend);
-                //Mavlink_Reporter(Qcmd, Qaram, msgSend);
+                sendCnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, Qcmd, Qparam, msgSend);
+                Mavlink_SendMessage(&mavMsgTx, sendCnt);
                 reportTimes--;
             }
             if(reportTimes == 0)
@@ -95,16 +93,6 @@ void System_MsgReporter(void)
             }
         }
     }
-}
-
-// Will add "param" after updating "mavlink_msg_stm32_f3_command.h"
-void Mavlink_Reporter(uint8_t cmd, char* content)
-//void Mavlink_Reporter(uint8_t cmd, uint8_t param, char* content)
-{
-    uint16_t cnt;
-    cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, cmd, content);
-    //cnt = mavlink_msg_stm32_f3_command_pack(1, 1, &mavMsgTx, cmd, param, content);
-    Mavlink_SendMessage(&mavMsgTx, cnt);
 }
 
 void System_ErrorHandler(void)

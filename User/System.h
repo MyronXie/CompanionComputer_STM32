@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.06
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -129,8 +129,7 @@ void System_Init(void);
 void System_Heartbeat(void);
 void System_MsgReporter(void);
 void System_ErrorHandler(void);
-void Mavlink_Reporter(uint8_t cmd, char* content);
-//void Mavlink_Reporter(uint8_t cmd, uint8_t param, char* content)
+
 void Mavlink_SendMessage(mavlink_message_t* msg, uint16_t length);
 
 void PRINTLOG(const char *format, ...);
