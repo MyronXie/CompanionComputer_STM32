@@ -148,6 +148,7 @@ typedef struct
 #define BATT_MGMT_PWROFF        0x03
 #define BATT_MGMT_RECNCT        0x04
 #define BATT_MGMT_PWRCHECK      0x05
+#define BATT_MGMT_DEBUG         0x07
 
 #define BATT_MGMT_SEND_LOG      0x0E
 #define BATT_MGMT_CNCT_COUNT    0x0F

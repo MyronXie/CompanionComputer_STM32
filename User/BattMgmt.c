@@ -12,9 +12,9 @@
   */
 
 #include "BattMgmt.h"
-
-BattMsg battA={"battA",0x16,0x00,0,0x00,2340,24828,-30,94,13140,13980,16000};   // Test data, will replaced by default data
-BattMsg battB={"battB",0x26,0x00,0,0x00,2350,24893,-31,95,13680,14520,16000};   // in release version
+// <Debug> Test data, will replaced by default data in release version
+BattMsg battA={"battA",0x16,0x00,0,0x00,2340,24828,-30,94,13140,13980,16000}; 
+BattMsg battB={"battB",0x26,0x00,0,0x00,2350,24893,-31,95,13680,14520,16000};
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
 uint8_t battMode = BATT_NONE;                   // Battery Mode (SINGLE/DUAL)
@@ -41,6 +41,12 @@ void Battery_Init(void)
             #else  //DUAL_BATTERY
             PRINTLOG(" <DUAL_BATTERY>");
             #endif
+        
+            #ifdef WITHOUT_BATTERY  
+            battA.status |=  BATT_ONBOARD;
+            battA.fet = 0x14;
+            #endif
+            
             stage = BATT_CNCT_CHECK, atmpTimes = 0;
             break;
 
@@ -50,6 +56,12 @@ void Battery_Init(void)
             Batt_Measure(&battB, BATT_MEAS_FET);
             PRINTLOG("\r\n [ACT]  Connecting #%d: A-0x%02X, B-0x%02X", atmpTimes, battA.fet, battB.fet);
 
+            // <Debug> Test Battery Init Process
+            #ifdef WITHOUT_BATTERY  
+            if(atmpTimes == 0)  battA.status |=  BATT_ONBOARD;
+            if(atmpTimes == 1)  battB.status |=  BATT_ONBOARD;
+            #endif
+        
             // Check onboard status
             #ifdef SINGLE_BATTERY
             if((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD))        // At least one battery is onboard
@@ -91,13 +103,7 @@ void Battery_Init(void)
                 
                 battMsg.cmd     = ERR_BATT_OFFBOARD;
                 battMsg.param   = Batt_Judge(BATT_JUDGE_ONBOARD);
-            }
-            
-            #ifdef WITHOUT_BATTERY
-            if(atmpTimes == 1)  battA.status |=  BATT_ONBOARD;
-            if(atmpTimes == 2)  battB.status |=  BATT_ONBOARD;
-            #endif
-            
+            }            
             break;
 
         case BATT_VDIFF_CHECK:
@@ -127,6 +133,12 @@ void Battery_Init(void)
             break;
 
         case BATT_PWRON_CHECK:
+            // <Debug> Test Battery Init Process    
+            #ifdef WITHOUT_BATTERY
+            if(atmpTimes == 0)  battA.fet=0x25;
+            if(atmpTimes == 1)  battB.fet=0x25;
+            #endif
+        
             // Power ON Process
             if(battMode == BATT_SINGLE)            // Single battery mode
             {
@@ -183,14 +195,16 @@ void Battery_Init(void)
                 battMsg.cmd = ERR_BATT_POWERON;
                 stage = BATT_INIT_BEGIN;
             }
-            
-            #ifdef WITHOUT_BATTERY
-            if(atmpTimes == 1)  battA.fet=0x25;
-            if(atmpTimes == 2)  battB.fet=0x25;
-            #endif
+
             break;
 
-        case BATT_ENFET_CHECK:
+        case BATT_ENFET_CHECK:   
+            // <Debug> Test Battery Init Process    
+            #ifdef WITHOUT_BATTERY
+            if(atmpTimes == 0)  battA.fet=0x34;
+            if(atmpTimes == 1)  battB.fet=0x34;
+            #endif
+
             // Enable FET process
             if(battMode == BATT_SINGLE)                // Single battery mode
             {
@@ -242,11 +256,6 @@ void Battery_Init(void)
                     battMsg.param   = Batt_Judge(BATT_JUDGE_FETEN);
                 }
             }
-            
-            #ifdef WITHOUT_BATTERY
-            if(atmpTimes == 1)  battA.fet=0x34;
-            if(atmpTimes == 2)  battB.fet=0x34;
-            #endif
             
             break;
 
@@ -447,10 +456,6 @@ void Battery_Management(void)
         {
             // Battery Link Lost
             case BATT_MGMT_CNCT_LOST:
-                // =============== DEBUG =============== 
-                if(sysTicks == 8) battA.status&=~BATT_ONBOARD;
-                if(sysTicks == 12) battB.status&=~BATT_ONBOARD;
-                // =============== DEBUG =============== 
                 if(battMode == BATT_SINGLE)        // Single battery mode
                 {
                     if(battO->lostCnt == CNCT_ATTEMPT)
@@ -481,24 +486,24 @@ void Battery_Management(void)
                         PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
                         battMode = BATT_DUAL_VDIFF;
                         battPwrOff = 1;
-                        battMsg.cmd = ERR_BATT_VDIFF;
-                        if(battA.voltage < battB.voltage)             // Select specific battery
+
+                        if(battA.voltage < battB.voltage)           // Select specific battery
                         {
-                            battMsg.param = 1<<INDEX_BATTA;
                             battO = &battA;
                             battQ = &battB;
                         }
                         else
                         {
-                            battMsg.param = 1<<INDEX_BATTB;
                             battO = &battB;
                             battQ = &battA;
                         }
+                        battMsg.cmd = ERR_BATT_VDIFF;
+                        battMsg.param = Batt_Judge(BATT_JUDGE_SINGLEBATT);
                     }
                 }
                 else if(battMode == BATT_DUAL_VDIFF)
                 {
-                    if((!battPwrOff)&&(battQ!=NULL))
+                    if((!battPwrOff)&&(battQ!=NULL))                // Change inactive battery to active
                     {
                         battO = battQ;
                         battQ = NULL;
@@ -574,9 +579,11 @@ void Battery_Management(void)
                 if(battMode == BATT_NONE)
                 {
                     // If these code can be reached, means battery power is still on
+                    #ifndef WITHOUT_BATTERY
                     if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
                         battMsg.cmd     = ERR_BATT_STILLPWR;    //ERR_BATT_POWEROFF
                         battMsg.param   = Batt_Judge(BATT_JUDGE_PWRCHECK);
+                    #endif
                 }
                 else if(battMode == BATT_DUAL)
                 {
@@ -593,6 +600,14 @@ void Battery_Management(void)
                         battMsg.param   = Batt_Judge(BATT_JUDGE_LOWSOC);
                     }
                 }
+                break;
+                
+            case BATT_MGMT_DEBUG:
+                #ifdef WITHOUT_BATTERY
+                //if(sysTicks==8) battB.voltage-=2000;
+                //if(sysTicks == 12) battA.status&=~BATT_ONBOARD;
+                //if(sysTicks == 16) battB.status&=~BATT_ONBOARD;
+                #endif            
                 break;
 
             default:    break;
@@ -617,6 +632,11 @@ void Batt_PowerOff(void)
             Batt_Measure(&battB, BATT_MEAS_FET);
             PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
 
+            // <Debug> Test Battery Init Process
+            #ifdef WITHOUT_BATTERY  
+            if(atmpTimes == 2)  battO->fet = 0x14;
+            #endif
+        
             // Close single battery
             if(battMode == BATT_SINGLE||battMode == BATT_DUAL_ONLYONE||battMode == BATT_DUAL_VDIFF)
             {
@@ -628,6 +648,7 @@ void Batt_PowerOff(void)
                     battPwrOff = 0;
                     stage = BATT_PWROFF_CHECK, atmpTimes = 0;
                     battMsg.cmd = MSG_BATT_PWROFF_END;
+                    battMsg.param = Batt_Judge(BATT_JUDGE_SINGLEBATT);
                 }
                 else
                 {
@@ -688,45 +709,53 @@ void Batt_PowerOff(void)
     if(battMsg.cmd)     ReportMessage(battMsg);
 }
 
-uint8_t Batt_Judge(uint8_t type)
+uint8_t Batt_Judge(BattJudgeType type)
 {
     uint8_t result;
 
     switch(type)
     {
         case BATT_JUDGE_ONBOARD:
-            result=((!(battA.status&BATT_ONBOARD))<<INDEX_BATTA)+((!(battB.status&BATT_ONBOARD))<<INDEX_BATTB); break;
-        
+            result=((!(battA.status&BATT_ONBOARD))?(1<<INDEX_BATTA):0)
+                  +((!(battB.status&BATT_ONBOARD))?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_PWRON:
-            result=((!(battA.fet&PWR_ON))<<INDEX_BATTA)+((!(battB.fet&PWR_ON))<<INDEX_BATTB);                   break;
-        
+            result=((!(battA.fet&PWR_ON))?(1<<INDEX_BATTA):0)
+                  +((!(battB.fet&PWR_ON))?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_FETEN:
-            result=((!(battA.fet&FET_EN))<<INDEX_BATTA)+((!(battB.fet&FET_EN))<<INDEX_BATTB);                   break;
-        
+            result=((!(battA.fet&FET_EN))?(1<<INDEX_BATTA):0)
+                  +((!(battB.fet&FET_EN))?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_INUSE:
-            result=((!(battA.status&BATT_INUSE))<<INDEX_BATTA)+((!(battB.status&BATT_INUSE))<<INDEX_BATTB);     break;
-        
+            result=((!(battA.status&BATT_INUSE))?(1<<INDEX_BATTA):0)
+                  +((!(battB.status&BATT_INUSE))?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_VDIFF:
-            result=((battA.voltage<battB.voltage)<<INDEX_BATTA)+((battA.voltage>battB.voltage)<<INDEX_BATTB);   break;
-        
+            result=(battA.voltage<battB.voltage)?(1<<INDEX_BATTA):(1<<INDEX_BATTB); break;
+
         case BATT_JUDGE_OFFBOARD:
-            result=((battA.lostCnt>=CNCT_ATTEMPT)<<INDEX_BATTA)+((battB.lostCnt>=CNCT_ATTEMPT)<<INDEX_BATTB);   break;
-        
+            result=((battA.lostCnt>=CNCT_ATTEMPT)?(1<<INDEX_BATTA):0)
+                  +((battB.lostCnt>=CNCT_ATTEMPT)?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_LOWVOLT:
-            result=((battA.voltage<=LOW_VOLT_TOL)<<INDEX_BATTA)+((battB.voltage<=LOW_VOLT_TOL)<<INDEX_BATTB);   break;
-        
+            result=((battA.voltage<=LOW_VOLT_TOL)?(1<<INDEX_BATTA):0)
+                  +((battB.voltage<=LOW_VOLT_TOL)?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_LOWSOC:
-            result=((battA.soc<=LOW_SOC_TOL)<<INDEX_BATTA) + ((battB.soc<=LOW_SOC_TOL)<<INDEX_BATTB);           break;
-        
+            result=((battA.soc<=LOW_SOC_TOL)?(1<<INDEX_BATTA):0)
+                  +((battB.soc<=LOW_SOC_TOL)?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_PWROFF:
-            result=((battA.fet&PWR_ON)<<INDEX_BATTA)+((battB.fet&PWR_ON)<<INDEX_BATTB);                         break;
-        
+            result=((battA.fet&PWR_ON)?(1<<INDEX_BATTA):0)
+                  +((battB.fet&PWR_ON)?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_PWRCHECK:
-            result=((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))<<INDEX_BATTA)
-                  +((!((battB.fet&PWR_ON)||(battA.fet&FET_EN)))<<INDEX_BATTB);                                  break;
-        
+            result=((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))?(1<<INDEX_BATTA):0)
+                  +((!((battB.fet&PWR_ON)||(battB.fet&FET_EN)))?(1<<INDEX_BATTB):0); break;
+
         case BATT_JUDGE_SINGLEBATT:
-            result=((battO==&battA)<<INDEX_BATTA)+((battO==&battB)<<INDEX_BATTB);                               break;
+            result=(battO==&battA)?(1<<INDEX_BATTA):(1<<INDEX_BATTB); break;    
   
         default:    break;
     }

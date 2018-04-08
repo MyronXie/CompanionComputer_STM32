@@ -33,7 +33,7 @@
 
 // <Dev> Option
 #define WITHOUT_BATTERY
-#define INGORE_LOSTCOMM
+//#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF
 #define ENABLE_BATT_REINIT
@@ -47,8 +47,8 @@
 #define MSG_BATT_PWROFF_END     0x05
 
 //=========== Error Code ===========
-#define ERR_SYS_GENERAL         0x11
-#define ERR_SYS_SERIAL          0x12
+#define ERR_SYS_GENERAL         0x10
+#define ERR_SYS_SERIAL          0x11
 
 #define ERR_LG_RESET            0x18
 
@@ -88,7 +88,7 @@
 #define	MSG_24  "FET Enable Fail"
 #define	MSG_25  "Power Off Fail"
 #define MSG_26  "Lost power in the air"
-#define MSG_27  "Still power on after pwroff"
+#define MSG_27  "Still power on"
 #define MSG_28  "Low Power"
 
 #define PARAM_BATT_0    ""

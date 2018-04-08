@@ -77,10 +77,10 @@ int main(void)
     while(1)
     {
         /************************* Mavlink Decode Process *************************/
-        if(Serial_Rx_Available())
+        if(Serial_Mav_Available())
         {
             // Get available data from FIFO of Usart
-            recvByte = Serial_Rx_NextByte();
+            recvByte = Serial_Mav_NextByte();
 
             if(mavlink_parse_char(MAVLINK_COMM_0, recvByte, &mavMsgRx, &mavSta))
             {
@@ -197,7 +197,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* STM32_F3_COMMAND (#500)*/
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
-            PRINTLOG("\r\n [FMU]  #500: 0x%02X,\"%s\"", (uint8_t)mavF3CmdRx.command, mavF3CmdRx.f3_log);
+            PRINTLOG("\r\n [FMU]  #500: 0x%02X,0x%02X,\"%s\"", (uint8_t)mavF3CmdRx.command, (uint8_t)mavF3CmdRx.param, mavF3CmdRx.f3_log);
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:
