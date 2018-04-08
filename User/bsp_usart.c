@@ -3,9 +3,9 @@
   * File Name       : bsp_usart.c
   * Description     : Drivers for usart (based on HAL)
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2017.10.18
-  * Revised Date    : 2018.02.28
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -14,7 +14,7 @@
 #include "bsp_usart.h"
 
 UART_HandleTypeDef huart1,huart3;
-SerialType USART1_Tx,USART1_Rx,USART3_Tx;
+SerialType USART1_Tx,USART1_Rx,USART3_Tx,USART3_Rx;
 
 void USART_Config_Init(void)
 {
@@ -62,8 +62,15 @@ void USART_Buffer_Init(void)
     USART3_Tx.front  = USART3_Tx.buffer;
     USART3_Tx.rear   = USART3_Tx.buffer;
     USART3_Tx.flag   = 0;
+    
+    USART3_Rx.handle = &huart3;
+    USART3_Rx.length = BUFFSIZE;
+    USART3_Rx.front  = USART3_Tx.buffer;
+    USART3_Rx.rear   = USART3_Tx.buffer;
+    USART3_Rx.flag   = 0;
 
     HAL_UART_Receive_IT(USART1_Rx.handle,USART1_Rx.rear,1);
+    HAL_UART_Receive_IT(USART3_Rx.handle,USART3_Rx.rear,1);
 }
 
 void USART_Init(void)
@@ -76,8 +83,12 @@ void USART_ReInit(void)
 {
     HAL_UART_DeInit(&huart1);
     HAL_UART_DeInit(&huart3);
+
     USART_Config_Init();
+
     HAL_UART_Receive_IT(USART1_Rx.handle,USART1_Rx.rear,1);
+    HAL_UART_Receive_IT(USART3_Rx.handle,USART3_Rx.rear,1);
+
     if(USART1_Tx.front!=USART1_Tx.rear) HAL_UART_Transmit_IT(USART1_Tx.handle,USART1_Tx.front,1);
     if(USART3_Tx.front!=USART3_Tx.rear) HAL_UART_Transmit_IT(USART3_Tx.handle,USART3_Tx.front,1);
 }
@@ -135,23 +146,43 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if(huart->Instance == USART1)
     {
         if(++USART1_Rx.rear >= (USART1_Rx.buffer + USART1_Rx.length))   USART1_Rx.rear = USART1_Rx.buffer;
-
-        // Restart usart1's IT for next receive process
-        HAL_UART_Receive_IT(USART1_Rx.handle, USART1_Rx.rear, 1);}
+        HAL_UART_Receive_IT(USART1_Rx.handle, USART1_Rx.rear, 1);   // Restart usart1's IT for next receive process
+    }
+    if(huart->Instance == USART3)
+    {
+        if(++USART3_Rx.rear >= (USART3_Rx.buffer + USART3_Rx.length))   USART3_Rx.rear = USART3_Rx.buffer;
+        HAL_UART_Receive_IT(USART3_Rx.handle, USART3_Rx.rear, 1);   // Restart usart1's IT for next receive process
+    }
 }
 
-uint8_t Serial_Rx_Available(void)
+uint8_t Serial_Mavlink_Available(void)
 {
     if(USART1_Rx.front != USART1_Rx.rear)   return 1;
     else return 0;
 }
 
-uint8_t Serial_Rx_NextByte(void)
+uint8_t Serial_Mavlink_NextByte(void)
 {
     uint8_t tmp;
 
     tmp = (uint8_t)(*USART1_Rx.front);
     if (++USART1_Rx.front >= (USART1_Rx.buffer+USART1_Rx.length)) USART1_Rx.front = USART1_Rx.buffer;
+
+    return tmp;
+}
+
+uint8_t Serial_Console_Available(void)
+{
+    if(USART3_Rx.front != USART3_Rx.rear)   return 1;
+    else return 0;
+}
+
+uint8_t Serial_Console_NextByte(void)
+{
+    uint8_t tmp;
+
+    tmp = (uint8_t)(*USART3_Rx.front);
+    if (++USART3_Rx.front >= (USART3_Rx.buffer+USART3_Rx.length)) USART3_Rx.front = USART3_Rx.buffer;
 
     return tmp;
 }

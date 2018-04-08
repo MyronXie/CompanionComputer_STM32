@@ -77,10 +77,10 @@ int main(void)
     while(1)
     {
         /************************* Mavlink Decode Process *************************/
-        if(Serial_Mav_Available())
+        if(Serial_Mavlink_Available())
         {
             // Get available data from FIFO of Usart
-            recvByte = Serial_Mav_NextByte();
+            recvByte = Serial_Mavlink_NextByte();
 
             if(mavlink_parse_char(MAVLINK_COMM_0, recvByte, &mavMsgRx, &mavSta))
             {
@@ -112,6 +112,19 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
+        
+        if(Serial_Console_Available())
+        {
+            recvByte = Serial_Console_NextByte();
+            
+            PRINTLOG("\r\n [CONSOLE] \"%c",recvByte);
+            
+            switch(recvByte)
+            {
+                // Add console command later 
+            }
+        }
+        
     }//while
 }//main
 

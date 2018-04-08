@@ -3,9 +3,9 @@
   * File Name       : bsp_usart.h
   * Description     : Drivers for usart (based on HAL)
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2017.10.18
-  * Revised Date    : 2018.02.27
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -38,8 +38,11 @@ void USART_Init(void);
 void USART_DeInit(void);
 void USART_ReInit(void);
 
-uint8_t Serial_Rx_Available(void);
-uint8_t Serial_Rx_NextByte(void);
+uint8_t Serial_Mavlink_Available(void);
+uint8_t Serial_Mavlink_NextByte(void);
+uint8_t Serial_Console_Available(void);
+uint8_t Serial_Console_NextByte(void);
+
 void Serial_Send(SerialType* serial, uint8_t* buf, uint16_t len);
 
 #endif /* __BSP_USART_H */

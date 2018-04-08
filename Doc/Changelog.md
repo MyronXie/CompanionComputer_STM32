@@ -5,6 +5,7 @@
     * Add reading misc status of battery
 * Improve F3 board system
     * Improve Message Reporter system
+    * Availble to receive command from console for debuging
 
 ### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system
