@@ -1,15 +1,17 @@
 ## Changelog
 
-### v0.3.1 (20180313) : Improve stability of Battery Management System
+### v0.3.1 (20180408) : Improve stability of Battery Management System
 * Improve Battery Management System
     * Add reading misc status of battery
+* Improve F3 board system
+    * Improve Message Reporter system
 
 ### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system
     * Fix problem of USART1-Rx (lost package frequently and become dummy occasionally)
 * Improve Battery Management System
-    * Reconsider whole logic of Battery Management System
-    * Rewrite `Batt_Init()` & `Batt_PowerOff()` from pending function to Finite state machine
+    * Rewrite whole logic of Battery Management System
+    * Rewrite `Batt_Init()` & `Batt_PowerOff()` from pending function to Finite State Machine
     * Rewrite `BATT_SINGLE` logic and add `BATT_DUAL_VDIFF` logic
 + Add Current Monitor System
     + Monitoring current of Electronic Speed Control (ESC)

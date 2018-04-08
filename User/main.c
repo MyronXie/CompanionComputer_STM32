@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.04.06
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -112,16 +112,6 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
-
-        // LandingGear: Auto Reset Process
-        if(lgAutoReset)         LG_Reset();
-
-        // BattMgmt: Power Off Process
-        if(battPwrOff == 1)     Batt_PowerOff();
-
-        // BattMgmt: ReInit Process
-        if(battInit)            Battery_Init();
-
     }//while
 }//main
 
@@ -144,11 +134,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if(htim->Instance == TIM6)      // TIM6: Landing Gear PWM Adjustment (100Hz)
     {
         LandingGear_Adjustment();
+        if(lgAutoReset)         LG_Reset();
     }
 
     if(htim->Instance == TIM7)      // TIM7: Read & Send Battery Message (40Hz)
     {
-        if(!battInit)   Battery_Management();
+        if(!battInit)           Battery_Management();
+        if(battInit)            Battery_Init();
+        if(battPwrOff == 1)     Batt_PowerOff();
     }
 
     if(htim->Instance == TIM15)     // TIM15: Send ESC Current Message (20Hz)

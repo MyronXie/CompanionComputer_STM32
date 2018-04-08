@@ -15,7 +15,7 @@
 
 uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
 uint8_t  sysWarning     = 0;    // Counter for fatal error
-uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem
+uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem (no used now )
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
 
@@ -23,7 +23,7 @@ mavlink_message_t mavMsgTx;     // Send mavlink massage
 uint8_t  msgLostCnt     = 0;    // Mavlink Communication Lost Counter
 uint16_t sendCnt        = 0;
 
-QueueType msgQ;
+QueueType msgQ;                 // Message Queue
 
 // msgList from system.h
 char* msgList[48]={
@@ -69,8 +69,9 @@ void System_MsgReporter(void)
 
                 switch(Qcmd>>4)
                 {
-                    case 0x02:
-                        strcpy(msgSend,paramList[Qparam]);
+                    case 0x02:                      // Battery Message
+                        if(Qparam<4)    strcpy(msgSend,paramList[Qparam]);
+                        else            strcpy(msgSend,"");
                         break;
                     
                     default:
@@ -85,6 +86,7 @@ void System_MsgReporter(void)
             if(reportTimes > 0)
             {
                 Mavlink_Reporter(Qcmd, msgSend);
+                //Mavlink_Reporter(Qcmd, Qaram, msgSend);
                 reportTimes--;
             }
             if(reportTimes == 0)
@@ -95,6 +97,7 @@ void System_MsgReporter(void)
     }
 }
 
+// Will add "param" after updating "mavlink_msg_stm32_f3_command.h"
 void Mavlink_Reporter(uint8_t cmd, char* content)
 //void Mavlink_Reporter(uint8_t cmd, uint8_t param, char* content)
 {

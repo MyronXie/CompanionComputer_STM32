@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.06
+  * Revised Date    : 2018.04.08
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -38,6 +38,9 @@ typedef struct
     uint32_t    pfStatus;
     uint32_t    operationStatus;
 }BattMsg;
+
+#define INDEX_BATTA     0
+#define INDEX_BATTB     1
 
 //========== Battery Management Config ==========
 
@@ -149,6 +152,19 @@ typedef struct
 #define BATT_MGMT_SEND_LOG      0x0E
 #define BATT_MGMT_CNCT_COUNT    0x0F
 
+//=========== Batt_Judge =========
+#define BATT_JUDGE_ONBOARD      0x00
+#define BATT_JUDGE_PWRON        0x01
+#define BATT_JUDGE_FETEN        0x02
+#define BATT_JUDGE_INUSE        0x03
+#define BATT_JUDGE_VDIFF        0x04
+#define BATT_JUDGE_OFFBOARD     0x05
+#define BATT_JUDGE_LOWVOLT      0x06
+#define BATT_JUDGE_LOWSOC       0x07
+#define BATT_JUDGE_PWROFF       0x08
+#define BATT_JUDGE_PWRCHECK     0x09
+#define BATT_JUDGE_SINGLEBATT   0x0A
+
 
 extern uint8_t battPwrOff;
 extern uint8_t battInit;
@@ -158,6 +174,8 @@ void Batt_Measure(BattMsg* _batt, uint8_t _cmd);
 void Batt_PowerOff(void);
 void Battery_Management(void);
 void Battery_MavlinkPack(mavlink_battery_status_t* mav, BattMsg* batt);
+
+uint8_t Batt_Judge(uint8_t type);
 
 uint8_t Batt_WriteByte(uint8_t _addr, uint8_t _reg, uint8_t _data);
 uint8_t Batt_WriteWord(uint8_t _addr, uint8_t _reg, uint16_t _data);

@@ -1,6 +1,6 @@
 ## Command
 
-Used for `mavlink_msg_stm32_f3_command.h`
+Used for [mavlink_msg_stm32_f3_command.h](../Drivers/mavlink-c_library_v2/common/mavlink_msg_stm32_f3_command.h)
 
 ### Message Code
 

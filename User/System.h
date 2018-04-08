@@ -96,9 +96,6 @@
 #define PARAM_BATT_2    "Battery B "
 #define PARAM_BATT_3    "All Battery "
 
-#define ERR_BATTA               (1<<0)
-#define ERR_BATTB               (1<<1)
-
 typedef struct
 {
     uint8_t cmd;
