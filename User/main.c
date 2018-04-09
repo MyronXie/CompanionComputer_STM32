@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.04.08
+  * Revised Date    : 2018.04.09
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -19,6 +19,7 @@ static void Error_Handler(void);
 
 /* Extern Variable */
 extern TIM_HandleTypeDef htim7;
+extern void Console_BattMgmt(uint8_t cmd);
 
 /* Serial */
 uint8_t recvByte = 0;
@@ -76,6 +77,7 @@ int main(void)
 
     while(1)
     {
+
         /************************* Mavlink Decode Process *************************/
         if(Serial_Mavlink_Available())
         {
@@ -104,7 +106,7 @@ int main(void)
                         PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
-                
+
                 // Record seqid of mavlink msg
                 msgSeqPrev=mavMsgRx.seq;
 
@@ -112,19 +114,23 @@ int main(void)
                 Mavlink_Decode(&mavMsgRx);
             }
         }
-        
+
+        /************************* Console Recv Process *************************/
         if(Serial_Console_Available())
         {
             recvByte = Serial_Console_NextByte();
-            
-            PRINTLOG("\r\n [CONSOLE] \"%c",recvByte);
-            
+
+            PRINTLOG("\r\n [CONSOLE] \"%c\"",recvByte);
+
             switch(recvByte)
             {
-                // Add console command later 
+                case 'Q': sysArmed = 1; PRINTLOG("\r\n [INFO] Drone Armed");break;
+                case 'q': sysArmed = 0; PRINTLOG("\r\n [INFO] Drone Disarmed");break;
+                case 'R': NVIC_SystemReset();   break;
+                default: Console_BattMgmt(recvByte); break;
             }
         }
-        
+
     }//while
 }//main
 
@@ -151,9 +157,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
     if(htim->Instance == TIM7)      // TIM7: Read & Send Battery Message (40Hz)
-    {
-        if(!battInit)           Battery_Management();
-        if(battInit)            Battery_Init();
+    {          
+        if(battInit == 1)       Battery_Init();
+        else                    Battery_Management();
         if(battPwrOff == 1)     Batt_PowerOff();
     }
 
@@ -291,6 +297,7 @@ static void SystemClock_Config(void)
 
 static void Error_Handler(void)
 {
+    PRINTLOG("\r\n [FATAL] %s,%d",__FILE__,__LINE__);
     while(1)  {  }
 }
 

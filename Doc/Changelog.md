@@ -1,11 +1,12 @@
 ## Changelog
 
-### v0.3.1 (20180408) : Improve stability of Battery Management System
+### v0.3.1 (20180409) : Improve stability of Battery Management System
 * Improve Battery Management System
     * Add reading misc status of battery
 * Improve F3 board system
     * Improve Message Reporter system
     * Availble to receive command from console for debuging
+    * Merge `BATT_MODE_SINGLE` and `BATT_MODE_DUAL` logic
 
 ### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system
@@ -13,7 +14,7 @@
 * Improve Battery Management System
     * Rewrite whole logic of Battery Management System
     * Rewrite `Batt_Init()` & `Batt_PowerOff()` from pending function to Finite State Machine
-    * Rewrite `BATT_SINGLE` logic and add `BATT_DUAL_VDIFF` logic
+    * Rewrite `BATT_MODE_SINGLE` logic and add `BATT_MODE_DUAL_VDIFF` logic
 + Add Current Monitor System
     + Monitoring current of Electronic Speed Control (ESC)
     + Send `STM32_F3_MOTOR_CURR` to FMU

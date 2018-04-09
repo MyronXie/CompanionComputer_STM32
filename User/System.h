@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.08
+  * Revised Date    : 2018.04.09
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -60,7 +60,12 @@
 #define ERR_BATT_POWEROFF       0x25
 #define ERR_BATT_LOSTPWR        0x26
 #define ERR_BATT_STILLPWR       0x27
-#define ERR_BATT_LOWPOWER       0x28
+#define ERR_BATT_UNDERVOLT      0x28
+#define ERR_BATT_LOWSOC         0x29
+#define ERR_BATT_OVERCURR       0x2A
+#define ERR_BATT_OVERTEMP       0x2B
+#define ERR_BATT_UNDERTEMP      0x2C
+#define ERR_BATT_INNER          0x2D
 
 
 //========== Command Code ==========
@@ -89,7 +94,12 @@
 #define	MSG_25  "Power Off Fail"
 #define MSG_26  "Lost power in the air"
 #define MSG_27  "Still power on"
-#define MSG_28  "Low Power"
+#define MSG_28  "Undervoltage"
+#define MSG_29  "Low battery"
+#define MSG_2A  "Overcurrent"
+#define MSG_2B  "Overtemperature"
+#define MSG_2C  "Undertemperature"
+#define MSG_2D  "Inner status error"
 
 #define PARAM_BATT_0    ""
 #define PARAM_BATT_1    "Battery A "
@@ -123,6 +133,7 @@ extern uint8_t  sysArmed;
 extern uint8_t msgLostCnt;
 
 extern char* msgList[48];
+extern char* paramList[4];
 
 void System_Init(void);
 
