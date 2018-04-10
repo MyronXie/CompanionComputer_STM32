@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.09
+  * Revised Date    : 2018.04.10
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -178,7 +178,6 @@ void Battery_Init(void)
                 battInit = 2;
                 stage = BATT_INIT_BEGIN;
             }
-
             break;
 
         case BATT_ENFET_CHECK:   
@@ -231,7 +230,7 @@ void Battery_Init(void)
             // Read battery fet
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            // Set inuse flag
+            // Set INUSE flag
             if((battA.status&BATT_ONBOARD)&&(battA.fet&PWR_ON)&&(battA.fet&FET_LOCK))   battA.status |= BATT_INUSE;
             if((battB.status&BATT_ONBOARD)&&(battB.fet&PWR_ON)&&(battB.fet&FET_LOCK))   battB.status |= BATT_INUSE;
 
@@ -240,6 +239,7 @@ void Battery_Init(void)
                 battMsg.cmd     = ERR_BATT_INIT;
                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_INUSE);
                 PRINTLOG("\r\n [ERR]  %sBattery Init Error",paramList[battMsg.param]); 
+                battInit = 2;
             }
             else
             {
@@ -333,6 +333,8 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 void Battery_Management(void)
 {
     static uint8_t battCycleCnt = BATT_FUNC_CYCLE-1;       // Counter for dispatch command for battmgmt system
+    static MsgType battMsgLst = {0,0};
+    static uint8_t reportTimes = 0;
     MsgType battMsg = {0,0};
     
     // Increase battCycleCnt
@@ -395,7 +397,6 @@ void Battery_Management(void)
 
             default: break;
         }
-
     }
 
     /********** Judge Process **********/
@@ -430,25 +431,25 @@ void Battery_Management(void)
 
                         PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
 
-                        if(battMsg.param == battA.index)           // Select specific battery
-                        {
-                            battO = &battA;     battQ = &battB;
-                        }
-                        else
-                        {
-                            battO = &battB;     battQ = &battA;
-                        }
+                        // if(battMsg.param == battA.index)           // Select specific battery
+                        // {
+                        //     battO = &battA;     battQ = &battB;
+                        // }
+                        // else
+                        // {
+                        //     battO = &battB;     battQ = &battA;
+                        // }
 
-                        battPwrOff = 1;
+                        // battPwrOff = 1;
                     }
                 }
                 else if(battMode == BATT_MODE_DUAL_VDIFF)
                 {
-                    if((!battPwrOff)&&(battQ!=NULL))                // Change inactive battery to active
-                    {
-                        battO = battQ;
-                        battQ = NULL;
-                    }
+                    // if((!battPwrOff)&&(battQ!=NULL))                // Change inactive battery to active
+                    // {
+                    //     battO = battQ;
+                    //     battQ = NULL;
+                    // }
                 }
                 break;
 
@@ -529,7 +530,6 @@ void Battery_Management(void)
                 }
                 else if(battMode == BATT_MODE_DUAL)
                 {
-                    // Need a method to avoid frequent report (in 0.1V or 1%)
                     if(Batt_Judge(battMode, BATT_JUDGE_UNDERVOLT))
                     {
                         battMsg.cmd     = ERR_BATT_UNDERVOLT;
@@ -555,16 +555,24 @@ void Battery_Management(void)
                         battMsg.cmd     = ERR_BATT_UNDERTEMP;
                         battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_UNDERTEMP);
                     }
+                    
+                    if(battMsgLst.cmd!=battMsg.cmd)
+                    {
+                        reportTimes = 0;
+                        battMsgLst.cmd=battMsg.cmd;
+                    }
+                    else if((++reportTimes)%3)   battMsg.cmd=0;  // Clear msg to avoid frequent report
+
                 }
                 break;
                 
             case BATT_MGMT_DEBUG:
                 #ifdef WITHOUT_BATTERY
                 srand(sysTicks);
-                battA.voltage -= rand()%2;
-                battB.voltage -= rand()%2;
-                battA.remainingCapacity -= rand()%5;
-                battB.remainingCapacity -= rand()%5;
+                battA.voltage -= rand()%3;
+                battB.voltage -= rand()%3;
+                battA.remainingCapacity -= rand()%9;
+                battB.remainingCapacity -= rand()%9;
                 battA.soc = battA.remainingCapacity*100/battA.fullChargeCapacity;
                 battB.soc = battB.remainingCapacity*100/battB.fullChargeCapacity;
                 #endif            
@@ -588,7 +596,6 @@ void Batt_PowerOff(void)
     switch(stage)
     {
         case BATT_PWROFF_CHECK:
-
             // <Debug> Test Battery Init Process
             #ifdef WITHOUT_BATTERY  
             if(atmpTimes == 1)  battA.fet = 0x14;
@@ -762,13 +769,20 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
 void Console_BattMgmt(uint8_t cmd)
 {
     switch(cmd)
-    {
+    { 
         case 'A':   battA.status|=BATT_ONBOARD; break;
         case 'a':   battA.status&=~BATT_ONBOARD; break;
         case 'B':   battB.status|=BATT_ONBOARD; break;
         case 'b':   battB.status&=~BATT_ONBOARD; break;
-        case 'X':   battB.fet&=~PWR_ON; break;
-        case 'V':   battA.voltage-=2000;    break;
+        case 'X':   battB.fet|=PWR_ON; break;
+        case 'x':   battB.fet&=~PWR_ON; break;
+        case 'V':   battA.voltage+=2000;    break;
+        case 'v':   battA.voltage-=2000;    break;
+        case '1':   battA.voltage=20000;battB.voltage=20000;    break;
+        case '2':   battA.temperature=4000;break;
+        case '3':   battA.temperature=1000;  break;
+        case '4':   battA.current=-8001;  break;
+        case '5':   battA.remainingCapacity=1000;  break;
     }
 }
 

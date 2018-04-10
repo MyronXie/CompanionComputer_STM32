@@ -154,11 +154,11 @@ typedef struct
 
 typedef enum
 {
-    BATT_MODE_NONE           =  0x00,
-    BATT_MODE_SINGLE         =  0x10,       // Used for SINGLE_BATTERY mode
-    BATT_MODE_DUAL           =  0x20,
-    BATT_MODE_DUAL_ONLY1,                   // Only one battery is onboard/poweron/enablefet, will re-init after all onboard
-    BATT_MODE_DUAL_VDIFF,                   // Only one battery can be power on
+    BATT_MODE_NONE          = 0x00,
+    BATT_MODE_SINGLE        = 0x10,     // Used for SINGLE_BATTERY mode
+    BATT_MODE_DUAL          = 0x20,
+    BATT_MODE_DUAL_ONLY1    = 0x21,     // Only one battery is onboard/poweron/enablefet
+    BATT_MODE_DUAL_VDIFF    = 0x22,     // Only one battery can be power on
 }BattModeType;
 
 typedef enum

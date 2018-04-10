@@ -54,7 +54,7 @@ int main(void)
     #ifdef ENABLE_BATTERYMGMT
     PRINTLOG("\r\n [INFO] Init Battery Management System");
     I2C_Init();
-    while(battInit)     Battery_Init();
+    while(battInit==1)     Battery_Init();
     #endif //ENABLE_BATTERYMGMT
 
     #ifdef ENABLE_LANGINGGEAR
@@ -119,18 +119,20 @@ int main(void)
         if(Serial_Console_Available())
         {
             recvByte = Serial_Console_NextByte();
-
-            PRINTLOG("\r\n [CONSOLE] \"%c\"",recvByte);
-
-            switch(recvByte)
+            
+            if(recvByte!='\r'&&recvByte!='\n')
             {
-                case 'Q': sysArmed = 1; PRINTLOG("\r\n [INFO] Drone Armed");break;
-                case 'q': sysArmed = 0; PRINTLOG("\r\n [INFO] Drone Disarmed");break;
-                case 'R': NVIC_SystemReset();   break;
-                default: Console_BattMgmt(recvByte); break;
+                PRINTLOG("\r\n [CONSOLE] \"%c\"",recvByte);
+
+                switch(recvByte)
+                {
+                    case 'Q': sysArmed = 1; PRINTLOG("\r\n [INFO] Drone Armed");break;
+                    case 'q': sysArmed = 0; PRINTLOG("\r\n [INFO] Drone Disarmed");break;
+                    case 'R': NVIC_SystemReset();   break;
+                    default: Console_BattMgmt(recvByte); break;
+                }
             }
         }
-
     }//while
 }//main
 
@@ -187,7 +189,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* COMMAND_LONG (#76) */
         case MAVLINK_MSG_ID_COMMAND_LONG:
             mavlink_msg_command_long_decode(msg, &mavCmdRx);
-            PRINTLOG("\r\n [FMU]  #76 : %4d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);    // Only use 2 params at present
+            PRINTLOG("\r\n [FMU]  #76 : %d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);    // Only use 2 params at present
             switch(mavCmdRx.command)
             {
                 #ifdef ENABLE_LANGINGGEAR
@@ -203,7 +205,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* COMMAND_ACK (#77) */
         case MAVLINK_MSG_ID_COMMAND_ACK:
             mavlink_msg_command_ack_decode(msg, &mavCmdAck);
-            PRINTLOG("\r\n [FMU]  #77 : %4d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
+            PRINTLOG("\r\n [FMU]  #77 : %d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
             break;
 
         /* BATTERY_STATUS (#147)*/
