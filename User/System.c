@@ -27,8 +27,8 @@ QueueType msgQ;                 // Message Queue
 
 // msgList from system.h
 char* msgList[48]={
-    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
-    MSG_10,MSG_11,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_18,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
+    MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_06,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
+    MSG_10,MSG_11,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
     MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_29,MSG_2A,MSG_2B,MSG_2C,MSG_2D,MSG_XX,MSG_XX};
 
 char* paramList[4]={PARAM_BATT_0,PARAM_BATT_1,PARAM_BATT_2,PARAM_BATT_3};
@@ -55,7 +55,7 @@ void System_MsgReporter(void)
     static uint8_t Qcmd = 0;
     static uint8_t Qparam = 0;
     static char msgSend[100]={""};
-    
+
     if(sysConnect)                                  // Must report after connected with FMU, otherwise it's useless
     {
         if(msgQ.front!=msgQ.rear)                   // MsgQueue have message(s)
@@ -67,13 +67,13 @@ void System_MsgReporter(void)
                 reportTimes = 3;                    // Report same error message for 3 times
 
                 memset(msgSend,0,sizeof(msgSend));  // Clear message buffer
-                
+
                 switch(Qcmd>>4)
                 {
                     case 0x02:                      // Battery Message
                         if(Qparam<4)    strcpy(msgSend,paramList[Qparam]);
                         break;
-                    
+
                     default:    break;
                 }
 
@@ -88,7 +88,7 @@ void System_MsgReporter(void)
                 reportTimes--;
             }
             if(reportTimes == 0)
-            {   
+            {
                 msgQ.front = (++msgQ.front) % 10;
             }
         }
@@ -98,7 +98,7 @@ void System_MsgReporter(void)
 void System_ErrorHandler(void)
 {
     MsgType syMsg = {0,0};
-    
+
     #ifndef INGORE_LOSTCOMM
     if(sysConnect)      msgLostCnt++;               // msgLostCnt will reset if receive mavlink msg
     #endif

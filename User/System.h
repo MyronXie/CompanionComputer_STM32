@@ -45,12 +45,11 @@
 #define MSG_BATT_PWROFF_START   0x03
 #define MSG_BATT_REINIT         0x04
 #define MSG_BATT_PWROFF_END     0x05
+#define MSG_LG_RESET            0x06
 
 //=========== Error Code ===========
 #define ERR_SYS_GENERAL         0x10
 #define ERR_SYS_SERIAL          0x11
-
-#define ERR_LG_RESET            0x18
 
 #define ERR_BATT_INIT           0x20
 #define ERR_BATT_OFFBOARD       0x21
@@ -80,11 +79,10 @@
 #define MSG_03  "Start Power Off Process"
 #define MSG_04  "Battery Reinit"
 #define MSG_05  "Power Off Success"
+#define MSG_06  "Landing Gear Auto Reset"
 
 #define MSG_10  "System Error"
 #define MSG_11  "Serial Error"
-
-#define MSG_18  "Landing Gear Auto Reset"
 
 #define	MSG_20  "Init Fail"
 #define	MSG_21  "Offboard"

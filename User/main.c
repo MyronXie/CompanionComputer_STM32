@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.04.10
+  * Revised Date    : 2018.04.11
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -119,7 +119,7 @@ int main(void)
         if(Serial_Console_Available())
         {
             recvByte = Serial_Console_NextByte();
-            
+
             if(recvByte!='\r'&&recvByte!='\n')
             {
                 PRINTLOG("\r\n [CONSOLE] \"%c\"",recvByte);
@@ -144,7 +144,7 @@ int main(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     System_MsgReporter();        // Put here to avoid timing sync bug in the init part
-    
+
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {
         System_Heartbeat();
@@ -154,12 +154,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if(htim->Instance == TIM6)      // TIM6: Landing Gear PWM Adjustment (100Hz)
     {
-        LandingGear_Adjustment();
         if(lgAutoReset)         LG_Reset();
+        else                    LandingGear_Adjustment();
     }
 
     if(htim->Instance == TIM7)      // TIM7: Read & Send Battery Message (40Hz)
-    {          
+    {
         if(battInit == 1)       Battery_Init();
         else                    Battery_Management();
         if(battPwrOff == 1)     Batt_PowerOff();
@@ -167,6 +167,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if(htim->Instance == TIM15)     // TIM15: Send ESC Current Message (20Hz)
     {
+        CurrMonitor_Capture();
         CurrMonitor_Send();
     }
 }

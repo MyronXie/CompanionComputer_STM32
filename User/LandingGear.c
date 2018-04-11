@@ -130,13 +130,13 @@ void LandingGear_Adjustment(void)
 void LandingGear_Reset(void)
 {
     MsgType lgMsg = {0,0};
-    
+
     if(lgPositionCurr)                      // Changing Landing Gear cost 1~2s approx., no need to judge change status
     {
         PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
-        HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
+        //HAL_TIM_Base_Stop_IT(&htim6);       // Stop general changing process temp.
         lgAutoReset = 1;
-        lgMsg.cmd = ERR_LG_RESET;
+        lgMsg.cmd = MSG_LG_RESET;
         ReportMessage(lgMsg);
     }
 }
@@ -256,7 +256,7 @@ void LG_Reset(void)
                 lgPositionCurr = 0, lgChangeStatusCurr = 0;
                 flashParam[0] = lgPositionCurr;     flashParam[1] = lgChangeStatusCurr;
                 FLASH_SaveParam(flashParam,2);
-                HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
+                //HAL_TIM_Base_Start_IT(&htim6);      // Restart general changing process
                 lgAutoReset = 0;
                 stage = 0x00;
             }
