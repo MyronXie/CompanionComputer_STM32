@@ -1,6 +1,6 @@
 ## Changelog
 
-### v0.3.1 (20180409) : Improve stability of Battery Management System
+### v0.3.1 (20180411) : Improve stability of Battery Management System
 * Improve Battery Management System
     * Add reading misc status of battery
 * Improve F3 board system

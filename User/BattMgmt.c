@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.10
+  * Revised Date    : 2018.04.11
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -525,7 +525,7 @@ void Battery_Management(void)
                     #ifndef WITHOUT_BATTERY
                     if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
                         battMsg.cmd     = ERR_BATT_STILLPWR;    //ERR_BATT_POWEROFF
-                        battMsg.param   = Batt_Judge(BATT_JUDGE_PWRCHECK);
+                        battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_PWRCHECK);
                     #endif
                 }
                 else if(battMode == BATT_MODE_DUAL)
