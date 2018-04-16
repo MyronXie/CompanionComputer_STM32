@@ -23,8 +23,8 @@
 #include "stdlib.h"
 
 // Function Select
-#define ENABLE_BATTERYMGMT
-//#define ENABLE_LANGINGGEAR
+//#define ENABLE_BATTERYMGMT
+#define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
 //#define SINGLE_BATTERY
 

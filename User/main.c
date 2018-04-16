@@ -17,10 +17,6 @@
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
-/* Extern Variable */
-extern TIM_HandleTypeDef htim7;
-extern void Console_BattMgmt(uint8_t cmd);
-
 /* Serial */
 uint8_t recvByte = 0;
 uint16_t msgSeqPrev = 0;            // Monitor numbers of Mavlink lost package
@@ -126,6 +122,8 @@ int main(void)
 
                 switch(recvByte)
                 {
+                    case '0': LandingGear_Control(0);break;
+                    case '1': LandingGear_Control(1);break;
                     case 'Q': sysArmed = 1; PRINTLOG("\r\n [INFO] Drone Armed");break;
                     case 'q': sysArmed = 0; PRINTLOG("\r\n [INFO] Drone Disarmed");break;
                     case 'R': NVIC_SystemReset();   break;
@@ -190,12 +188,12 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* COMMAND_LONG (#76) */
         case MAVLINK_MSG_ID_COMMAND_LONG:
             mavlink_msg_command_long_decode(msg, &mavCmdRx);
-            PRINTLOG("\r\n [FMU]  #76 : %d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);    // Only use 2 params at present
+            PRINTLOG("\r\n [FMU]  #76 : %d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);
             switch(mavCmdRx.command)
             {
                 #ifdef ENABLE_LANGINGGEAR
                 case MAV_CMD_AIRFRAME_CONFIGURATION:    // 2520,0x09D8
-                    LandingGear_Control(&mavCmdRx);
+                    LandingGear_Control((int)mavCmdRx.param2);
                     break;
                 #endif
 
@@ -223,7 +221,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:
-                    if(!sysArmed)
+                    if(!sysArmed)       // Only display message when armed status changed
                     {
                         sysArmed = 1;
                         PRINTLOG("\r\n [INFO] Drone Armed");
@@ -300,7 +298,6 @@ static void SystemClock_Config(void)
 
 static void Error_Handler(void)
 {
-    PRINTLOG("\r\n [FATAL] %s,%d",__FILE__,__LINE__);
     while(1)  {  }
 }
 

@@ -80,8 +80,6 @@
 - TIM2: System Management (1Hz)
 - IWDG: Watchdog
 - Flash: Save params of system
-    - 0: lgPositionCurr
-    - 1: lgChangeStatusCurr
 
 ### Communication
 - USART1: F3<->FMU  for communication   (57600bps)
