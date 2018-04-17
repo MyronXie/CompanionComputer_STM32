@@ -145,6 +145,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {
+        LED_TOGGLE(LED1);
         System_Heartbeat();
         System_ErrorHandler();
         IWDG_Feed();                    // Feed watchdog

@@ -1,12 +1,13 @@
 ## Changelog
 
-### v0.3.1 (20180411) : Improve stability of Battery Management System
+### v0.3.1 (20180417) : Improve stability of Battery Management System
 * Improve Battery Management System
     * Add reading misc status of battery
+    * Merge `BATT_MODE_SINGLE` and `BATT_MODE_DUAL` logic
 * Improve F3 board system
     * Improve Message Reporter system
     * Availble to receive command from console for debuging
-    * Merge `BATT_MODE_SINGLE` and `BATT_MODE_DUAL` logic
++ Add Support for Externsion Board Rev2.0
 
 ### v0.3 (20180308) : Improve stability of CC_STM32 System
 * Improve F3 board system

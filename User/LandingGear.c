@@ -86,11 +86,13 @@ void LandingGear_Adjustment(void)
         lgChangePrev = lgChangeCurr;
         if(lgChangeCurr)                        // Changing Process Start
         {
+            LED_ON(LED2);
             PRINTLOG("\r\n [ACT]  Landing Gear: Start(%s)",lgPositionCurr?"UP":"DOWN");
             sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
         }
         else                                    // Changing Process Finish
         {
+            LED_OFF(LED2);
             PRINTLOG("\r\n [ACT]  Landing Gear: Stop (%s)",lgPositionCurr?"UP":"DOWN");
             sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
         }
@@ -249,13 +251,15 @@ void LG_Relay_Init(void)
     GPIO_InitStructure.Pin  = GPIO_PIN_11;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
-    #elif BOARD_REV2
+    #else
+    #ifdef BOARD_REV2
     __HAL_RCC_GPIOC_CLK_ENABLE();
     GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStructure.Pull = GPIO_NOPULL;
     GPIO_InitStructure.Pin  = GPIO_PIN_13;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+    #endif
     #endif
 
     Relay_OFF();

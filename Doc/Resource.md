@@ -19,17 +19,17 @@
 
 ### Landing Gear
 
-|Chip|Function  | |Board|Name       |Remark                 |
-|-   |-         |-|-    |-          |-                      |
-|PB4 |TIM3_CH1  | |P8.1 |PWM1       |Left                   |
-|    |          | |P8.2 |7V_OUT     |                       |
-|    |          | |P8.3 |GND        |                       |
-|-   |-         |-|-    |-          |-                      |
-|PB5 |TIM3_CH2  | |P9.1 |PWM2       |Right                  |
-|    |          | |P9.2 |7V_OUT     |                       |
-|    |          | |P9.3 |GND        |                       |
-|-   |-         |-|-    |-          |-                      |
-|PC13|PC13      | |     |STEER_PWR  |Relay **PA11->PC13**   |
+|Chip|Function  | |Board|Name       |Remark |
+|-   |-         |-|-    |-          |-      |
+|PB4 |TIM3_CH1  | |P8.1 |PWM1       |Left   |
+|    |          | |P8.2 |7V_OUT     |       |
+|    |          | |P8.3 |GND        |       |
+|-   |-         |-|-    |-          |-      |
+|PB5 |TIM3_CH2  | |P9.1 |PWM2       |Right  |
+|    |          | |P9.2 |7V_OUT     |       |
+|    |          | |P9.3 |GND        |       |
+|-   |-         |-|-    |-          |-      |
+|PC13|PC13      | |     |STEER_PWR  |Relay  |
 
 ### Battery Management
 
@@ -60,8 +60,8 @@
 |PB13|PB13      | |     |LED2       |           |
 |PB14|PB14      | |     |LED3       |           |
 |PB15|PB15      | |     |LED4       |           |
-|    |          | |     |LED5       |Steer PWR  |
-|    |          | |     |LED6       |Board PWR  |
+|    |          | |     |LED5       |3.3V PWR   |
+|    |          | |     |LED6       |7V PWR     |
 
 ### Unused PWM Pin
 
@@ -83,7 +83,7 @@
 
 ### Communication
 - USART1: F3<->FMU  for communication   (57600bps)
-- USART3: F3<->PC   for debug           (256000bps)
+- USART3: F3<->PC   for debug           (115200bps)
 
 ### Landing Gear
 - TIM3: Landing gear PWM control (50Hz)
@@ -96,6 +96,3 @@
 ### Current Monitor
 - ADC1: Read current of ESC
 - TIM15: Send ESC Current Message (20Hz)
-
-### Mavlink
-Based on mavlink-c_library_v2 from Gitlab v20180131 (`84a046bc`)

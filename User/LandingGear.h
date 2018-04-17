@@ -39,9 +39,11 @@
 #ifdef BOARD_REV1
     #define Relay_ON()      HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
     #define Relay_OFF()     HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_RESET)
-#elif
-    #define Relay_ON()      HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET)
+#else
+#ifdef BOARD_REV2
+    #define Relay_ON()      HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_SET)
     #define Relay_OFF()     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_13,GPIO_PIN_RESET)
+#endif
 #endif
 
 extern uint8_t lgAutoReset;

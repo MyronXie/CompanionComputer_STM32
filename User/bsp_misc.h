@@ -26,8 +26,8 @@
 #define LED3    GPIOB,GPIO_PIN_14
 #define LED4    GPIOB,GPIO_PIN_15
 
-#define LED_ON(led)     HAL_GPIO_WritePin(led,GPIO_PIN_SET)
-#define LED_OFF(led)    HAL_GPIO_WritePin(led,GPIO_PIN_RESET)
+#define LED_ON(led)     HAL_GPIO_WritePin(led,GPIO_PIN_RESET)
+#define LED_OFF(led)    HAL_GPIO_WritePin(led,GPIO_PIN_SET)
 #define LED_TOGGLE(led) HAL_GPIO_TogglePin(led)
 
 
