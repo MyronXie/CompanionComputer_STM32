@@ -3,7 +3,7 @@
   * File Name       : LandingGear.h
   * Description     : Landing Gear Drivers
   *
-  * Version         : v0.3.1
+  * Version         : v0.4
   * Created Date    : 2017.09.25
   * Revised Date    : 2018.04.18
   *
@@ -22,20 +22,43 @@
 #include "math.h"
 
 /* Parameters of Landing Gear Control */
-#define PUL_LEFT_UP         900
-#define PUL_LEFT_DOWN       250
+#define PUL_LEFT_MAX        1000
+#define PUL_LEFT_MIN        475
+#define PUL_RIGHT_MAX       1100
+#define PUL_RIGHT_MIN       575
 
-#define PUL_RIGHT_UP        900
-#define PUL_RIGHT_DOWN      250
+#define STEER_LEFT_NORMAL
+//#define STEER_LEFT_REVERSE
+//#define STEER_RIGHT_NORMAL
+#define STEER_RIGHT_REVERSE
 
-#define PUL_SCALE_UP        0.008
-#define PUL_SCALE_DOWN      0.008
+#define PUL_SCALE_UP        0.012
+#define PUL_SCALE_DOWN      0.012
 
 #define LG_CHANGE_DELAY     100//200     //*10ms = 2s
 #define LG_RELAY_DELAY      500     //ms
 
-#define PUL_LEFT_Range      (PUL_LEFT_UP-PUL_LEFT_DOWN)
-#define PUL_RIGHT_Range     (PUL_RIGHT_UP-PUL_RIGHT_DOWN)
+#define STEER_TIANYI_UP     900
+#define STEER_TIANYI_DOWN   250
+
+#ifdef STEER_LEFT_NORMAL
+#define PUL_LEFT_UP         PUL_LEFT_MAX
+#define PUL_LEFT_DOWN       PUL_LEFT_MIN
+#else
+#define PUL_LEFT_UP         PUL_LEFT_MIN
+#define PUL_LEFT_DOWN       PUL_LEFT_MAX
+#endif
+
+#ifdef STEER_RIGHT_NORMAL
+#define PUL_RIGHT_UP        PUL_RIGHT_MAX
+#define PUL_RIGHT_DOWN      PUL_RIGHT_MIN
+#else
+#define PUL_RIGHT_UP        PUL_RIGHT_MIN
+#define PUL_RIGHT_DOWN      PUL_RIGHT_MAX
+#endif
+
+#define PUL_LEFT_RANGE      (int16_t)(PUL_LEFT_UP-PUL_LEFT_DOWN)
+#define PUL_RIGHT_RANGE     (int16_t)(PUL_RIGHT_UP-PUL_RIGHT_DOWN)
 
 #define LG_POS_UP           1
 #define LG_POS_DOWN         0

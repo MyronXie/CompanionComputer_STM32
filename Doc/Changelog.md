@@ -1,12 +1,14 @@
 ## Changelog
 
-### v0.3.1 (20180417) : Improve stability of Battery Management System
+### v0.4 (20180418) : Improve stability of BattMgmt System & LandGear System
 * Improve Battery Management System
     * Add reading misc status of battery
     * Merge `BATT_MODE_SINGLE` and `BATT_MODE_DUAL` logic
 * Improve F3 board system
     * Improve Message Reporter system
     * Availble to receive command from console for debuging
+* Improve stability of Landing Gear System
+    * Add different situation of steering installation method
 + Add Support for Externsion Board Rev2.0
 
 ### v0.3 (20180308) : Improve stability of CC_STM32 System

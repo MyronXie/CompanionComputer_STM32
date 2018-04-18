@@ -3,7 +3,7 @@
   * File Name       : LandingGear.c
   * Description     : Landing Gear Drivers
   *
-  * Version         : v0.3.1
+  * Version         : v0.4
   * Created Date    : 2017.09.25
   * Revised Date    : 2018.04.18
   *
@@ -22,8 +22,9 @@ uint8_t lgModeCurr = 0;             // Change Status of Landing Gear [Standby: 0
 uint8_t lgModePrev = 0;             // To indicate begin or end of changing status
 uint8_t lgAutoReset = 1;
 
-uint16_t lgPulseL=PUL_LEFT_DOWN;
-uint16_t lgPulseR=PUL_RIGHT_DOWN;
+uint16_t lgPulseL=PUL_LEFT_MIN;
+//uint16_t lgPulseR=PUL_RIGHT_MIN;
+uint16_t lgPulseR=PUL_RIGHT_MAX;
 uint8_t  lgProgress=0;
 
 TIM_HandleTypeDef htim3;
@@ -40,7 +41,7 @@ void LandingGear_Init(void)
 }
 
 void LandingGear_Control(uint8_t posi)
-{    
+{
     if(posi==LG_POS_DOWN||posi==LG_POS_UP)  // Param check
     {
         PRINTLOG("\r\n [INFO] Landing Gear: %s", posi?"UP":"DOWN");
@@ -80,9 +81,9 @@ void LandingGear_Control(uint8_t posi)
 void LandingGear_Adjustment(void)
 {
     static uint8_t lgCycleCnt = 50-1;
-    
+
     lgCycleCnt = (lgCycleCnt+1)%50;
-    
+
     // Decrease lgDelayCnt
     if(lgDelayCnt)    lgDelayCnt--;
 
@@ -107,7 +108,7 @@ void LandingGear_Adjustment(void)
         Relay_ON();                             // Turn on relay to power on steers
         lgModeCurr = LG_Control(lgPositionCurr);// If changing process finished, lgMode turns 0
         lgDelayCnt = LG_CHANGE_DELAY;           // Ignore cmd for 2s (guard time)
-        if(!lgCycleCnt)    PRINTLOG("\r\n [INFO] LandGear Progress:%3d%%",lgProgress);
+        if(!lgCycleCnt)    PRINTLOG("\r\n [INFO] Landing Gear: Moving %3d%%",lgProgress);
     }
     else Relay_OFF();                           // Turn off relay to power off steers
 }
@@ -167,10 +168,10 @@ uint8_t LG_Control(uint8_t pos)
         case 0x00:
             if(pos == LG_POS_UP)            // Landing Gear Up(1)
             {
-                lgPulseL+=(uint8_t)(PUL_LEFT_Range*PUL_SCALE_UP);
-                lgPulseR+=(uint8_t)(PUL_RIGHT_Range*PUL_SCALE_UP);
-                lgProgress=(lgPulseL-PUL_LEFT_DOWN)*100/PUL_LEFT_Range;
-                if(lgPulseL>PUL_LEFT_UP||lgPulseR>PUL_RIGHT_UP)
+                lgPulseL+=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_UP);
+                lgPulseR+=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_UP);
+                lgProgress=(lgPulseL-PUL_LEFT_DOWN)*100/PUL_LEFT_RANGE;
+                if(lgPulseL>PUL_LEFT_MAX||lgPulseL<PUL_LEFT_MIN||lgPulseR>PUL_RIGHT_MAX||lgPulseR<PUL_RIGHT_MIN)
                 {
                     lgPulseL=PUL_LEFT_UP;       // Ensure safe
                     lgPulseR=PUL_RIGHT_UP;
@@ -180,10 +181,10 @@ uint8_t LG_Control(uint8_t pos)
             }
             else if(pos == LG_POS_DOWN)     // Landing Gear Down(0)
             {
-                lgPulseL-=(uint8_t)(PUL_LEFT_Range*PUL_SCALE_DOWN);
-                lgPulseR-=(uint8_t)(PUL_RIGHT_Range*PUL_SCALE_DOWN);
-                lgProgress=(PUL_LEFT_UP-lgPulseL)*100/PUL_LEFT_Range;
-                if(lgPulseL<PUL_LEFT_DOWN||lgPulseR<PUL_RIGHT_DOWN)
+                lgPulseL-=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_DOWN);
+                lgPulseR-=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_DOWN);
+                lgProgress=(PUL_LEFT_UP-lgPulseL)*100/PUL_LEFT_RANGE;
+                if(lgPulseL>PUL_LEFT_MAX||lgPulseL<PUL_LEFT_MIN||lgPulseR>PUL_RIGHT_MAX||lgPulseR<PUL_RIGHT_MIN)
                 {
                     lgPulseL=PUL_LEFT_DOWN;
                     lgPulseR=PUL_RIGHT_DOWN;
@@ -191,6 +192,7 @@ uint8_t LG_Control(uint8_t pos)
                     stage = 0x01;
                 }
             }
+            //PRINTLOG("\r\n $%4d,%4d",lgPulseL,lgPulseR);  // <Dev> Watch lgPulseL/lgPulseR
             break;
 
         // Waiting for relay finish
@@ -228,14 +230,10 @@ void LG_Reset(void)
         case 0x00:
             Relay_ON();
 
-            lgPulseL=PUL_LEFT_DOWN;
-            lgPulseR=PUL_RIGHT_DOWN;
-
-            hocl.Pulse=lgPulseL;
+            hocl.Pulse=PUL_LEFT_DOWN;
             HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
             HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-
-            hocr.Pulse=lgPulseR;
+            hocr.Pulse=PUL_RIGHT_DOWN;
             HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
             HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
 
