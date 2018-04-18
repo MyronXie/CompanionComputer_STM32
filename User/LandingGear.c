@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.17
+  * Revised Date    : 2018.04.18
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -24,6 +24,7 @@ uint8_t lgAutoReset = 1;
 
 uint16_t lgPulseL=PUL_LEFT_DOWN;
 uint16_t lgPulseR=PUL_RIGHT_DOWN;
+uint8_t  lgProgress=0;
 
 TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
@@ -39,7 +40,7 @@ void LandingGear_Init(void)
 }
 
 void LandingGear_Control(uint8_t posi)
-{
+{    
     if(posi==LG_POS_DOWN||posi==LG_POS_UP)  // Param check
     {
         PRINTLOG("\r\n [INFO] Landing Gear: %s", posi?"UP":"DOWN");
@@ -78,6 +79,10 @@ void LandingGear_Control(uint8_t posi)
 
 void LandingGear_Adjustment(void)
 {
+    static uint8_t lgCycleCnt = 50-1;
+    
+    lgCycleCnt = (lgCycleCnt+1)%50;
+    
     // Decrease lgDelayCnt
     if(lgDelayCnt)    lgDelayCnt--;
 
@@ -102,6 +107,7 @@ void LandingGear_Adjustment(void)
         Relay_ON();                             // Turn on relay to power on steers
         lgModeCurr = LG_Control(lgPositionCurr);// If changing process finished, lgMode turns 0
         lgDelayCnt = LG_CHANGE_DELAY;           // Ignore cmd for 2s (guard time)
+        if(!lgCycleCnt)    PRINTLOG("\r\n [INFO] LandGear Progress:%3d%%",lgProgress);
     }
     else Relay_OFF();                           // Turn off relay to power off steers
 }
@@ -110,7 +116,7 @@ void LG_TIM_Init(void)
 {
     /* TIM3 for PWM control (50Hz) */
     htim3.Instance          = TIM3;
-    htim3.Init.Prescaler    = 128;
+    htim3.Init.Prescaler    = 128-1;
     htim3.Init.CounterMode  = TIM_COUNTERMODE_UP;
     htim3.Init.Period       = 10000-1;
     htim3.Init.ClockDivision= TIM_CLOCKDIVISION_DIV1;
@@ -161,8 +167,9 @@ uint8_t LG_Control(uint8_t pos)
         case 0x00:
             if(pos == LG_POS_UP)            // Landing Gear Up(1)
             {
-                lgPulseL+=PUL_LEFT_Range*PUL_SCALE_UP;
-                lgPulseR+=PUL_RIGHT_Range*PUL_SCALE_UP;
+                lgPulseL+=(uint8_t)(PUL_LEFT_Range*PUL_SCALE_UP);
+                lgPulseR+=(uint8_t)(PUL_RIGHT_Range*PUL_SCALE_UP);
+                lgProgress=(lgPulseL-PUL_LEFT_DOWN)*100/PUL_LEFT_Range;
                 if(lgPulseL>PUL_LEFT_UP||lgPulseR>PUL_RIGHT_UP)
                 {
                     lgPulseL=PUL_LEFT_UP;       // Ensure safe
@@ -173,8 +180,9 @@ uint8_t LG_Control(uint8_t pos)
             }
             else if(pos == LG_POS_DOWN)     // Landing Gear Down(0)
             {
-                lgPulseL-=PUL_LEFT_Range*PUL_SCALE_DOWN;
-                lgPulseR-=PUL_RIGHT_Range*PUL_SCALE_DOWN;
+                lgPulseL-=(uint8_t)(PUL_LEFT_Range*PUL_SCALE_DOWN);
+                lgPulseR-=(uint8_t)(PUL_RIGHT_Range*PUL_SCALE_DOWN);
+                lgProgress=(PUL_LEFT_UP-lgPulseL)*100/PUL_LEFT_Range;
                 if(lgPulseL<PUL_LEFT_DOWN||lgPulseR<PUL_RIGHT_DOWN)
                 {
                     lgPulseL=PUL_LEFT_DOWN;
@@ -187,7 +195,7 @@ uint8_t LG_Control(uint8_t pos)
 
         // Waiting for relay finish
         case 0x01:
-            if(HAL_GetTick() - timeTick > LG_RELAY_CTR_DELAY)
+            if(HAL_GetTick() - timeTick > LG_RELAY_DELAY)
             {
                 stage = 0x00;
                 if(pos == LG_POS_UP)        LED_ON(LED2);
@@ -235,7 +243,7 @@ void LG_Reset(void)
             stage = 0x01;
 
         case 0x01:
-            if(HAL_GetTick() - timeTick > LG_RELAY_RST_DELAY)
+            if(HAL_GetTick() - timeTick > LG_RELAY_DELAY)
             {
                 Relay_OFF();
                 lgPositionCurr = LG_POS_DOWN;

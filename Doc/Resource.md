@@ -87,7 +87,7 @@
 
 ### Landing Gear
 - TIM3: Landing gear PWM control (50Hz)
-- TIM6: Landing gear PWM adjustment (100Hz)
+- TIM6: Landing gear PWM adjustment (50Hz)
 
 ### Battery Management
 - I2C1: Battery communication

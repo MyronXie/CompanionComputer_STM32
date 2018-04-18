@@ -3,9 +3,9 @@
   * File Name       : bsp_tim.c
   * Description     : Drivers for usart (based on HAL)
   *
-  * Version         : v0.2
+  * Version         : v0.3.1
   * Created Date    : 2017.10.18
-  * Revised Date    : 2018.03.05
+  * Revised Date    : 2018.04.18
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -30,12 +30,12 @@ void TIM_Init(void)
     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
 
-    /* TIM6: Landing Gear PWM Adjustment (100Hz) */
+    /* TIM6: Landing Gear PWM Adjustment (50Hz) */
     #ifdef ENABLE_LANGINGGEAR
     htim6.Instance          = TIM6;
     htim6.Init.Prescaler    = 64000-1;
     htim6.Init.CounterMode  = TIM_COUNTERMODE_UP;
-    htim6.Init.Period       = 10-1;
+    htim6.Init.Period       = 20-1;
     htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
     HAL_TIM_Base_Init(&htim6);
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;

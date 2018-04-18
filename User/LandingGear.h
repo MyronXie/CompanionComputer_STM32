@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.17
+  * Revised Date    : 2018.04.18
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -31,9 +31,8 @@
 #define PUL_SCALE_UP        0.008
 #define PUL_SCALE_DOWN      0.008
 
-#define LG_CHANGE_DELAY     10//200     //*10ms = 2s
-#define LG_RELAY_RST_DELAY  1000     //ms
-#define LG_RELAY_CTR_DELAY  100     //ms
+#define LG_CHANGE_DELAY     100//200     //*10ms = 2s
+#define LG_RELAY_DELAY      500     //ms
 
 #define PUL_LEFT_Range      (PUL_LEFT_UP-PUL_LEFT_DOWN)
 #define PUL_RIGHT_Range     (PUL_RIGHT_UP-PUL_RIGHT_DOWN)
