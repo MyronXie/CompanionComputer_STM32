@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2018.02.02
-  * Revised Date    : 2018.04.09
+  * Revised Date    : 2018.04.17
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -66,7 +66,6 @@
 #define ERR_BATT_UNDERTEMP      0x2C
 #define ERR_BATT_INNER          0x2D
 
-
 //========== Command Code ==========
 #define CMD_FLY_ARM             0x80
 #define CMD_FLY_DISARM          0x81
@@ -124,7 +123,7 @@ extern uint16_t sendCnt;
 
 extern uint8_t  sysConnect;
 extern uint8_t  sysWarning;
-extern uint8_t  sysStatus;
+//extern uint8_t  sysStatus;
 extern uint16_t sysTicks;
 extern uint8_t  sysArmed;
 

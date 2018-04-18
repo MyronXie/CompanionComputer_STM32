@@ -1,8 +1,8 @@
 # CompanionComputer_STM32
 
 ### Version
-- Software: v0.3.1 (20180408)
-- Hardware: Rev0.1
+- Software: v0.3.1 (20180417)
+- Hardware: Rev0.2
 
 ### Function
 - Communication with FMU through Mavlink (bi-direction)

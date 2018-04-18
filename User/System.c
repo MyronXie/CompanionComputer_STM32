@@ -15,7 +15,7 @@
 
 uint8_t  sysConnect     = 0;    // Flag for system working (Receive first heartbeat from FC)
 uint8_t  sysWarning     = 0;    // Counter for fatal error
-uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem (no used now )
+//uint8_t  sysStatus      = 0;    // Flag for battery , 0 for no problem (no used now)
 uint16_t sysTicks       = 0;    // Record system running time
 uint8_t  sysArmed       = 0;    // Flag for record whether drone is in the air
 
@@ -25,6 +25,8 @@ uint16_t sendCnt        = 0;
 
 QueueType msgQ;                 // Message Queue
 
+extern uint8_t lgAutoReset;
+
 // msgList from system.h
 char* msgList[48]={
     MSG_00,MSG_01,MSG_02,MSG_03,MSG_04,MSG_05,MSG_06,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,MSG_XX,
@@ -32,8 +34,6 @@ char* msgList[48]={
     MSG_20,MSG_21,MSG_22,MSG_23,MSG_24,MSG_25,MSG_26,MSG_27,MSG_28,MSG_29,MSG_2A,MSG_2B,MSG_2C,MSG_2D,MSG_XX,MSG_XX};
 
 char* paramList[4]={PARAM_BATT_0,PARAM_BATT_1,PARAM_BATT_2,PARAM_BATT_3};
-
-extern uint8_t LandingGear_Reset(void);
 
 void System_Init()
 {
@@ -114,7 +114,10 @@ void System_ErrorHandler(void)
         msgLostCnt++;
 
         #ifdef  ENABLE_LANGINGGEAR
-        LandingGear_Reset();
+        PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
+        lgAutoReset = 1;
+        syMsg.cmd = MSG_LG_RESET;
+        ReportMessage(syMsg);
         #endif
     }
     else if(msgLostCnt==4)

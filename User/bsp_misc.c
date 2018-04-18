@@ -3,9 +3,9 @@
   * File Name       : bsp_misc.c
   * Description     : Drivers for LED, Flash, IWDG (based on HAL)
   *
-  * Version         : v0.3
+  * Version         : v0.3.1
   * Created Date    : 2018.02.01
-  * Revised Date    : 2018.03.07
+  * Revised Date    : 2018.04.17
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -80,7 +80,6 @@ void LED_Init(void)
     GPIO_InitStruct.Mode        = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull        = GPIO_PULLUP;
     GPIO_InitStruct.Speed       = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate   = GPIO_AF4_I2C1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     LED_OFF(LED1);
