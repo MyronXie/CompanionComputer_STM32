@@ -151,6 +151,37 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
+int8_t LG_Step(uint8_t pos,uint8_t type)
+{
+    int8_t temp;
+    uint8_t prog;
+    int16_t range;
+    if(pos == LG_POS_UP)    prog=lgProgress;
+    else                    prog=100-lgProgress;
+    
+    if(type==LG_STEER_LEFT) range=PUL_LEFT_RANGE;
+    else                    range=PUL_RIGHT_RANGE;
+    
+    switch(prog/10)
+    {
+        case 0:     temp=range*0.018;   break;
+        case 1:     temp=range*0.012;   break;
+        case 2:     temp=range*0.008;   break;
+        case 3:     temp=range*0.008;   break;
+        case 4:     temp=range*0.008;   break;
+        case 5:     temp=range*0.010;   break;
+        case 6:     temp=range*0.016;   break;
+        case 7:     temp=range*0.020;   break;
+        case 8:     temp=range*0.018;   break;
+        case 9:     temp=range*0.012;   break;
+        case 10:    temp=range*0.006;   break; 
+        default:    temp=0;
+    }
+    
+    PRINTLOG("\r\n #%d,%d,%d,%d",pos,type,_prog,temp);
+    return temp;
+}
+
 /**
   * @brief  Landing Gear Control function.
   * @param  pos current position of landing gear
@@ -168,8 +199,10 @@ uint8_t LG_Control(uint8_t pos)
         case 0x00:
             if(pos == LG_POS_UP)            // Landing Gear Up(1)
             {
-                lgPulseL+=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_UP);
-                lgPulseR+=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_UP);
+                lgPulseL+=LG_Step(pos,LG_STEER_LEFT);
+                lgPulseR+=LG_Step(pos,LG_STEER_RIGHT);
+                //lgPulseL+=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_UP);
+                //lgPulseR+=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_UP);
                 lgProgress=(lgPulseL-PUL_LEFT_DOWN)*100/PUL_LEFT_RANGE;
                 if(lgPulseL>PUL_LEFT_MAX||lgPulseL<PUL_LEFT_MIN||lgPulseR>PUL_RIGHT_MAX||lgPulseR<PUL_RIGHT_MIN)
                 {
@@ -181,8 +214,10 @@ uint8_t LG_Control(uint8_t pos)
             }
             else if(pos == LG_POS_DOWN)     // Landing Gear Down(0)
             {
-                lgPulseL-=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_DOWN);
-                lgPulseR-=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_DOWN);
+                lgPulseL-=LG_Step(pos,LG_STEER_LEFT);
+                lgPulseR-=LG_Step(pos,LG_STEER_RIGHT);
+                //lgPulseL-=(int8_t)(PUL_LEFT_RANGE*PUL_SCALE_DOWN);
+                //lgPulseR-=(int8_t)(PUL_RIGHT_RANGE*PUL_SCALE_DOWN);
                 lgProgress=(PUL_LEFT_UP-lgPulseL)*100/PUL_LEFT_RANGE;
                 if(lgPulseL>PUL_LEFT_MAX||lgPulseL<PUL_LEFT_MIN||lgPulseR>PUL_RIGHT_MAX||lgPulseR<PUL_RIGHT_MIN)
                 {
@@ -192,7 +227,7 @@ uint8_t LG_Control(uint8_t pos)
                     stage = 0x01;
                 }
             }
-            //PRINTLOG("\r\n $%4d,%4d",lgPulseL,lgPulseR);  // <Dev> Watch lgPulseL/lgPulseR
+            PRINTLOG("\r\n $%4d,%4d",lgPulseL,lgPulseR);  // <Dev> Watch lgPulseL/lgPulseR
             break;
 
         // Waiting for relay finish
@@ -200,6 +235,7 @@ uint8_t LG_Control(uint8_t pos)
             if(HAL_GetTick() - timeTick > LG_RELAY_DELAY)
             {
                 stage = 0x00;
+                lgProgress = 0;
                 if(pos == LG_POS_UP)        LED_ON(LED2);
                 else                        LED_OFF(LED2);
                 return LG_MODE_STANDBY;

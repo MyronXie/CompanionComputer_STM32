@@ -32,10 +32,10 @@
 //#define STEER_RIGHT_NORMAL
 #define STEER_RIGHT_REVERSE
 
-#define PUL_SCALE_UP        0.012
-#define PUL_SCALE_DOWN      0.012
+#define PUL_SCALE_UP        0.012//0.012
+#define PUL_SCALE_DOWN      0.012//0.012
 
-#define LG_CHANGE_DELAY     100//200     //*10ms = 2s
+#define LG_CHANGE_DELAY     10//200     //*10ms = 2s
 #define LG_RELAY_DELAY      500     //ms
 
 #define STEER_TIANYI_UP     900
@@ -63,6 +63,9 @@
 #define LG_POS_UP           1
 #define LG_POS_DOWN         0
 
+#define LG_STEER_LEFT       0
+#define LG_STEER_RIGHT      1
+
 #define LG_MODE_STANDBY     0
 #define LG_MODE_CHANGING    1
 
@@ -83,6 +86,7 @@ void LG_Relay_Init(void);
 void LG_TIM_Init(void);
 void LG_Reset(void);
 uint8_t LG_Control(uint8_t pos);
+int8_t LG_Step(uint8_t pos,uint8_t type);
 
 void LandingGear_Init(void);
 void LandingGear_Control(uint8_t param);
