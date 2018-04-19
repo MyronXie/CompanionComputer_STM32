@@ -5,13 +5,12 @@
   *
   * Version         : v0.4
   * Created Date    : 2017.09.25
-  * Revised Date    : 2018.04.18
+  * Revised Date    : 2018.04.19
   *
   * Author          : Mingye Xie
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
 #include "LandingGear.h"
 
 TIM_HandleTypeDef htim3;
@@ -26,10 +25,9 @@ uint16_t lgPulseL   = PUL_LEFT_DOWN;
 uint16_t lgPulseR   = PUL_RIGHT_DOWN;
 uint8_t  lgProgress = 0;
 
-float stepList[11]={0.025,0.007,0.004,0.004,0.007,0.014,0.020,0.050,0.050,0.012,0.006};
-//float stepList[11]={0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004};
-//float stepList[11]={0.018,0.012,0.008,0.008,0.008,0.010,0.016,0.020,0.018,0.012,0.006};
-
+float stepListNormal[11]={0.025,0.007,0.004,0.004,0.007,0.014,0.020,0.050,0.050,0.012,0.006};
+//float stepListNormal[11]={0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004,0.004};
+float stepListReset[11]={0.024,0.010,0.010,0.010,0.010,0.024,0.036,0.048,0.048,0.024,0.016};
 
 void LandingGear_Init(void)
 {
@@ -79,8 +77,6 @@ void LandingGear_ChangePosition(uint8_t pos)
 
 void LandingGear_Control(void)
 {
-
-
     switch(lgMode)
     {
         case LG_MODE_CHANGING:
@@ -97,7 +93,6 @@ void LandingGear_Control(void)
 
         default:    break;
     }
-
 }
 
 void LG_TIM_Init(void)
@@ -145,8 +140,9 @@ int16_t LG_PulseStep(uint8_t pos,uint8_t type)
     if(type == LG_STEER_LEFT)   range = PUL_LEFT_RANGE;
     else                        range = PUL_RIGHT_RANGE;
 
-    if(pos == LG_POS_UP)        step = range*stepList[lgProgress/10];     // Resolution:10%
-    else                        step = -range*stepList[(100-lgProgress)/10];     // Resolution:10%
+    if(pos == LG_POS_UP)                step = range*stepListNormal[lgProgress/10];     // Resolution:10%
+    else if(lgMode == LG_MODE_CHANGING) step = -range*stepListNormal[(100-lgProgress)/10];     // Resolution:10%
+    else                                step = -range*stepListReset[(100-lgProgress)/10];
 
     //PRINTLOG("\r\nDEBUG|LandGear|#%d,%d,%d,%d",pos,type,prog,step);       // <Dev>
     return step;
@@ -165,6 +161,7 @@ uint8_t LG_AdjustPulse(void)
 
     if(lgPulseL>PUL_LEFT_MAX||lgPulseL<PUL_LEFT_MIN||lgPulseR>PUL_RIGHT_MAX||lgPulseR<PUL_RIGHT_MIN)
     {
+        lgProgress  = 100;
         if(lgPosNext == LG_POS_UP)
         {
             lgPulseL    = PUL_LEFT_UP;       // Safe Ensurence
@@ -218,7 +215,6 @@ void LG_Control(void)
         case 0x01:
             if(LG_AdjustPulse())
             {
-                lgProgress  = 100;
                 tmTickRelay = HAL_GetTick();
                 stage = 0x02;
             }
@@ -274,24 +270,40 @@ void LG_Reset(void)
         case 0x00:
             PRINTLOG("\r\n INFO|LandGear|Start Reset Process");
 
-            lgPulseL    = PUL_LEFT_DOWN;
-            lgPulseR    = PUL_RIGHT_DOWN;
-
             lgPosNext   = LG_POS_DOWN;
-
             Relay_ON();
 
-            hocl.Pulse=lgPulseL;
-            HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
-            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
-            hocr.Pulse=lgPulseR;
-            HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
-            HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
+            if(lgPosCurr == LG_POS_DOWN)
+            {
+                lgPulseL    = PUL_LEFT_DOWN;
+                lgPulseR    = PUL_RIGHT_DOWN;
 
-            timeTick = HAL_GetTick();
-            stage = 0x01;
+                hocl.Pulse=lgPulseL;
+                HAL_TIM_PWM_ConfigChannel(&htim3,&hocl,TIM_CHANNEL_1);
+                HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+                hocr.Pulse=lgPulseR;
+                HAL_TIM_PWM_ConfigChannel(&htim3,&hocr,TIM_CHANNEL_2);
+                HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
+
+                timeTick = HAL_GetTick();
+                stage = 0x02;
+            }
+            else
+            {
+                lgPulseL    = PUL_LEFT_UP;
+                lgPulseR    = PUL_RIGHT_UP;
+                stage = 0x01;
+            }
 
         case 0x01:
+            if(LG_AdjustPulse())
+            {
+                timeTick = HAL_GetTick();
+                stage = 0x02;
+            }
+            break;
+
+        case 0x02:
             if(HAL_GetTick() - timeTick > LG_RELAY_DELAY)
             {
                 PRINTLOG("\r\n INFO|LandGear|Stop Reset Process");
