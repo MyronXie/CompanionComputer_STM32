@@ -37,7 +37,7 @@ void LandingGear_Init(void)
     LG_Relay_Init();                        // Low-layer init
     LG_TIM_Init();
 
-    PRINTLOG("\r\n [ACT]  Reset Landing Gear");
+    PRINTLOG("\r\n INFO|LandGear|Reset Landing Gear");
     while(lgAutoReset) LG_Reset();
 }
 
@@ -45,7 +45,7 @@ void LandingGear_Control(uint8_t pos)
 {
     if(pos==LG_POS_DOWN||pos==LG_POS_UP)  // Param check
     {
-        PRINTLOG("\r\n [INFO] LandGear: RecvCmd: %s", pos?"UP":"DOWN");
+        PRINTLOG("\r\n INFO|LandGear|RecvCmd: %s", pos?"UP":"DOWN");
         /* Landing Gear is changing or in delay time, ignore recv command */
         if(lgModeCurr||lgDelayCnt)
         {
@@ -91,12 +91,12 @@ void LandingGear_Adjustment(void)
     {
         if(lgModeCurr == LG_MODE_CHANGING)      // Changing Process Start
         {
-            PRINTLOG("\r\n [ACT]  LandGear: Start Moving %s",lgPosCurr?"UP":"DOWN");
+            PRINTLOG("\r\n INFO|LandGear|Start Moving %s",lgPosCurr?"UP":"DOWN");
             sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, 0, 0, 1, 1);
         }
         else                                    // Changing Process Finish
         {
-            PRINTLOG("\r\n [ACT]  LandGear: Stop Moving %s",lgPosCurr?"UP":"DOWN");
+            PRINTLOG("\r\n INFO|LandGear|Stop Moving %s",lgPosCurr?"UP":"DOWN");
             sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_ACCEPTED, 100, 0, 1, 1);
         }
         Mavlink_SendMessage(&mavMsgTx, sendCnt);
@@ -109,7 +109,7 @@ void LandingGear_Adjustment(void)
         lgDelayCnt = LG_CHANGE_DELAY;           // Ignore cmd for 2s (guard time)
         if(!lgCycleCnt)
         {
-            PRINTLOG("\r\n [INFO] LandGear: Changing: %3d%%",lgProgress);
+            PRINTLOG("\r\n INFO|LandGear|Changing:%3d%%",lgProgress);
             sendCnt = mavlink_msg_command_ack_pack(1, 1, &mavMsgTx, MAV_CMD_AIRFRAME_CONFIGURATION, MAV_RESULT_IN_PROGRESS, lgProgress, 0, 1, 1);
             Mavlink_SendMessage(&mavMsgTx, sendCnt);
         }
@@ -167,7 +167,7 @@ int16_t LG_Step(uint8_t pos,uint8_t type)
     
     step = range*stepList[prog/10];     // Resolution:10%
     
-    PRINTLOG("\r\n #%d,%d,%d,%d",pos,type,prog,step);       // <Dev>
+    //PRINTLOG("\r\nDEBUG|LandGear|#%d,%d,%d,%d",pos,type,prog,step);       // <Dev>
     return step;
 }
 
@@ -220,7 +220,7 @@ uint8_t LG_Control(uint8_t pos)
                     stage = 0x01;
                 }
             }
-            PRINTLOG("\r\n $%4d,%4d",lgPulseL,lgPulseR);  // <Dev> Watch lgPulseL/lgPulseR
+            //PRINTLOG("\r\nDEBUG|LandGear|$%4d,%4d",lgPulseL,lgPulseR);  // <Dev> Watch lgPulseL/lgPulseR
             
             // Adjust PWM duty cycle
             hocl.Pulse=lgPulseL;

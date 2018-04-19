@@ -42,7 +42,7 @@ void CurrMonitor_Capture(void)
 
 void CurrMonitor_Send(void)
 {
-    PRINTLOG("\r\n [INFO] ADC_Value:");
+    PRINTLOG("\r\n INFO|CurrMon |ADC_Value:");
     for(int i = 0; i < ESC_NUM; i++)        PRINTLOG("%.2f,",Curr_Value[i]);
 
     sendCnt = mavlink_msg_stm32_f3_motor_curr_pack(1, 1, &mavMsgTx, Curr_Value);

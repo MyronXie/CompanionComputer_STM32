@@ -43,7 +43,7 @@ void System_Init()
 
 void System_Heartbeat(void)
 {
-    PRINTLOG("\r\n\r\n [HRT]  #%d",++sysTicks);     // Record running time
+    PRINTLOG("\r\n\r\n INFO| System |HrtBeat #%d",++sysTicks);     // Record running time
     sendCnt = mavlink_msg_heartbeat_pack(1, 1, &mavMsgTx, MAV_TYPE_ONBOARD_CONTROLLER, MAV_AUTOPILOT_PX4, 81, 1016, MAV_STATE_STANDBY);
     Mavlink_SendMessage(&mavMsgTx, sendCnt);
     srand(sysTicks);
@@ -78,7 +78,7 @@ void System_MsgReporter(void)
                 }
 
                 strcat(msgSend, msgList[Qcmd]);
-                PRINTLOG("\r\n [INFO] Reporter: 0x%02X,0x%02X,\"%s\"", Qcmd, Qparam, msgSend);
+                PRINTLOG("\r\n INFO| System |Reporter: 0x%02X,0x%02X,\"%s\"", Qcmd, Qparam, msgSend);
             }
 
             if(reportTimes > 0)
@@ -107,14 +107,14 @@ void System_ErrorHandler(void)
     if(msgLostCnt==3)
     {
         sysConnect = 0;
-        PRINTLOG("\r\n [ERR]  FMU Connect Lost");
-        PRINTLOG("\r\n [ACT]  Reset USART1");
+        PRINTLOG("\r\n ERR | System |FMU Connect Lost");
+        PRINTLOG("\r\n INFO| System |Reset USART1");
         syMsg.cmd = ERR_SYS_SERIAL;
         ReportMessage(syMsg);
         msgLostCnt++;
 
         #ifdef  ENABLE_LANGINGGEAR
-        PRINTLOG("\r\n [ACT]  LandingGear: Reset...");
+        PRINTLOG("\r\n INFO|LandGear|Start Reset Process");
         lgAutoReset = 1;
         syMsg.cmd = MSG_LG_RESET;
         ReportMessage(syMsg);
@@ -124,13 +124,13 @@ void System_ErrorHandler(void)
     {
         USART_ReInit();                     // Reset USART
         msgLostCnt = 0;
-        PRINTLOG("\r\n [WARN] sysWarning = %d",++sysWarning);
+        PRINTLOG("\r\n WARN| System |sysWarning = %d",++sysWarning);
     }
 
     // Reset System
 //    if(sysWarning >= 4)
 //    {
-//        PRINTLOG("\r\n [ACT]  System: Reset...");
+//        PRINTLOG("\r\n WARN| System |System: Reset...");
 //        syMsg.cmd = ERR_SYS_GENERAL;
 //        ReportMessage(syMsg);
 //        NVIC_SystemReset();

@@ -22,13 +22,13 @@
 #include "math.h"
 
 /* Parameters of Landing Gear Control */
-#define PUL_LEFT_MAX        1000
+#define PUL_LEFT_MAX        975
 #define PUL_LEFT_MIN        475
-#define PUL_RIGHT_MAX       1100
+#define PUL_RIGHT_MAX       1075
 #define PUL_RIGHT_MIN       575
 
-#define PUL_SCALE_UP        0.01
-#define PUL_SCALE_DOWN      0.01
+#define PUL_SCALE_UP        0.002
+#define PUL_SCALE_DOWN      0.002
 
 #define LG_CHANGE_DELAY     10//100     //*20ms
 #define LG_RELAY_DELAY      500         //ms

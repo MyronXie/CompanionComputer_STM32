@@ -50,7 +50,7 @@ void Battery_Init(void)
             // Attepmt Connect to battery
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Connecting #%d: A-0x%02X, B-0x%02X", atmpTimes, battA.fet, battB.fet);
+            PRINTLOG("\r\n INFO|BattMgmt|Connecting #%d: A-0x%02X, B-0x%02X", atmpTimes, battA.fet, battB.fet);
 
             // <Debug> Test Battery Init Process
             #ifdef WITHOUT_BATTERY  
@@ -101,7 +101,7 @@ void Battery_Init(void)
 
                 battMsg.cmd     = ERR_BATT_OFFBOARD;
                 battMsg.param   = Batt_Judge(BATT_MODE_DUAL, BATT_JUDGE_ONBOARD);   // Specific
-                PRINTLOG("\r\n [ERR]  %sOffboard",paramList[battMsg.param]);
+                PRINTLOG("\r\n ERR |BattMgmt|%sOffboard",paramList[battMsg.param]);
 
                 stage = BATT_INIT_BEGIN;
                 battInit = 0;
@@ -123,7 +123,7 @@ void Battery_Init(void)
 
                     battMsg.cmd     = ERR_BATT_VDIFF;
                     battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_VDIFF_INIT);
-                    PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
+                    PRINTLOG("\r\n ERR |BattMgmt|Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
 
                     battMode = BATT_MODE_DUAL_VDIFF;
                     stage = BATT_INIT_BEGIN;
@@ -145,7 +145,7 @@ void Battery_Init(void)
             // Read battery fet
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Power On   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
+            PRINTLOG("\r\n INFO|BattMgmt|Power On   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
 
             if(Batt_Judge(battMode, BATT_JUDGE_PWRON))
             {
@@ -172,7 +172,7 @@ void Battery_Init(void)
             {
                 battMsg.cmd     = ERR_BATT_POWERON;
                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_PWRON);
-                PRINTLOG("\r\n [ERR]  %sPower On Fail",paramList[battMsg.param]);
+                PRINTLOG("\r\n ERR |BattMgmt|%sPower On Fail",paramList[battMsg.param]);
 
                 battMode = BATT_MODE_DUAL_ONLY1;
                 battInit = 2;
@@ -190,7 +190,7 @@ void Battery_Init(void)
             // Read battery fet
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Enable FET #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
+            PRINTLOG("\r\n INFO|BattMgmt|Enable FET #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
 
             if(Batt_Judge(battMode, BATT_JUDGE_FETEN))
             {
@@ -217,7 +217,7 @@ void Battery_Init(void)
             {
                 battMsg.cmd     = ERR_BATT_ENABLEFET;
                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_FETEN);
-                PRINTLOG("\r\n [ERR]  %sEnable FET Fail",paramList[battMsg.param]);
+                PRINTLOG("\r\n ERR |BattMgmt|%sEnable FET Fail",paramList[battMsg.param]);
 
                 battMode = BATT_MODE_DUAL_ONLY1;
                 battInit = 2;
@@ -238,13 +238,13 @@ void Battery_Init(void)
             {
                 battMsg.cmd     = ERR_BATT_INIT;
                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_INUSE);
-                PRINTLOG("\r\n [ERR]  %sBattery Init Error",paramList[battMsg.param]); 
+                PRINTLOG("\r\n ERR |BattMgmt|%sBattery Init Error",paramList[battMsg.param]); 
                 battInit = 2;
             }
             else
             {
                 battMsg.cmd     = MSG_BATT_INIT;
-                PRINTLOG("\r\n [INFO] Battery Init Success");
+                PRINTLOG("\r\n INFO|BattMgmt|Battery Init Success");
                 battInit = 0;
             }
             stage = BATT_INIT_BEGIN;
@@ -357,10 +357,10 @@ void Battery_Management(void)
             case BATT_MGMT_SEND_LOG:
                 if(battX->status&BATT_ONBOARD)
                 {
-                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d",
+                    PRINTLOG("\r\n INFO|BattMgmt|%s:0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d",
                             battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
                             battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity);
-//                    PRINTLOG("\r\n [INFO] %s: 0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d,0x%08X,0x%08X,0x%08X",
+//                    PRINTLOG("\r\n INFO|BattMgmt|%s:0x%02X,0x%02X,%d,%d,%d,%d,%d,%d,%d,0x%08X,0x%08X,0x%08X",
 //                            battX->name, battX->status, battX->fet, battX->temperature, battX->voltage, battX->current,
 //                            battX->soc, battX->remainingCapacity, battX->fullChargeCapacity, battX->designCapacity,
 //                            battX->safetyStatus,battX->pfStatus,battX->operationStatus);
@@ -390,7 +390,7 @@ void Battery_Management(void)
                     else
                     {
                         if(++battX->lostCnt < CNCT_ATTEMPT)
-                            PRINTLOG("\r\n [INFO] %s Lost #%d!", battX->name, battX->lostCnt);
+                            PRINTLOG("\r\n WARN|BattMgmt|%s Lost #%d!", battX->name, battX->lostCnt);
                     }
                 }
                 break;
@@ -412,7 +412,7 @@ void Battery_Management(void)
                     {
                         battMsg.cmd     = ERR_BATT_OFFBOARD;
                         battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_OFFBOARD);
-                        PRINTLOG("\r\n [ERR]  %sConnect lost",paramList[battMsg.param]);
+                        PRINTLOG("\r\n ERR |BattMgmt|%sConnect lost",paramList[battMsg.param]);
                         if(battMode == BATT_MODE_SINGLE)    battMode = BATT_MODE_NONE;
                         if(battMode == BATT_MODE_DUAL)      battMode = BATT_MODE_DUAL_ONLY1;
                     }
@@ -429,7 +429,7 @@ void Battery_Management(void)
                         battMsg.cmd     = ERR_BATT_VDIFF;
                         battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_VDIFF_RUN);
 
-                        PRINTLOG("\r\n [ERR]  Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
+                        PRINTLOG("\r\n ERR |BattMgmt|Voltage mismatch: A-%dmV, B-%dmV",battA.voltage,battB.voltage);
 
                         // if(battMsg.param == battA.index)           // Select specific battery
                         // {
@@ -469,7 +469,7 @@ void Battery_Management(void)
                                 // These code can be reached when battery lost power in armed status, should not power off the other battery
                                 battMsg.cmd     = ERR_BATT_LOSTPWR;
                                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_PWRON);
-                                PRINTLOG("\r\n [ERR]  %sLost power in the air",paramList[battMsg.param]);
+                                PRINTLOG("\r\n ERR |BattMgmt|%sLost power in the air",paramList[battMsg.param]);
                             }
                             else
                             {
@@ -496,7 +496,7 @@ void Battery_Management(void)
                         {
                             if(battA.status&BATT_ONBOARD)   battO = &battA;
                             if(battB.status&BATT_ONBOARD)   battO = &battB;
-                            PRINTLOG("\r\n [INFO] %s Re-connect",battO->name);
+                            PRINTLOG("\r\n INFO|BattMgmt|%s Re-connect",battO->name);
                             battInit = 1;
                             battMsg.cmd = MSG_BATT_REINIT;
                         }
@@ -507,7 +507,7 @@ void Battery_Management(void)
                         //<Dev> Need to re-config when can re-init
                         if(((battA.status&BATT_ONBOARD)&&(battB.status&BATT_ONBOARD)&&(!battInit)))
                         {
-                            PRINTLOG("\r\n [INFO] All Battery Re-connect");
+                            PRINTLOG("\r\n INFO|BattMgmt|All Battery Re-connect");
                             battInit = 1;
                             battMsg.cmd = MSG_BATT_REINIT;
                         }
@@ -604,13 +604,13 @@ void Batt_PowerOff(void)
 
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
-            PRINTLOG("\r\n [ACT]  Power Off   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
+            PRINTLOG("\r\n INFO|BattMgmt|Power Off   #%d: A-0x%02X, B-0x%02X",atmpTimes,battA.fet,battB.fet);
 
             if(battMode == BATT_MODE_DUAL||battMode == BATT_MODE_SINGLE)
             {
                 if(!Batt_Judge(battMode, BATT_JUDGE_PWROFF))
                 {
-                    PRINTLOG("\r\n [INFO] Batt: Power Off Success");
+                    PRINTLOG("\r\n INFO|BattMgmt|Power Off Success");
                     battA.status &= ~BATT_INUSE;
                     battB.status &= ~BATT_INUSE;
 
@@ -645,7 +645,7 @@ void Batt_PowerOff(void)
 
             if(atmpTimes > PWROFF_ATTEMPT)
             {
-                PRINTLOG("\r\n [ERR]  Batt: Power Off Fail");
+                PRINTLOG("\r\n ERR |BattMgmt|Power Off Fail");
                 stage = BATT_PWROFF_CHECK, atmpTimes = 0;
 
                 battMsg.cmd     = ERR_BATT_POWEROFF;
@@ -688,7 +688,7 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
                 result=(((battO->lostCnt>=CNCT_ATTEMPT))?(1<<(battO->index)):0); break;
 
             default: 
-                PRINTLOG("\r\n [DEBUG] Batt_Judge(0x%02X,0x%02X)",mode,judge);
+                PRINTLOG("\r\nDEBUG|BattMgmt|Batt_Judge(0x%02X,0x%02X)",mode,judge);
                 break;
         }
     }
@@ -753,15 +753,12 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
                     +((battB.temperature<=TOL_UNDERTEMP)?(1<<INDEX_BATTB):0); break;
     
             default:
-                PRINTLOG("\r\n [DEBUG] Batt_Judge(0x%02Xd,0x%02X)",mode,judge);
+                PRINTLOG("\r\nDEBUG|BattMgmt|Batt_Judge(0x%02X,0x%02X)",mode,judge);
                 break;
         }
     }
 
-    else 
-    {
-        PRINTLOG("\r\n [DEBUG] Batt_Judge(0x%02X,0x%02X)",mode,judge);
-    }
+    else    PRINTLOG("\r\nDEBUG|BattMgmt|Batt_Judge(0x%02X,0x%02X)",mode,judge);
 
     return result;
 }

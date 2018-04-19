@@ -5,7 +5,7 @@
   *
   * Version         : v0.3.1
   * Created Date    : 2017.11.23
-  * Revised Date    : 2018.04.11
+  * Revised Date    : 2018.04.18
   *
   * Author          : Mingye Xie
   ******************************************************************************
@@ -48,22 +48,22 @@ int main(void)
     LED_Init();
 
     #ifdef ENABLE_BATTERYMGMT
-    PRINTLOG("\r\n [INFO] Init Battery Management System");
+    PRINTLOG("\r\n INFO|BattMgmt|Init Battery Management System");
     I2C_Init();
     while(battInit==1)     Battery_Init();
     #endif //ENABLE_BATTERYMGMT
 
     #ifdef ENABLE_LANGINGGEAR
-    PRINTLOG("\r\n [INFO] Init Landing Gear Control System");
+    PRINTLOG("\r\n INFO|LandGear|Init Landing Gear Control System");
     LandingGear_Init();
     #endif //ENABLE_LANGINGGEAR
 
     #ifdef ENABLE_CURRMONITOR
-    PRINTLOG("\r\n [INFO] Init Current Monitor System");
+    PRINTLOG("\r\n INFO|CurrMon |Current Monitor System");
     CurrMonitor_Init();
     #endif //ENABLE_CURRMONITOR
 
-    PRINTLOG("\r\n [INFO] Init CC_STM32 Misc System");
+    PRINTLOG("\r\n INFO| System |CC_STM32 Misc System");
     IWDG_Init();
     TIM_Init();
 
@@ -86,12 +86,12 @@ int main(void)
                 sysWarning = 0;                         // Clear communication error
 
                 // <Dev> Display all mavlink msg received
-                //PRINTLOG("\r\n [Info] Mav: %d",mavMsgRx.msgid);
+                //PRINTLOG("\r\n INFO|Mavlink |msgid: %d",mavMsgRx.msgid);
 
                 if(!sysConnect)
                 {
                     // Receive first mavlink msg in current process
-                    PRINTLOG("\r\n [INFO] Connected with FMU");
+                    PRINTLOG("\r\n INFO| System |Connected with FMU");
                     sysConnect = 1;
                 }
                 else
@@ -99,7 +99,7 @@ int main(void)
                     // Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
                     {
-                        PRINTLOG("\r\n [WARN] Mavlink lost: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
+                        PRINTLOG("\r\n WARN|Mavlink |Lost package: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                     }
                 }
 
@@ -118,14 +118,14 @@ int main(void)
 
             if(recvByte!='\r'&&recvByte!='\n')
             {
-                PRINTLOG("\r\n [CONSOLE] \"%c\"",recvByte);
+                PRINTLOG("\r\n INFO|Console |\"%c\"",recvByte);
 
                 switch(recvByte)
                 {
                     case '0': LandingGear_Control(0);break;
                     case '1': LandingGear_Control(1);break;
-                    case 'Q': sysArmed = 1; PRINTLOG("\r\n [INFO] Drone Armed");break;
-                    case 'q': sysArmed = 0; PRINTLOG("\r\n [INFO] Drone Disarmed");break;
+                    case 'Q': sysArmed = 1; PRINTLOG("\r\n INFO [System] Drone Armed");break;
+                    case 'q': sysArmed = 0; PRINTLOG("\r\n INFO [System] Drone Disarmed");break;
                     case 'R': NVIC_SystemReset();   break;
                     default: Console_BattMgmt(recvByte); break;
                 }
@@ -183,13 +183,13 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* HEARTBEAT (#0) */
         case MAVLINK_MSG_ID_HEARTBEAT:
             mavlink_msg_heartbeat_decode(msg, &mavHrt);
-            PRINTLOG("\r\n [FMU]  #0  : %d,%d", mavHrt.type, mavHrt.autopilot);
+            PRINTLOG("\r\n INFO|Mavlink |Msg #0  : %d,%d", mavHrt.type, mavHrt.autopilot);
             break;
 
         /* COMMAND_LONG (#76) */
         case MAVLINK_MSG_ID_COMMAND_LONG:
             mavlink_msg_command_long_decode(msg, &mavCmdRx);
-            PRINTLOG("\r\n [FMU]  #76 : %d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);
+            PRINTLOG("\r\n INFO|Mavlink |Msg #76 : %d,%d,%d", mavCmdRx.command, (int)mavCmdRx.param1, (int)mavCmdRx.param2);
             switch(mavCmdRx.command)
             {
                 #ifdef ENABLE_LANGINGGEAR
@@ -205,34 +205,34 @@ void Mavlink_Decode(mavlink_message_t* msg)
         /* COMMAND_ACK (#77) */
         case MAVLINK_MSG_ID_COMMAND_ACK:
             mavlink_msg_command_ack_decode(msg, &mavCmdAck);
-            PRINTLOG("\r\n [FMU]  #77 : %d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
+            PRINTLOG("\r\n INFO|Mavlink |Msg #77 : %d,%d", mavCmdAck.command, mavCmdAck.result);    // .progess is dummy
             break;
 
         /* BATTERY_STATUS (#147)*/
         case MAVLINK_MSG_ID_BATTERY_STATUS:
             mavlink_msg_battery_status_decode(msg, &mavBattRx);
-            PRINTLOG("\r\n [FMU]  #147: 0x%02X,%dC,%dmV,%d0mA,%d%%",
+            PRINTLOG("\r\n INFO|Mavlink |Msg #147: 0x%02X,%dC,%dmV,%d0mA,%d%%",
                     mavBattRx.id, mavBattRx.temperature, mavBattRx.voltages[0], mavBattRx.current_battery, mavBattRx.battery_remaining);
             break;
 
         /* STM32_F3_COMMAND (#500)*/
         case MAVLINK_MSG_ID_STM32_F3_COMMAND:
             mavlink_msg_stm32_f3_command_decode(msg, &mavF3CmdRx);
-            PRINTLOG("\r\n [FMU]  #500: 0x%02X,0x%02X,\"%s\"", (uint8_t)mavF3CmdRx.command, (uint8_t)mavF3CmdRx.param, mavF3CmdRx.f3_log);
+            PRINTLOG("\r\n INFO|Mavlink |Msg #500: 0x%02X,0x%02X,\"%s\"", (uint8_t)mavF3CmdRx.command, (uint8_t)mavF3CmdRx.param, mavF3CmdRx.f3_log);
             switch(mavF3CmdRx.command)
             {
                 case CMD_FLY_ARM:
                     if(!sysArmed)       // Only display message when armed status changed
                     {
                         sysArmed = 1;
-                        PRINTLOG("\r\n [INFO] Drone Armed");
+                        PRINTLOG("\r\n INFO| System |Drone Armed");
                     }
                     break;
                 case CMD_FLY_DISARM:
                     if(sysArmed)
                     {
                         sysArmed = 0;
-                        PRINTLOG("\r\n [INFO] Drone Disarmed");
+                        PRINTLOG("\r\n INFO| System |Drone Disarmed");
                     }
                     break;
                 default:break;
@@ -243,7 +243,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
         #ifdef ENABLE_CURRMONITOR
         case MAVLINK_MSG_ID_STM32_F3_MOTOR_CURR:
             mavlink_msg_stm32_f3_motor_curr_decode(msg, &mavF3Curr);
-            PRINTLOG("\r\n [FMU]  #501: %.2f,%.2f,%.2f,%.2f,%.2f,%.2f", mavF3Curr.motor_curr[0],mavF3Curr.motor_curr[1],
+            PRINTLOG("\r\n INFO|Mavlink |Msg #501: %.2f,%.2f,%.2f,%.2f,%.2f,%.2f", mavF3Curr.motor_curr[0],mavF3Curr.motor_curr[1],
                         mavF3Curr.motor_curr[2],mavF3Curr.motor_curr[3],mavF3Curr.motor_curr[4],mavF3Curr.motor_curr[5]);
             break;
         #endif
