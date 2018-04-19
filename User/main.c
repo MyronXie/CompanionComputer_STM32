@@ -43,8 +43,7 @@ int main(void)
     SystemClock_Config();
 
     USART_Init();
-    PRINTLOG("\r\n************* CompanionComputer_STM32 **************\r\n");
-    System_Init();
+    PRINTLOG("\r\n*********** CompanionComputer_STM32 v0.4 ************\r\n");
     LED_Init();
 
     #ifdef ENABLE_BATTERYMGMT
@@ -59,11 +58,11 @@ int main(void)
     #endif //ENABLE_LANGINGGEAR
 
     #ifdef ENABLE_CURRMONITOR
-    PRINTLOG("\r\n INFO|CurrMon |Current Monitor System");
+    PRINTLOG("\r\n INFO|CurrMon |Init Current Monitor System");
     CurrMonitor_Init();
     #endif //ENABLE_CURRMONITOR
 
-    PRINTLOG("\r\n INFO| System |CC_STM32 Misc System");
+    PRINTLOG("\r\n INFO| System |Init CC_STM32 Misc System");
     IWDG_Init();
     TIM_Init();
 
@@ -85,8 +84,8 @@ int main(void)
                 msgLostCnt = 0;                         // Clear Communication Lost flag
                 sysWarning = 0;                         // Clear communication error
 
-                // <Dev> Display all mavlink msg received
-                //PRINTLOG("\r\n INFO|Mavlink |msgid: %d",mavMsgRx.msgid);
+                // <Debug> Display all mavlink msg received
+                //PRINTLOG("\r\nDEBUG|Mavlink |msgid: %d",mavMsgRx.msgid);
 
                 if(!sysConnect)
                 {
@@ -98,16 +97,12 @@ int main(void)
                 {
                     // Monitor lost package number of Mavlink
                     if((mavMsgRx.seq-msgSeqPrev!=1)&&(mavMsgRx.seq+256-msgSeqPrev!=1))
-                    {
-                        PRINTLOG("\r\n WARN|Mavlink |Lost package: %d", (mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
-                    }
+                        PRINTLOG("\r\n WARN|Mavlink |Lost %d package(s)",(mavMsgRx.seq>msgSeqPrev)?(mavMsgRx.seq-msgSeqPrev-1):(mavMsgRx.seq+256-msgSeqPrev-1));
                 }
 
-                // Record seqid of mavlink msg
-                msgSeqPrev=mavMsgRx.seq;
+                msgSeqPrev=mavMsgRx.seq;                // Record seqid of mavlink msg
 
-                // Decode specific mavlink msg
-                Mavlink_Decode(&mavMsgRx);
+                Mavlink_Decode(&mavMsgRx);              // Decode specific mavlink msg
             }
         }
 
@@ -122,8 +117,9 @@ int main(void)
 
                 switch(recvByte)
                 {
-                    case '0': LandingGear_Control(0);break;
-                    case '1': LandingGear_Control(1);break;
+                    case '0': LandingGear_ChangePosition(0);break;
+                    case '1': LandingGear_ChangePosition(1);break;
+                    case '2': lgAutoReset = 1;break;
                     case 'Q': sysArmed = 1; PRINTLOG("\r\n INFO [System] Drone Armed");break;
                     case 'q': sysArmed = 0; PRINTLOG("\r\n INFO [System] Drone Disarmed");break;
                     case 'R': NVIC_SystemReset();   break;
@@ -141,7 +137,7 @@ int main(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    System_MsgReporter();        // Put here to avoid timing sync bug in the init part
+    System_MsgReporter();        // Put here to avoid timing sync bug in the initial part
 
     if(htim->Instance == TIM2)      // TIM2: System Management (1Hz)
     {
@@ -151,10 +147,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         IWDG_Feed();                    // Feed watchdog
     }
 
-    if(htim->Instance == TIM6)      // TIM6: Landing Gear PWM Adjustment (100Hz)
+    if(htim->Instance == TIM6)      // TIM6: Landing Gear PWM Adjustment (50Hz)
     {
-        if(lgAutoReset)         LG_Reset();
-        else                    LandingGear_Adjustment();
+        LandingGear_Control();
     }
 
     if(htim->Instance == TIM7)      // TIM7: Read & Send Battery Message (40Hz)
@@ -194,7 +189,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
             {
                 #ifdef ENABLE_LANGINGGEAR
                 case MAV_CMD_AIRFRAME_CONFIGURATION:    // 2520,0x09D8
-                    LandingGear_Control((int)mavCmdRx.param2);
+                    LandingGear_ChangePosition((int)mavCmdRx.param2);
                     break;
                 #endif
 

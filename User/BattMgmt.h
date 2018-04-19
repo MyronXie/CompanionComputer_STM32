@@ -89,8 +89,8 @@ typedef struct
 #define BATT_ChargingStatus     0x55
 #define BATT_GaugingStatus      0x56
 
-#define	SerialNumber            0x0001
-#define	SpecificationInfo       0x0031
+#define SerialNumber            0x0001
+#define SpecificationInfo       0x0031
 
 #define BATT_PowerControl       0x71
     #define BATT_POWERON        0xAA55

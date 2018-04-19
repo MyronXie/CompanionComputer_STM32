@@ -23,12 +23,12 @@
 
 typedef struct
 {
-	UART_HandleTypeDef* handle;
+    UART_HandleTypeDef* handle;
     uint8_t buffer[BUFFSIZE];
     uint16_t length;
-	uint8_t *front;
-	uint8_t *rear;
-	uint8_t flag;
+    uint8_t *front;
+    uint8_t *rear;
+    uint8_t flag;
 }
 SerialType;
 

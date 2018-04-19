@@ -83,12 +83,12 @@
 #define MSG_10  "System Error"
 #define MSG_11  "Serial Error"
 
-#define	MSG_20  "Init Fail"
-#define	MSG_21  "Offboard"
-#define	MSG_22  "Voltage mismatch"
-#define	MSG_23  "Power On Fail"
-#define	MSG_24  "FET Enable Fail"
-#define	MSG_25  "Power Off Fail"
+#define MSG_20  "Init Fail"
+#define MSG_21  "Offboard"
+#define MSG_22  "Voltage mismatch"
+#define MSG_23  "Power On Fail"
+#define MSG_24  "FET Enable Fail"
+#define MSG_25  "Power Off Fail"
 #define MSG_26  "Lost power in the air"
 #define MSG_27  "Still power on"
 #define MSG_28  "Undervoltage"
@@ -117,13 +117,11 @@ typedef struct
     uint8_t rear;
 }QueueType;
 
-extern SerialType USART1_Tx,USART3_Tx;
 extern mavlink_message_t mavMsgTx;
 extern uint16_t sendCnt;
 
 extern uint8_t  sysConnect;
 extern uint8_t  sysWarning;
-//extern uint8_t  sysStatus;
 extern uint16_t sysTicks;
 extern uint8_t  sysArmed;
 
@@ -131,8 +129,6 @@ extern uint8_t msgLostCnt;
 
 extern char* msgList[48];
 extern char* paramList[4];
-
-void System_Init(void);
 
 void System_Heartbeat(void);
 void System_MsgReporter(void);

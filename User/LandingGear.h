@@ -30,7 +30,7 @@
 #define PUL_SCALE_UP        0.002
 #define PUL_SCALE_DOWN      0.002
 
-#define LG_CHANGE_DELAY     10//100     //*20ms
+#define LG_CMD_DELAY        3000         //ms
 #define LG_RELAY_DELAY      500         //ms
 
 //STEER_LEFT_NORMAL
@@ -55,6 +55,7 @@
 
 #define LG_MODE_STANDBY     0x00
 #define LG_MODE_CHANGING    0x01
+#define LG_MODE_RESETING    0x02
 
 #ifdef BOARD_REV1
     #define Relay_ON()      HAL_GPIO_WritePin(GPIOA,GPIO_PIN_11,GPIO_PIN_SET)
@@ -72,12 +73,13 @@ extern uint8_t lgAutoReset;
 void LG_Relay_Init(void);
 void LG_TIM_Init(void);
 void LG_Reset(void);
-uint8_t LG_Control(uint8_t pos);
-int16_t LG_Step(uint8_t pos,uint8_t type);
+void LG_Control(void);
+int16_t LG_PulseStep(uint8_t pos,uint8_t type);
+uint8_t LG_AdjustPulse(void);
 
 void LandingGear_Init(void);
-void LandingGear_Control(uint8_t pos);
-void LandingGear_Adjustment(void);
+void LandingGear_ChangePosition(uint8_t pos);
+void LandingGear_Control(void);
 
 #endif /* __LANDING_GEAR_H */
 

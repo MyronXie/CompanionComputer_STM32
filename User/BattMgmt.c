@@ -13,7 +13,7 @@
 
 #include "BattMgmt.h"
 // <Debug> Test data, will replaced by default data in release version
-BattMsg battA={0,"battA",0x16,0x00,0,0x14,2340,24828,-30,94,13140,13980,16000}; 
+BattMsg battA={0,"battA",0x16,0x00,0,0x14,2340,24828,-30,94,13140,13980,16000};
 BattMsg battB={1,"battB",0x26,0x00,0,0x00,2350,24893,-31,95,13680,14520,16000};
 BattMsg *battX=NULL;                            // Used for select specific battery
 BattMsg *battO=NULL,*battQ=NULL;                // Used for single battery mode
@@ -30,7 +30,7 @@ void Battery_Init(void)
     static uint32_t timeTick = 0;               // Record delay time
     static uint8_t stage = BATT_INIT_BEGIN;     // Record running stage
     static uint8_t atmpTimes = 0;               // Record attempt times
-    
+
     MsgType battMsg = {0,0};
 
     switch(stage)                               // Finite State Machine
@@ -53,11 +53,11 @@ void Battery_Init(void)
             PRINTLOG("\r\n INFO|BattMgmt|Connecting #%d: A-0x%02X, B-0x%02X", atmpTimes, battA.fet, battB.fet);
 
             // <Debug> Test Battery Init Process
-            #ifdef WITHOUT_BATTERY  
+            #ifdef WITHOUT_BATTERY
             if(atmpTimes == 0)  battA.status |=  BATT_ONBOARD;
             if(atmpTimes == 0)  battB.status |=  BATT_ONBOARD;
             #endif
-        
+
             // Check onboard status
             #ifdef SINGLE_BATTERY
             if((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD))        // At least one battery is onboard
@@ -85,7 +85,7 @@ void Battery_Init(void)
         case BATT_CNCT_WAIT:
             // Waiting for delay
             if(HAL_GetTick() - timeTick >= CNCT_DELAY)   stage = BATT_CNCT_CHECK; // Continue waiting
-            
+
             if(atmpTimes >= CNCT_ATTEMPT)
             {
                 if((battA.status&BATT_ONBOARD)||(battB.status&BATT_ONBOARD))    // If one battery is onboard
@@ -105,7 +105,7 @@ void Battery_Init(void)
 
                 stage = BATT_INIT_BEGIN;
                 battInit = 0;
-            }            
+            }
             break;
 
         case BATT_VDIFF_CHECK:
@@ -136,12 +136,12 @@ void Battery_Init(void)
             break;
 
         case BATT_PWRON_CHECK:
-            // <Debug> Test Battery Init Process    
+            // <Debug> Test Battery Init Process
             #ifdef WITHOUT_BATTERY
             if(atmpTimes == 0)  if(battA.fet<0x25)  battA.fet = 0x25;
             if(atmpTimes == 1)  if(battB.fet<0x25)  battB.fet = 0x25;
             #endif
-        
+
             // Read battery fet
             Batt_Measure(&battA, BATT_MEAS_FET);
             Batt_Measure(&battB, BATT_MEAS_FET);
@@ -156,7 +156,7 @@ void Battery_Init(void)
                 // Record current timeTick, step into delay process
                 atmpTimes++;
                 timeTick = HAL_GetTick();
-                stage = BATT_PWRON_WAIT;                
+                stage = BATT_PWRON_WAIT;
             }
             else
             {
@@ -180,8 +180,8 @@ void Battery_Init(void)
             }
             break;
 
-        case BATT_ENFET_CHECK:   
-            // <Debug> Test Battery Init Process    
+        case BATT_ENFET_CHECK:
+            // <Debug> Test Battery Init Process
             #ifdef WITHOUT_BATTERY
             if(atmpTimes == 0) if(battA.fet<0x34) battA.fet = 0x34;
             if(atmpTimes == 1) if(battB.fet<0x34) battB.fet = 0x34;
@@ -212,7 +212,7 @@ void Battery_Init(void)
         case BATT_ENFET_WAIT:
             // Waiting for delay
             if(HAL_GetTick() - timeTick >= ENFET_DELAY)  stage = BATT_ENFET_CHECK;
-        
+
             if(atmpTimes > ENFET_ATTEMPT)
             {
                 battMsg.cmd     = ERR_BATT_ENABLEFET;
@@ -223,7 +223,7 @@ void Battery_Init(void)
                 battInit = 2;
                 stage = BATT_INIT_BEGIN;
             }
-            
+
             break;
 
         case BATT_INIT_CHECK:
@@ -238,7 +238,7 @@ void Battery_Init(void)
             {
                 battMsg.cmd     = ERR_BATT_INIT;
                 battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_INUSE);
-                PRINTLOG("\r\n ERR |BattMgmt|%sBattery Init Error",paramList[battMsg.param]); 
+                PRINTLOG("\r\n ERR |BattMgmt|%sBattery Init Error",paramList[battMsg.param]);
                 battInit = 2;
             }
             else
@@ -254,7 +254,7 @@ void Battery_Init(void)
             stage = BATT_INIT_BEGIN;
             break;
     }
-    
+
     if(battMsg.cmd) ReportMessage(battMsg);
 }
 
@@ -280,7 +280,7 @@ void Batt_Measure(BattMsg* batt, uint8_t cmd)
 
         case BATT_MEAS_TEMP:
             regSta = Batt_ReadWord(batt->id, BATT_Temperature, &regVal);
-            if(!regSta) batt->temperature = (regVal-2731)*10;	break;  // Kelvin -> Celsius
+            if(!regSta) batt->temperature = (regVal-2731)*10;   break;  // Kelvin -> Celsius
 
         case BATT_MEAS_CURR:
             regSta = Batt_ReadWord(batt->id, BATT_Current, &regVal);
@@ -336,7 +336,7 @@ void Battery_Management(void)
     static MsgType battMsgLst = {0,0};
     static uint8_t reportTimes = 0;
     MsgType battMsg = {0,0};
-    
+
     // Increase battCycleCnt
     battCycleCnt = (battCycleCnt+1)%BATT_FUNC_CYCLE;
 
@@ -555,7 +555,7 @@ void Battery_Management(void)
                         battMsg.cmd     = ERR_BATT_UNDERTEMP;
                         battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_UNDERTEMP);
                     }
-                    
+
                     if(battMsgLst.cmd!=battMsg.cmd)
                     {
                         reportTimes = 0;
@@ -565,7 +565,7 @@ void Battery_Management(void)
 
                 }
                 break;
-                
+
             case BATT_MGMT_DEBUG:
                 #ifdef WITHOUT_BATTERY
                 srand(sysTicks);
@@ -575,7 +575,7 @@ void Battery_Management(void)
                 battB.remainingCapacity -= rand()%9;
                 battA.soc = battA.remainingCapacity*100/battA.fullChargeCapacity;
                 battB.soc = battB.remainingCapacity*100/battB.fullChargeCapacity;
-                #endif            
+                #endif
                 break;
 
             default:    break;
@@ -592,12 +592,12 @@ void Batt_PowerOff(void)
     static uint8_t atmpTimes = 0;
 
     MsgType battMsg = {0,0};
-    
+
     switch(stage)
     {
         case BATT_PWROFF_CHECK:
             // <Debug> Test Battery Init Process
-            #ifdef WITHOUT_BATTERY  
+            #ifdef WITHOUT_BATTERY
             if(atmpTimes == 1)  battA.fet = 0x14;
             if(atmpTimes == 1)  battB.fet = 0x14;
             #endif
@@ -659,7 +659,7 @@ void Batt_PowerOff(void)
             stage = BATT_PWROFF_CHECK;
             break;
     }
-    
+
     if(battMsg.cmd)     ReportMessage(battMsg);
 }
 
@@ -674,20 +674,20 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
         {
             case BATT_JUDGE_ONBOARD:
                 result=((!(battO->status&BATT_ONBOARD))?(1<<(battO->index)):0); break;
-        
+
             case BATT_JUDGE_PWRON:
                 result=((!(battO->fet&PWR_ON))?(1<<(battO->index)):0); break;
-            
+
             case BATT_JUDGE_FETEN:
                 result=((!(battO->fet&FET_LOCK))?(1<<(battO->index)):0); break;
 
             case BATT_JUDGE_INUSE:
                 result=((!(battO->status&BATT_INUSE))?(1<<(battO->index)):0); break;
-            
+
             case BATT_JUDGE_OFFBOARD:
                 result=(((battO->lostCnt>=CNCT_ATTEMPT))?(1<<(battO->index)):0); break;
 
-            default: 
+            default:
                 PRINTLOG("\r\nDEBUG|BattMgmt|Batt_Judge(0x%02X,0x%02X)",mode,judge);
                 break;
         }
@@ -731,7 +731,7 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
             case BATT_JUDGE_PWRCHECK:
                 result=((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))?(1<<INDEX_BATTA):0)
                     +((!((battB.fet&PWR_ON)||(battB.fet&FET_EN)))?(1<<INDEX_BATTB):0); break;
-                
+
             case BATT_JUDGE_UNDERVOLT:
                 result=((battA.voltage<=TOL_UNDERVOLT)?(1<<INDEX_BATTA):0)
                     +((battB.voltage<=TOL_UNDERVOLT)?(1<<INDEX_BATTB):0); break;
@@ -751,7 +751,7 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
             case BATT_JUDGE_UNDERTEMP:
                 result=((battA.temperature<=TOL_UNDERTEMP)?(1<<INDEX_BATTA):0)
                     +((battB.temperature<=TOL_UNDERTEMP)?(1<<INDEX_BATTB):0); break;
-    
+
             default:
                 PRINTLOG("\r\nDEBUG|BattMgmt|Batt_Judge(0x%02X,0x%02X)",mode,judge);
                 break;
@@ -766,7 +766,7 @@ uint8_t Batt_Judge(BattModeType mode, BattJudgeType judge)
 void Console_BattMgmt(uint8_t cmd)
 {
     switch(cmd)
-    { 
+    {
         case 'A':   battA.status|=BATT_ONBOARD; break;
         case 'a':   battA.status&=~BATT_ONBOARD; break;
         case 'B':   battB.status|=BATT_ONBOARD; break;

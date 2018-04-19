@@ -62,7 +62,7 @@ void USART_Buffer_Init(void)
     USART3_Tx.front  = USART3_Tx.buffer;
     USART3_Tx.rear   = USART3_Tx.buffer;
     USART3_Tx.flag   = 0;
-    
+
     USART3_Rx.handle = &huart3;
     USART3_Rx.length = BUFFSIZE;
     USART3_Rx.front  = USART3_Tx.buffer;
@@ -106,7 +106,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         GPIO_InitS.Mode         = GPIO_MODE_AF_PP;
         GPIO_InitS.Pull         = GPIO_PULLUP;
         GPIO_InitS.Speed        = GPIO_SPEED_FREQ_HIGH;
-        GPIO_InitS.Alternate	= GPIO_AF7_USART1;
+        GPIO_InitS.Alternate    = GPIO_AF7_USART1;
         HAL_GPIO_Init(GPIOB,&GPIO_InitS);
     }
 
@@ -119,7 +119,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
         GPIO_InitS.Mode         = GPIO_MODE_AF_PP;
         GPIO_InitS.Pull         = GPIO_PULLUP;
         GPIO_InitS.Speed        = GPIO_SPEED_FREQ_HIGH;
-        GPIO_InitS.Alternate	= GPIO_AF7_USART3;
+        GPIO_InitS.Alternate    = GPIO_AF7_USART3;
         HAL_GPIO_Init(GPIOB,&GPIO_InitS);
     }
 }
