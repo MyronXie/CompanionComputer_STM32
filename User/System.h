@@ -23,16 +23,17 @@
 #include "stdlib.h"
 
 // Function Select
-//#define ENABLE_BATTERYMGMT
+#define ENABLE_BATTERYMGMT
 #define ENABLE_LANGINGGEAR
 //#define ENABLE_CURRMONITOR
-//#define SINGLE_BATTERY
+#define SINGLE_BATTERY
 
 //#define BOARD_REV1
 #define BOARD_REV2
 
 // <Dev> Option
-#define WITHOUT_BATTERY
+#define ENBALE_CONSOLE_CTRL
+//#define WITHOUT_BATTERY
 //#define INGORE_LOSTCOMM
 //#define INGORE_VDIFF
 //#define INGORE_POWEROFF

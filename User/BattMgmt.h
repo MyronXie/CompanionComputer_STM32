@@ -17,6 +17,7 @@
 #include "stm32f3xx_hal.h"
 #include "bsp_usart.h"
 #include "bsp_i2c.h"
+#include "bsp_misc.h"
 #include "System.h"
 #include "math.h"
 
@@ -128,6 +129,9 @@ typedef struct
 #define BATT_MEAS_PFSTA         0x09
 #define BATT_MEAS_OPSSTA        0x0A
 
+#define BATT_MGMT_SEND_LOG      0x0E
+#define BATT_MGMT_CNCT_COUNT    0x0F
+
 //============Batt_Init============
 #define BATT_INIT_BEGIN         0x00
 #define BATT_CNCT_CHECK         0x01
@@ -147,10 +151,8 @@ typedef struct
 #define BATT_MGMT_PWROFF        0x03
 #define BATT_MGMT_RECNCT        0x04
 #define BATT_MGMT_PWRCHECK      0x05
+#define BATT_MGMT_LEDCTRL       0x06
 #define BATT_MGMT_DEBUG         0x07
-
-#define BATT_MGMT_SEND_LOG      0x0E
-#define BATT_MGMT_CNCT_COUNT    0x0F
 
 typedef enum
 {

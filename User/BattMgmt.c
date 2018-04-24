@@ -43,6 +43,7 @@ void Battery_Init(void)
             PRINTLOG(" <DUAL_BATTERY>");
             #endif
 
+            LED_OFF(LED3);
             stage = BATT_CNCT_CHECK, atmpTimes = 0;
             break;
 
@@ -246,6 +247,7 @@ void Battery_Init(void)
                 battMsg.cmd     = MSG_BATT_INIT;
                 PRINTLOG("\r\n INFO|BattMgmt|Battery Init Success");
                 battInit = 0;
+                LED_ON(LED3);
             }
             stage = BATT_INIT_BEGIN;
             break;
@@ -524,8 +526,10 @@ void Battery_Management(void)
                     // If these code can be reached, means battery power is still on
                     #ifndef WITHOUT_BATTERY
                     if((!((battA.fet&PWR_ON)||(battA.fet&FET_EN)))&&(!((battB.fet&PWR_ON)||(battB.fet&FET_EN))))
+                    {
                         battMsg.cmd     = ERR_BATT_STILLPWR;    //ERR_BATT_POWEROFF
                         battMsg.param   = Batt_Judge(battMode, BATT_JUDGE_PWRCHECK);
+                    }
                     #endif
                 }
                 else if(battMode == BATT_MODE_DUAL)
@@ -566,6 +570,13 @@ void Battery_Management(void)
                 }
                 break;
 
+            case BATT_MGMT_LEDCTRL:
+                if(battMode == BATT_MODE_NONE)                                          LED_OFF(LED3);
+                else if(battMode == BATT_MODE_DUAL || battMode == BATT_MODE_SINGLE)     LED_ON(LED3);
+                else                                                                    LED_TOGGLE(LED3);
+
+                break;
+                
             case BATT_MGMT_DEBUG:
                 #ifdef WITHOUT_BATTERY
                 srand(sysTicks);
@@ -614,6 +625,8 @@ void Batt_PowerOff(void)
                     battA.status &= ~BATT_INUSE;
                     battB.status &= ~BATT_INUSE;
 
+                    LED_OFF(LED3);
+                    
                     // Actually this message won't send because power down
                     battMsg.cmd = MSG_BATT_PWROFF_END;
                     battMsg.param = Batt_Judge(battMode, BATT_JUDGE_PWROFF);

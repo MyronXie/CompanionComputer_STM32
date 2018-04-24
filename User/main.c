@@ -31,6 +31,7 @@ mavlink_battery_status_t mavBattRx;
 mavlink_stm32_f3_command_t mavF3CmdRx;
 mavlink_stm32_f3_motor_curr_t mavF3Curr;
 void Mavlink_Decode(mavlink_message_t* msg);
+void Console_decode(char recv);
 
 /**
   * @brief  Main program
@@ -107,6 +108,7 @@ int main(void)
         }
 
         /************************* Console Recv Process *************************/
+        #ifdef ENBALE_CONSOLE_CTRL
         if(Serial_Console_Available())
         {
             recvByte = Serial_Console_NextByte();
@@ -114,19 +116,10 @@ int main(void)
             if(recvByte!='\r'&&recvByte!='\n')
             {
                 PRINTLOG("\r\n INFO|Console |\"%c\"",recvByte);
-
-                switch(recvByte)
-                {
-                    case '0': LandingGear_ChangePosition(0);break;
-                    case '1': LandingGear_ChangePosition(1);break;
-                    case '2': lgAutoReset = 1;break;
-                    case 'Q': sysArmed = 1; PRINTLOG("\r\n INFO [System] Drone Armed");break;
-                    case 'q': sysArmed = 0; PRINTLOG("\r\n INFO [System] Drone Disarmed");break;
-                    case 'R': NVIC_SystemReset();   break;
-                    default: Console_BattMgmt(recvByte); break;
-                }
+                Console_decode(recvByte);
             }
         }
+        #endif
     }//while
 }//main
 
@@ -244,6 +237,52 @@ void Mavlink_Decode(mavlink_message_t* msg)
         #endif
 
         default:break;
+    }
+}
+
+void Console_decode(char recv)
+{
+    static uint8_t stage = 0;
+    
+    switch(stage)
+    {
+        case 0x00:
+            switch(recv)
+            {
+                case 'S':stage=0X01;break;
+                case 'L':stage=0x02;break;
+                case 'B':stage=0x03;break;
+                default: stage=0x00;break;
+            }
+            break;
+            
+        case 0x01:
+            switch(recv)
+            {
+                case 'R':NVIC_SystemReset();   break;
+                case 'A':sysArmed = 1; PRINTLOG("\r\n INFO [System] Drone Armed");break;
+                case 'a':sysArmed = 1; PRINTLOG("\r\n INFO [System] Drone Armed");break;
+                default: stage=0x00;break;
+            }
+            break;
+            
+        case 0x02:
+            switch(recv)
+            {
+                case '0': LandingGear_ChangePosition(0);break;
+                case '1': LandingGear_ChangePosition(1);break;
+                case 'R': lgAutoReset = 1;break;
+                default: stage=0x00;break;
+            }
+            break;
+
+        case 0x03:
+            switch(recv)
+            {
+                case ' ': case '\r': case '\n': stage=0x00;break;
+                default:Console_BattMgmt(recvByte); break;
+            }
+            break;
     }
 }
 
