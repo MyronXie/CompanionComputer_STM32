@@ -243,7 +243,7 @@ void Mavlink_Decode(mavlink_message_t* msg)
 void Console_decode(char recv)
 {
     static uint8_t stage = 0;
-    
+
     switch(stage)
     {
         case 0x00:
@@ -255,7 +255,7 @@ void Console_decode(char recv)
                 default: stage=0x00;break;
             }
             break;
-            
+
         case 0x01:
             switch(recv)
             {
@@ -265,7 +265,7 @@ void Console_decode(char recv)
                 default: stage=0x00;break;
             }
             break;
-            
+
         case 0x02:
             switch(recv)
             {

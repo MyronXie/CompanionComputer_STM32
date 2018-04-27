@@ -56,7 +56,7 @@ typedef struct
 #define PWROFF_DELAY        2000    // ms
 #define ENFET_DELAY         2000    // ms
 
-#define TOL_VDIFF_INIT      90      // mv
+#define TOL_VDIFF_INIT      100     // mv
 #define TOL_VDIFF_RUN       1000    // mv
 #define TOL_UNDERVOLT       22000   // mv
 #define TOL_LOWSOC          10      // %
